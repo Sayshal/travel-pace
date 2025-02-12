@@ -2,54 +2,58 @@
   "id": "travel-pace",
   "title": "Innocenti's Travel Pace",
   "description": "Calculate player's journey time in Travel Pace",
-  "version": "2.1.3",
+  "version": "3.0.0",
+  "bugs": "https://github.com/Sayshal/travel-pace/issues",
+  "changelog": "https://github.com/Sayshal/travel-pace/releases",
+  "license": "https://github.com/Sayshal/travel-pace?tab=License-1-ov-file",
+  "readme": "https://github.com/Sayshal/travel-pace?tab=readme-ov-file",
   "authors": [
     {
       "name": "Innocenti",
       "discord": "Innocenti#1455",
-      "email": "renato.innocenti@gmail.com",
-      "flags": {}
+      "email": "renato.innocenti@gmail.com"
+    },
+    {
+      "name": "Tyler",
+      "discord": "Tyler",
+      "url": "https://github.com/Sayshal"
     }
   ],
+  "compatibility": {
+    "maximum": "13.999",
+    "minimum": "11",
+    "verified": "12.331"
+  },
+  "download": "",
+  "esmodules": ["scripts/settings.js", "scripts/travel-pace.js"],
+  "flags": {
+    "hotReload": {
+      "extensions": ["css", "html", "hbs", "json"],
+      "paths": ["styles", "lang", "templates"]
+    }
+  },
   "languages": [
-    {
-      "lang": "pt-BR",
-      "name": "Português (Brasil)",
-      "path": "lang/pt-BR.json",
-      "flags": {}
-    },
     {
       "lang": "en",
       "name": "English",
-      "path": "lang/en.json",
-      "flags": {}
-    },
-    {
-      "lang": "es",
-      "name": "Español",
-      "path": "lang/es.json",
-      "flags": {}
+      "path": "lang/en.json"
     }
   ],
-  "url": "https://github.com/rinnocenti/travel-pace",
-  "readme": "https://github.com/rinnocenti/travel-pace/blob/master/README.md",
-  "bugs": "https://github.com/rinnocenti/travel-pace/issues",
-  "changelog": "https://github.com/rinnocenti/travel-pace/blob/master/CHANGELOG.md",
-
-  "scripts": [
-    "scripts/settings.js",
-    "scripts/travel-pace.js"
-  ],
-  "styles": [
-    "styles/travel-pace.css"
-  ],
-
+  "manifest": "",
+  "relationships": {
+    "systems": [
+      {
+        "compatibility": {
+          "maximum": "4.2.9",
+          "minimum": "3.3.1",
+          "verified": "3.3.1"
+        },
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
+  },
   "socket": true,
-  "manifest": "https://raw.githubusercontent.com/rinnocenti/travel-pace/master/module.json",
-  "download": "https://github.com/rinnocenti/travel-pace/archive/master.zip",
-  "compatibility": {
-    "minimum": "9",
-    "verified": "11.299",
-    "maximum": "11"
-  }
+  "styles": ["styles/travel-pace.css"],
+  "url": "https://github.com/Sayshal/travel-pace"
 }

@@ -1,48 +1,54 @@
 {
-  "TravelPace.ButtomName": "Travel Pace",
-  "TravelPace.RequestorName": "Travel Time Measurement",
-  "TravelPace.Pace": "March",
-  "TravelPace.Dialog.Total": "Travel Time",
-  "TravelPace.Settings.ButtomName": "Left Toolbar: Travel Pace",
-  "TravelPace.Settings.ButtomNameHint": "Adds buttons to the left tool bar to measure time of Player's journey",
-  "TravelPace.Settings.ForcedMarchDialog": "Forced March on Chat",
-  "TravelPace.Settings.ForcedMarchDialogHint": "If enabled, show the March Forced rules in the chat.",
-  "TravelPace.Settings.MetricSystem": "Convert to Metric System",
-  "TravelPace.Settings.MetricSystemHint": "If enabled, metric measurements (m/km) will be used instead of imperial (ft/mi).",
-
-  "TravelPace.PaceSlow": "Slow March",
-  "TravelPace.PaceFast": "Fast March",
-  "TravelPace.PaceNormal": "Normal March",
-  "TravelPace.RatioNormal": "Normal (SRD)",
-  "TravelPace.Ratio2": "1/2 Normal",
-  "TravelPace.Ratio4": "1/4 Normal",
-  "TravelPace.Ratio6": "1/6 (Icewind Dale: Rime of the Frostmaiden)",
-
-  "TravelPace.feets": "Feet",
-  "TravelPace.meters": "Meters",
-  "TravelPace.miles": "Miles",
-  "TravelPace.kilometers": "Kilometers",
-  "TravelPace.feetsAbbr": "ft",
-  "TravelPace.metersAbbr": "m",
-  "TravelPace.milesAbbr": "mi",
-  "TravelPace.kilometersAbbr": "km",
-
-  "TravelPace.Dialog.Who": "Calculated the time the next journey will take.",
-  "TravelPace.Dialog.Journey": "{hour}h {min}min",
-  "TravelPace.Dialog.JourneyDay": " in {days} day",
-  "TravelPace.Dialog.JourneyDays": " in {days} days",
-
-  "TravelPace.Dialog.PreviewSpeed": "Slowest movement speed: {units_feetAbbr}",
-  "TravelPace.Dialog.PreviewOnroad": "{units_miles} on the road/trail",
-  "TravelPace.Dialog.PreviewOffroad": "{units_miles} on difficult terrain",
-  "TravelPace.Dialog.PreviewTime": "Estimated Hours",
-  "TravelPace.Dialog.PreviewRatio": "Speed Ratio",
-  "TravelPace.Dialog.SlowEffects": "Able to use stealth",
-  "TravelPace.Dialog.FastEffects": "-5 penalty to passive Wisdom (Perception) scores",
-
-  "TravelPace.Dialog.ForcedMarch": "Forced March",
-  "TravelPace.Dialog.ForcedMarchAlert": "The Travel Pace table assumes that characters travel for 8 hours in day. They can push on beyond that limit, at the risk of exhaustion.",
-  "TravelPace.Dialog.ForcedMarchAlertAdd": "For each additional hour of travel beyond 8 hours, the characters cover the distance shown for their pace, and each character must make a Constitution saving throw at the end of the hour. The DC is 10 + 1 for each hour past 8 hours. On a failed saving throw, a character suffers one level of exhaustion.",
-  "TravelPace.Dialog.Narrative": "The group walks at an average speed of {marchSpeed} {units_feetAbbr}, traveling for {marchOnRoad} {units_miles} on roads and {marchOffRoad} {units_miles} on difficult terrain."
-
+  "TravelPace": {
+    "ButtonName": "Travel Pace",
+    "Dialog": {
+      "FastEffects": "-5 penalty to passive Wisdom (Perception) scores",
+      "ForcedMarch": "Forced March",
+      "ForcedMarchAlert": "The Travel Pace table assumes that characters travel for 8 hours in day. They can push on beyond that limit, at the risk of exhaustion.",
+      "ForcedMarchAlertAdd": "For each additional hour of travel beyond 8 hours, the characters cover the distance shown for their pace, and each character must make a Constitution saving throw at the end of the hour. The DC is 10 + 1 for each hour past 8 hours. On a failed saving throw, a character suffers one level of exhaustion.",
+      "Journey": "{hour}h {min}min",
+      "JourneyDay": " in {days} day",
+      "JourneyDays": " in {days} days",
+      "Narrative": "The group walks at an average speed of {marchSpeed} {units_feetAbbr}, traveling for {marchOnRoad} {units_miles} on roads and {marchOffRoad} {units_miles} on difficult terrain.",
+      "PreviewOffroad": "{units_miles} on difficult terrain",
+      "PreviewOnroad": "{units_miles} on the road/trail",
+      "PreviewRatio": "Speed Ratio",
+      "PreviewSpeed": "Slowest movement speed: {units_feetAbbr}",
+      "PreviewTime": "Estimated Hours",
+      "SlowEffects": "Able to use stealth",
+      "Total": "Travel Time",
+      "Who": "Calculated the time the next journey will take."
+    },
+    "Pace": "March",
+    "PaceTypes": {
+      "PaceFast": "Fast March",
+      "PaceNormal": "Normal March",
+      "PaceSlow": "Slow March"
+    },
+    "Ratios": {
+      "Ratio2": "1/2 Normal",
+      "Ratio4": "1/4 Normal",
+      "Ratio6": "1/6 (Icewind Dale: Rime of the Frostmaiden)",
+      "RatioNormal": "Normal (SRD)"
+    },
+    "RequestorName": "Travel Time Measurement",
+    "Settings": {
+      "ButtonName": "Left Toolbar: Travel Pace",
+      "ButtonNameHint": "Adds buttons to the left tool bar to measure time of Player's journey",
+      "ForcedMarchDialog": "Forced March on Chat",
+      "ForcedMarchDialogHint": "If enabled, show the March Forced rules in the chat.",
+      "MetricSystem": "Convert to Metric System",
+      "MetricSystemHint": "If enabled, metric measurements (m/km) will be used instead of imperial (ft/mi)."
+    },
+    "Units": {
+      "feets": "Feet",
+      "feetsAbbr": "ft",
+      "kilometers": "Kilometers",
+      "kilometersAbbr": "km",
+      "meters": "Meters",
+      "metersAbbr": "m",
+      "miles": "Miles",
+      "milesAbbr": "mi"
+    }
+  }
 }

@@ -1,14 +1,15 @@
 #travelpace-config label {
-    display: block;
+  display: block;
 }
 
-    #travelpace-config label span {
-        display: inline-block;
-        text-align: left;
-        width: 200px;
-    }
+#travelpace-config label span {
+  display: inline-block;
+  text-align: left;
+  width: 200px;
+}
+
 #travelpace-button > button {
-    width: 32%;
-    display: inline-grid;
-    padding-top: .3em;
+  width: 32%;
+  display: inline-grid;
+  padding-top: 0.3rem;
 }
