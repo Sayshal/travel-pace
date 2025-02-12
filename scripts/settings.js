@@ -1,26 +1,31 @@
-Hooks.once('init', () => {
-  game.settings.register('travel-pace', 'ForcedMarchDialog', {
-    name: game.i18n.localize('TravelPace.Settings.ForcedMarchDialog'),
-    hint: game.i18n.localize('TravelPace.Settings.ForcedMarchDialogHint'),
-    scope: 'world',
-    config: true,
+const SETTINGS = {
+  forcedMarch: {
+    type: Boolean,
     default: true,
-    type: Boolean
-  });
-  game.settings.register('travel-pace', 'MetricSystem', {
-    name: game.i18n.localize('TravelPace.Settings.MetricSystem'),
-    hint: game.i18n.localize('TravelPace.Settings.MetricSystemHint'),
     scope: 'world',
     config: true,
+    name: 'TravelPace.settings.forcedMarch.name',
+    hint: 'TravelPace.settings.forcedMarch.hint'
+  },
+  useMetric: {
+    type: Boolean,
     default: false,
-    type: Boolean
-  });
-  game.settings.register('travel-pace', 'previewSetting', {
-    name: game.i18n.localize('TravelPace.Settings.previewSetting'),
-    hint: game.i18n.localize('TravelPace.Settings.previewSettingHint'),
-    default: {},
+    scope: 'world',
+    config: true,
+    name: 'TravelPace.settings.useMetric.name',
+    hint: 'TravelPace.settings.useMetric.hint'
+  },
+  preview: {
     type: Object,
+    default: {},
     scope: 'world',
     config: false
+  }
+};
+
+Hooks.once('init', () => {
+  // Register all settings
+  Object.entries(SETTINGS).forEach(([key, data]) => {
+    game.settings.register('travel-pace', key, data);
   });
 });

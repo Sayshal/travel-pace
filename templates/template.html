@@ -1,129 +1,120 @@
-<form
-  id="travel-pace-form"
-  autocomplete="off"
-  onsubmit="event.preventDefault();">
-  <div id="travelpace-config">
-    <label
-      class="corviva"
-      for="jspeed">
-      <span>{{previewSpeed}} </span>
-      <input
-        type="number"
-        id="jspeed"
-        name="jspeed"
-        value="{{previewSpeedVal}}" />
-    </label>
+<form id="travel-pace-form">
+  <div class="travel-pace-config">
+    <div class="form-group">
+      <label for="speed">
+        {{previewSpeed}}
+        <input 
+          type="number" 
+          name="speed" 
+          id="speed"
+          data-action="updatePreview"
+          value="{{previewSpeedVal}}" 
+        />
+      </label>
+    </div>
 
-    <label for="jmilesonroad">
-      <span>{{previewOnroad}}</span>
-      <input
-        type="number"
-        id="jmilesonroad"
-        name="jmilesonroad"
-        value="{{previewOnroadVal}}" />
-    </label>
-    <label for="jmilesoffroad">
-      <span>{{previewOffroad}}</span>
-      <input
-        type="number"
-        id="jmilesoffroad"
-        name="jmilesoffroad"
-        value="{{previewOffroadVal}}" />
-    </label>
-    <label for="jratio">
-      <span>{{previewRatio}}</span>
-      <select
-        name="jratio"
-        id="jratio">
-        <option
-          type="number"
-          value="1"
-          {{rnSelect}}>
-          {{localize "TravelPace.Ratios.RatioNormal"}}
-        </option>
-        <option
-          type="number"
-          value="2"
-          {{r2Select}}>
-          {{localize "TravelPace.Ratios.Ratio2"}}
-        </option>
-        <option
-          type="number"
-          value="4"
-          {{r4Select}}>
-          {{localize "TravelPace.Ratios.Ratio4"}}
-        </option>
-        <option
-          type="number"
-          value="6"
-          {{r6Select}}>
-          {{localize "TravelPace.Ratios.Ratio6"}}
-        </option>
-      </select>
-    </label>
+    <div class="form-group">
+      <label for="onRoadDistance">
+        {{previewOnroad}}
+        <input 
+          type="number" 
+          name="onRoadDistance" 
+          id="onRoadDistance"
+          data-action="updatePreview"
+          value="{{previewOnroadVal}}" 
+        />
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label for="offRoadDistance">
+        {{previewOffroad}}
+        <input 
+          type="number" 
+          name="offRoadDistance" 
+          id="offRoadDistance"
+          data-action="updatePreview"
+          value="{{previewOffroadVal}}" 
+        />
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label for="ratio">
+        {{previewRatio}}
+        <select 
+          name="ratio" 
+          id="ratio"
+          data-action="updatePreview"
+        >
+          <option value="1" {{#if rnSelect}}selected{{/if}}>
+            {{localize "TravelPace.ratios.normal"}}
+          </option>
+          <option value="2" {{#if r2Select}}selected{{/if}}>
+            {{localize "TravelPace.ratios.half"}}
+          </option>
+          <option value="4" {{#if r4Select}}selected{{/if}}>
+            {{localize "TravelPace.ratios.quarter"}}
+          </option>
+          <option value="6" {{#if r6Select}}selected{{/if}}>
+            {{localize "TravelPace.ratios.sixth"}}
+          </option>
+        </select>
+      </label>
+    </div>
   </div>
-  <div id="travelpace-preview">
-    <h2>{{localize "TravelPace.Dialog.PreviewTime"}}</h2>
-    <p>
-      <strong>{{localize "TravelPace.PaceTypes.PaceNormal"}} </strong
-      ><span
-        id="march-normal"
-        class="pw-march"
-        >{{pwNormal}}</span
-      >
-    </p>
-    <hr />
-    <p>
-      <strong>{{localize "TravelPace.PaceTypes.PaceSlow"}} </strong
-      ><span
-        id="march-slow"
-        class="pw-march"
-        >{{pwSlow}}</span
-      >
-    </p>
-    <p><em> {{localize "TravelPace.Dialog.SlowEffects"}}</em></p>
-    <hr />
-    <p>
-      <strong>{{localize "TravelPace.PaceTypes.PaceFast"}} </strong
-      ><span
-        id="march-fast"
-        class="pw-march"
-        >{{pwQuick}}</span
-      >
-    </p>
-    <p><em> {{localize "TravelPace.Dialog.FastEffects"}}</em></p>
+
+  <div class="travel-pace-preview">
+    <h2>{{localize "TravelPace.preview.title"}}</h2>
+    
+    <div class="pace-option">
+      <h3>{{localize "TravelPace.pace.normal"}}</h3>
+      <span class="pace-time" data-pace="normal">{{pwNormal}}</span>
+    </div>
+
+    <hr/>
+
+    <div class="pace-option">
+      <h3>{{localize "TravelPace.pace.slow"}}</h3>
+      <span class="pace-time" data-pace="slow">{{pwSlow}}</span>
+      <p class="pace-effect">{{localize "TravelPace.effects.slow"}}</p>
+    </div>
+
+    <hr/>
+
+    <div class="pace-option">
+      <h3>{{localize "TravelPace.pace.fast"}}</h3>
+      <span class="pace-time" data-pace="fast">{{pwQuick}}</span>
+      <p class="pace-effect">{{localize "TravelPace.effects.fast"}}</p>
+    </div>
   </div>
-  <div>
-    <h2>{{localize "TravelPace.Dialog.ForcedMarch"}}</h2>
-    <p>{{localize "TravelPace.Dialog.ForcedMarchAlert"}}</p>
-    <p>{{localize "TravelPace.Dialog.ForcedMarchAlertAdd"}}</p>
-  </div>
-  <div id="travelpace-button">
-    <input
-      type="hidden"
-      id="pace"
-      name="pace"
-      value="" />
-    <button
-      type="submit"
-      class="travelpace-slow-button"
-      name="submit"
-      value="Slow">
-      <i class="fas fa-angle-double-right"></i>{{localize "TravelPace.PaceTypes.PaceSlow"}}
+
+  <div class="travel-pace-controls">
+    <button 
+      type="button" 
+      data-action="setPaceSlow"
+      class="pace-button pace-slow"
+    >
+      <i class="fas fa-angle-double-right"></i>
+      {{localize "TravelPace.pace.slow"}}
     </button>
-    <button
-      type="submit"
-      class="travelpace-normal-button"
-      name="submit"
-      value="Normal">
-      <i class="fa fa-play"></i>{{localize "TravelPace.PaceTypes.PaceNormal"}}
+
+    <button 
+      type="button" 
+      data-action="setPaceNormal"
+      class="pace-button pace-normal"
+    >
+      <i class="fa fa-play"></i>
+      {{localize "TravelPace.pace.normal"}}
     </button>
-    <button
-      type="submit"
-      class="travelpace-fast-button"
-      name="submit"
-      value="Fast">
-      <i class="fa fa-forward"></i>{{localize "TravelPace.PaceTypes.PaceFast"}}
+
+    <button 
+      type="button" 
+      data-action="setPaceFast"
+      class="pace-button pace-fast"
+    >
+      <i class="fa fa-forward"></i>
+      {{localize "TravelPace.pace.fast"}}
     </button>
   </div>
 </form>

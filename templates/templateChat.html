@@ -1,13 +1,20 @@
-<h2 id="marchType">{{marchType}}</h2>
-<p id="dialogNarrative">{{dialogNarrative}}</p>
-<h3 id="TravelPace.Dialog.Total">{{localize "TravelPace.Dialog.Total"}}</h3>
-<p id="marchTotal"><strong>{{marchTotal}}</strong></p>
-<div id="travelpace-chatStealth marchDisclaimer">{{marchDisclaimer}}</div>
-{{#if chatForced}}
-<hr />
-<div id="travelpace-chatForced">
-  <h2 id="TravelPace.Dialog.ForcedMarch">{{localize "TravelPace.Dialog.ForcedMarch"}}</h2>
-  <p id="TravelPace.Dialog.ForcedMarchAlert">{{localize "TravelPace.Dialog.ForcedMarchAlert"}}</p>
-  <p id="TravelPace.Dialog.ForcedMarchAlertAdd">{{localize "TravelPace.Dialog.ForcedMarchAlertAdd"}}</p>
+<div class="travel-pace-chat">
+  <h2 class="travel-pace-type">{{marchType}}</h2>
+  <p class="travel-pace-narrative">{{dialogNarrative}}</p>
+
+  <h3>{{localize "TravelPace.chat.totalTime"}}</h3>
+  <p class="travel-pace-total"><strong>{{marchTotal}}</strong></p>
+
+  {{#if marchEffect}}
+  <div class="travel-pace-effect">
+    <p>{{marchEffect}}</p>
+  </div>
+  {{/if}} {{#if showForcedMarch}}
+  <hr />
+  <div class="travel-pace-forced">
+    <h3>{{localize "TravelPace.forcedMarch.title"}}</h3>
+    <p>{{localize "TravelPace.forcedMarch.description"}}</p>
+    <p>{{localize "TravelPace.forcedMarch.rules"}}</p>
+  </div>
+  {{/if}}
 </div>
-{{/if}}

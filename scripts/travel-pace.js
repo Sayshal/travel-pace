@@ -1,3 +1,5 @@
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
 class TravelPace {
   static getSceneControlButtons(buttons) {
     let tokenButton = buttons.find((b) => b.name == 'token');
@@ -5,182 +7,260 @@ class TravelPace {
       tokenButton.tools.push({
         name: 'travel-pace',
         title: game.i18n.localize('TravelPace.ButtonName'),
-        icon: 'fa fa-location-arrow',
+        icon: 'fa-regular fa-route',
         visible: true,
         onClick: () => TravelPace.requestMeasure()
       });
     }
   }
+
   static requestMeasure() {
-    //ui.notifications.warn("oi");
-    if (TravelPace.requestor === undefined) TravelPace.requestor = new TravelPaceRequestor();
-    TravelPace.requestor.render(true);
+    if (TravelPace.requestor === undefined) {
+      TravelPace.requestor = new TravelPaceRequestor();
+      TravelPace.requestor.render(true);
+    }
   }
 }
-class TravelPaceRequestor extends FormApplication {
-  constructor(...args) {
-    super(...args);
+
+class TravelPaceRequestor extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: 'travel-pace-app',
+    template: 'modules/travel-pace/templates/template.html',
+    width: 500,
+    height: 'auto',
+    classes: ['travel-pace'],
+    closeOnSubmit: true,
+    tag: 'form',
+    resizable: true,
+    form: {
+      handler: TravelPaceRequestor.formHandler,
+      submitOnChange: false,
+      closeOnSubmit: true
+    },
+    actions: {
+      setPaceSlow: (event) => TravelPaceRequestor._setPace(event, 'slow'),
+      setPaceNormal: (event) => TravelPaceRequestor._setPace(event, 'normal'),
+      setPaceFast: (event) => TravelPaceRequestor._setPace(event, 'fast'),
+      updatePreview: (event) => TravelPaceRequestor._updatePreview(event)
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: 'modules/travel-pace/templates/template.html',
+      scrollable: ['.pw-march']
+    }
+  };
+
+  constructor(options = {}) {
+    super(options);
     game.users.apps.push(this);
   }
 
-  static get defaultOptions() {
-    const options = super.defaultOptions;
-    options.title = game.i18n.localize('TravelPace.RequestorName');
-    options.id = 'travel-pace';
-    options.template = 'modules/travel-pace/templates/template.html';
-    options.closeOnSubmit = true;
-    options.popOut = true;
-    options.width = 400;
-    options.height = 'auto';
-    options.classes = ['travel-pace'];
-    return options;
+  get title() {
+    return game.i18n.localize('TravelPace.title');
   }
-  activateListeners(html) {
-    super.activateListeners(html);
-    this.element.find('#jspeed').change(this._onUserChange.bind(this));
-    this.element.find('#jmilesonroad').change(this._onUserChange.bind(this));
-    this.element.find('#jmilesoffroad').change(this._onUserChange.bind(this));
-    this.element.find('#jratio').change(this._onUserChange.bind(this));
 
-    this.element.find('.travelpace-slow-button').click((event) => this.setTravelPace(event, 'Slow'));
-    this.element.find('.travelpace-normal-button').click((event) => this.setTravelPace(event, 'Normal'));
-    this.element.find('.travelpace-fast-button').click((event) => this.setTravelPace(event, 'Fast'));
+  async _prepareContext() {
+    const context = {};
+
+    const basemed = this.constructor.formatMetricSystem();
+    const previewSetting = game.settings.get('travel-pace', 'preview');
+    const typeRatio = previewSetting.jratio ?? 1;
+
+    const defaultValues = {
+      speed: game.settings.get('travel-pace', 'useMetric') ? 9 : 30,
+      onRoad: game.settings.get('travel-pace', 'useMetric') ? 5 : 3,
+      offRoad: game.settings.get('travel-pace', 'useMetric') ? 5 : 3
+    };
+
+    context.pwNormal = this.constructor.calculateJourneyTime(defaultValues.speed, defaultValues.onRoad, defaultValues.offRoad, 'Normal', typeRatio);
+    context.pwSlow = this.constructor.calculateJourneyTime(defaultValues.speed, defaultValues.onRoad, defaultValues.offRoad, 'Slow', typeRatio);
+    context.pwQuick = this.constructor.calculateJourneyTime(defaultValues.speed, defaultValues.onRoad, defaultValues.offRoad, 'Fast', typeRatio);
+    context.previewSpeed = game.i18n.format('TravelPace.preview.speed', { units: basemed[0] });
+    context.previewOnroad = game.i18n.format('TravelPace.preview.onroad', { units: basemed[2] });
+    context.previewOffroad = game.i18n.format('TravelPace.preview.offroad', { units: basemed[2] });
+    context.previewSpeedVal = defaultValues.speed;
+    context.previewOnroadVal = defaultValues.onRoad;
+    context.previewOffroadVal = defaultValues.offRoad;
+    context.previewRatio = game.i18n.localize('TravelPace.preview.ratio');
+    context.r6Select = typeRatio === '6';
+    context.r4Select = typeRatio === '4';
+    context.r2Select = typeRatio === '2';
+    context.rnSelect = typeRatio === '1';
+
+    return context;
   }
-  setTravelPace(event, pace) {
-    event.preventDefault();
-    this.element.find('#pace').val(pace);
-    $('#travel-pace-form').submit();
+
+  static formatMetricSystem() {
+    const metricSystem = game.settings.get('travel-pace', 'useMetric');
+    return [
+      metricSystem ? game.i18n.localize('TravelPace.units.meters') : game.i18n.localize('TravelPace.units.feet'),
+      metricSystem ? game.i18n.localize('TravelPace.units.metersAbbr') : game.i18n.localize('TravelPace.units.feetAbbr'),
+      metricSystem ? game.i18n.localize('TravelPace.units.kilometers') : game.i18n.localize('TravelPace.units.miles'),
+      metricSystem ? game.i18n.localize('TravelPace.units.kilometersAbbr') : game.i18n.localize('TravelPace.units.milesAbbr')
+    ];
   }
-  JourneyTime(speed, onroad, offroad, march, ratio, outDay = false) {
-    //console.log(ratio);
-    if (game.settings.get('travel-pace', 'MetricSystem') === true) {
+
+  static calculateJourneyTime(speed, onroad, offroad, march, ratio, outDay = false) {
+    console.log('Initial values:', { speed, onroad, offroad, march, ratio });
+
+    if (game.settings.get('travel-pace', 'useMetric')) {
       speed = Math.round(speed / 0.3);
       onroad = Math.round(onroad / 1.5);
       offroad = Math.round(offroad / 1.5);
+      console.log('After metric conversion:', { speed, onroad, offroad });
     }
-    let realDistance = onroad * 1 + offroad * 2;
-    let realSpeed = speed / 10;
+
+    const realDistance = onroad + offroad * 2;
+    const realSpeed = speed / 10;
     let total = (realDistance / realSpeed) * ratio;
+
+    console.log('Basic calculations:', {
+      realDistance,
+      realSpeed,
+      initialTotal: total
+    });
+
     if (march === 'Slow') {
       total = (realDistance / ((realSpeed / 3) * 2)) * ratio;
     } else if (march === 'Fast') {
       total = (realDistance / ((realSpeed / 3) * 4)) * ratio;
     }
-    let formatMeasure = game.i18n.format('TravelPace.Dialog.Journey', { hour: Math.floor(total), min: Math.floor((total * 60) % 60) });
-    //The Travel Pace table assumes that characters travel for 8 hours in day
-    if (outDay === true) {
-      let days = Math.round(total / 8);
-      if (days > 1) {
-        formatMeasure += game.i18n.format('TravelPace.Dialog.JourneyDays', { days: days });
-      } else {
-        formatMeasure += game.i18n.format('TravelPace.Dialog.JourneyDay', { days: days });
-      }
+
+    console.log('After pace adjustment:', {
+      march,
+      total
+    });
+
+    const hours = Math.floor(total);
+    const minutes = Math.floor((total * 60) % 60);
+    const days = outDay ? Math.round(total / 8) : null;
+
+    console.log('Final calculations:', {
+      hours,
+      minutes,
+      days
+    });
+
+    let formatMeasure = game.i18n.format('TravelPace.journey.time', {
+      hours: hours,
+      minutes: minutes
+    });
+
+    if (outDay) {
+      formatMeasure += game.i18n.format(days > 1 ? 'TravelPace.journey.days' : 'TravelPace.journey.day', { days });
     }
+
     return formatMeasure;
   }
 
-  formatMetricSystem() {
-    const metricSystem = game.settings.get('travel-pace', 'MetricSystem');
-    let unitFeed = metricSystem ? game.i18n.localize('TravelPace.meters') : game.i18n.localize('TravelPace.Units.feets');
-    let unitFeedAbbr = metricSystem ? game.i18n.localize('TravelPace.metersAbbr') : game.i18n.localize('TravelPace.Units.feetsAbbr');
-    let unitMiles = metricSystem ? game.i18n.localize('TravelPace.kilometers') : game.i18n.localize('TravelPace.Units.miles');
-    let unitMilesAbbr = metricSystem ? game.i18n.localize('TravelPace.kilometersAbbr') : game.i18n.localize('TravelPace.Units.milesAbbr');
-    let medidas = [unitFeed, unitFeedAbbr, unitMiles, unitMilesAbbr];
-    return medidas;
-  }
-  async getData() {
-    let basemed = this.formatMetricSystem();
-    let previewSetting = game.settings.get('travel-pace', 'previewSetting');
-    let previewSpeedVal = game.settings.get('travel-pace', 'MetricSystem') ? 9 : 30;
-    if (previewSetting.jspeed != undefined) previewSpeedVal = previewSetting.jspeed;
-    let previewOnroadVal = game.settings.get('travel-pace', 'MetricSystem') ? 5 : 3;
-    if (previewSetting.jmilesonroad != undefined) previewOnroadVal = previewSetting.jmilesonroad;
-    let previewOffroadVal = game.settings.get('travel-pace', 'MetricSystem') ? 5 : 3;
-    if (previewSetting.jmilesoffroad != undefined) previewOffroadVal = previewSetting.jmilesoffroad;
-    let r6Select = previewSetting.jratio == '6' ? 'selected' : '';
-    let r4Select = previewSetting.jratio == '4' ? 'selected' : '';
-    let r2Select = previewSetting.jratio == '2' ? 'selected' : '';
-    let rnSelect = previewSetting.jratio == '1' ? 'selected' : '';
-    let typeRatio = previewSetting.jratio ? previewSetting.jratio : 1;
+  static _setPace(event, pace) {
+    event.preventDefault();
+    const form = event.currentTarget.closest('form');
+    const formData = new FormDataExtended(form);
 
-    const pwNormal = this.JourneyTime(previewSpeedVal, previewOnroadVal, previewOffroadVal, 'Normal', typeRatio);
-    const pwSlow = this.JourneyTime(previewSpeedVal, previewOnroadVal, previewOffroadVal, 'Slow', typeRatio);
-    const pwQuick = this.JourneyTime(previewSpeedVal, previewOnroadVal, previewOffroadVal, 'Fast', typeRatio);
-    const previewSpeed = game.i18n.format('TravelPace.Dialog.PreviewSpeed', { units_feetAbbr: basemed[0] });
-    const previewOnroad = game.i18n.format('TravelPace.Dialog.PreviewOnroad', { units_miles: basemed[2] });
-    const previewOffroad = game.i18n.format('TravelPace.Dialog.PreviewOffroad', { units_miles: basemed[2] });
-    const previewRatio = game.i18n.localize('TravelPace.Dialog.PreviewRatio');
-    return {
-      pwNormal,
-      pwSlow,
-      pwQuick,
-      previewSpeed,
-      previewOnroad,
-      previewOffroad,
-      previewSpeedVal,
-      previewOnroadVal,
-      previewOffroadVal,
-      previewRatio,
-      rnSelect,
-      r2Select,
-      r4Select,
-      r6Select
+    // Get values directly from form elements
+    const data = {
+      speed: Number(form.querySelector('#speed').value),
+      onRoadDistance: Number(form.querySelector('#onRoadDistance').value),
+      offRoadDistance: Number(form.querySelector('#offRoadDistance').value),
+      ratio: Number(form.querySelector('#ratio').value),
+      selectedPace: pace
     };
-  }
-  _onUserChange() {
-    let typeSpeed = this.element.find('#jspeed').val();
-    let typeOnRoad = this.element.find('#jmilesonroad').val();
-    let typeOffRoad = this.element.find('#jmilesoffroad').val();
-    let typeRatio = this.element.find('#jratio').val();
 
-    $('#march-normal').html(this.JourneyTime(typeSpeed, typeOnRoad, typeOffRoad, 'Normal', typeRatio));
-    $('#march-slow').html(this.JourneyTime(typeSpeed, typeOnRoad, typeOffRoad, 'Slow', typeRatio));
-    $('#march-fast').html(this.JourneyTime(typeSpeed, typeOnRoad, typeOffRoad, 'Fast', typeRatio));
+    console.log('Form data collected:', data);
+
+    this.formHandler(event, form, data);
   }
-  async _updateObject(event, formData) {
-    //TODO: Fazer as mensagens do chat.
-    //ui.notifications.warn('oi2');
-    let speaker = ChatMessage.getSpeaker();
-    // Translate metric system
-    let basemed = this.formatMetricSystem();
-    // preview value
-    game.settings.set('travel-pace', 'previewSetting', {
-      jspeed: formData['jspeed'],
-      jmilesonroad: formData['jmilesonroad'],
-      jmilesoffroad: formData['jmilesoffroad'],
-      jratio: formData['jratio']
+
+  static async formHandler(event, form, formData) {
+    event.preventDefault();
+
+    const data = {
+      speed: Number(formData.speed),
+      onRoadDistance: Number(formData.onRoadDistance),
+      offRoadDistance: Number(formData.offRoadDistance),
+      ratio: Number(formData.ratio),
+      selectedPace: formData.selectedPace
+    };
+
+    console.log('Processed form data:', data);
+
+    await game.settings.set('travel-pace', 'preview', {
+      speed: data.speed,
+      onRoadDistance: data.onRoadDistance,
+      offRoadDistance: data.offRoadDistance,
+      ratio: data.ratio
     });
 
-    if (!speaker.actor && game.user.character) speaker = ChatMessage.getSpeaker({ actor: game.user.character });
-    let templateChat = 'modules/travel-pace/templates/templateChat.html';
-    let marchTotal = this.JourneyTime(formData['jspeed'], formData['jmilesonroad'], formData['jmilesoffroad'], formData['pace'], formData['jratio'], true);
-    let marchDisclaimer =
-      formData['pace'] === 'Slow' ? game.i18n.localize('TravelPace.Dialog.SlowEffects') : formData['pace'] === 'Fast' ? game.i18n.localize('TravelPace.Dialog.FastEffects') : '';
-    let dialogNarrative = game.i18n.format('TravelPace.Dialog.Narrative', {
-      units_miles: basemed[2],
-      units_feetAbbr: basemed[1],
-      marchSpeed: formData['jspeed'],
-      marchOnRoad: formData['jmilesonroad'],
-      marchOffRoad: formData['jmilesoffroad']
+    await this._createChatMessage(data);
+  }
+
+  static _updatePreview(event) {
+    const form = event.currentTarget.closest('form');
+    const speed = form.querySelector('#speed').value;
+    const onRoad = form.querySelector('#onRoadDistance').value;
+    const offRoad = form.querySelector('#offRoadDistance').value;
+    const ratio = form.querySelector('#ratio').value;
+
+    const times = {
+      normal: this.calculateJourneyTime(speed, onRoad, offRoad, 'Normal', ratio),
+      slow: this.calculateJourneyTime(speed, onRoad, offRoad, 'Slow', ratio),
+      fast: this.calculateJourneyTime(speed, onRoad, offRoad, 'Fast', ratio)
+    };
+
+    form.querySelector('[data-pace="normal"]').textContent = times.normal;
+    form.querySelector('[data-pace="slow"]').textContent = times.slow;
+    form.querySelector('[data-pace="fast"]').textContent = times.fast;
+  }
+
+  static async _createChatMessage(data) {
+    console.log('Chat Message Data:', data);
+    const speaker = ChatMessage.getSpeaker();
+    const basemed = this.formatMetricSystem();
+
+    // Log all values being passed to calculateJourneyTime
+    console.log('Values being passed to calculateJourneyTime:', {
+      speed: data.speed,
+      onRoadDistance: data.onRoadDistance,
+      offRoadDistance: data.offRoadDistance,
+      selectedPace: data.selectedPace,
+      ratio: data.ratio
     });
-    let marchstring = 'TravelPace.PaceTypes.Pace' + formData['pace'];
-    let marchType = game.i18n.localize(marchstring);
-    let dialogData = {
-      marchType: marchType,
-      dialogNarrative: dialogNarrative,
-      marchTotal: marchTotal,
-      marchDisclaimer: marchDisclaimer,
-      chatForced: game.settings.get('travel-pace', 'ForcedMarchDialog')
+
+    const marchTotal = this.calculateJourneyTime(data.speed, data.onRoadDistance, data.offRoadDistance, data.selectedPace, data.ratio, true);
+
+    const chatData = {
+      marchType: game.i18n.localize(`TravelPace.pace.${data.selectedPace}`),
+      dialogNarrative: game.i18n.format('TravelPace.chat.narrative', {
+        units: {
+          distance: basemed[2],
+          speed: basemed[1]
+        },
+        values: {
+          speed: data.speed,
+          onRoad: data.onRoadDistance,
+          offRoad: data.offRoadDistance
+        }
+      }),
+      marchTotal,
+      marchEffect: data.selectedPace !== 'normal' ? game.i18n.localize(`TravelPace.effects.${data.selectedPace}`) : '',
+      showForcedMarch: game.settings.get('travel-pace', 'forcedMarch')
     };
-    let flavor = '<h3>' + game.i18n.localize('TravelPace.Dialog.Who') + ' (ratio: 1/' + formData['jratio'] + ')</h3>';
-    let content = await renderTemplate(templateChat, dialogData);
-    let messageData = {
-      content: content,
-      flavor: flavor,
-      speaker: speaker
+
+    const content = await renderTemplate('modules/travel-pace/templates/templateChat.html', chatData);
+
+    const messageData = {
+      content,
+      speaker,
+      flavor: game.i18n.format('TravelPace.chat.header', {
+        ratio: data.ratio
+      })
     };
-    ChatMessage.create(messageData);
-    console.log('Travel Pace submit: ', formData);
+
+    return ChatMessage.create(messageData);
   }
 }
+
 Hooks.on('getSceneControlButtons', TravelPace.getSceneControlButtons);

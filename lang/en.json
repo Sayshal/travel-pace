@@ -1,54 +1,72 @@
 {
   "TravelPace": {
-    "ButtonName": "Travel Pace",
-    "Dialog": {
-      "FastEffects": "-5 penalty to passive Wisdom (Perception) scores",
-      "ForcedMarch": "Forced March",
-      "ForcedMarchAlert": "The Travel Pace table assumes that characters travel for 8 hours in day. They can push on beyond that limit, at the risk of exhaustion.",
-      "ForcedMarchAlertAdd": "For each additional hour of travel beyond 8 hours, the characters cover the distance shown for their pace, and each character must make a Constitution saving throw at the end of the hour. The DC is 10 + 1 for each hour past 8 hours. On a failed saving throw, a character suffers one level of exhaustion.",
-      "Journey": "{hour}h {min}min",
-      "JourneyDay": " in {days} day",
-      "JourneyDays": " in {days} days",
-      "Narrative": "The group walks at an average speed of {marchSpeed} {units_feetAbbr}, traveling for {marchOnRoad} {units_miles} on roads and {marchOffRoad} {units_miles} on difficult terrain.",
-      "PreviewOffroad": "{units_miles} on difficult terrain",
-      "PreviewOnroad": "{units_miles} on the road/trail",
-      "PreviewRatio": "Speed Ratio",
-      "PreviewSpeed": "Slowest movement speed: {units_feetAbbr}",
-      "PreviewTime": "Estimated Hours",
-      "SlowEffects": "Able to use stealth",
-      "Total": "Travel Time",
-      "Who": "Calculated the time the next journey will take."
+    "title": "Travel Time Measurement",
+    "button": "Travel Pace",
+
+    "preview": {
+      "title": "Estimated Hours",
+      "speed": "Slowest movement speed: {units}",
+      "onroad": "Distance on road/trail: {units}",
+      "offroad": "Distance on difficult terrain: {units}",
+      "ratio": "Speed Ratio"
     },
-    "Pace": "March",
-    "PaceTypes": {
-      "PaceFast": "Fast March",
-      "PaceNormal": "Normal March",
-      "PaceSlow": "Slow March"
+
+    "pace": {
+      "slow": "Slow March",
+      "normal": "Normal March",
+      "fast": "Fast March"
     },
-    "Ratios": {
-      "Ratio2": "1/2 Normal",
-      "Ratio4": "1/4 Normal",
-      "Ratio6": "1/6 (Icewind Dale: Rime of the Frostmaiden)",
-      "RatioNormal": "Normal (SRD)"
+
+    "effects": {
+      "slow": "Able to use stealth",
+      "fast": "-5 penalty to passive Wisdom (Perception) scores"
     },
-    "RequestorName": "Travel Time Measurement",
-    "Settings": {
-      "ButtonName": "Left Toolbar: Travel Pace",
-      "ButtonNameHint": "Adds buttons to the left tool bar to measure time of Player's journey",
-      "ForcedMarchDialog": "Forced March on Chat",
-      "ForcedMarchDialogHint": "If enabled, show the March Forced rules in the chat.",
-      "MetricSystem": "Convert to Metric System",
-      "MetricSystemHint": "If enabled, metric measurements (m/km) will be used instead of imperial (ft/mi)."
+
+    "journey": {
+      "time": "{hours}h {minutes}min",
+      "day": " in {days} day",
+      "days": " in {days} days"
     },
-    "Units": {
-      "feets": "Feet",
-      "feetsAbbr": "ft",
-      "kilometers": "Kilometers",
-      "kilometersAbbr": "km",
+
+    "chat": {
+      "totalTime": "Travel Time",
+      "header": "Travel Time Calculation (ratio: 1/{ratio})",
+      "narrative": "The group moves at {values.speed} {units.speed}, covering {values.onRoad} {units.distance} on roads and {values.offRoad} {units.distance} on difficult terrain."
+    },
+
+    "forcedMarch": {
+      "title": "Forced March",
+      "description": "The Travel Pace table assumes that characters travel for 8 hours in day. They can push on beyond that limit, at the risk of exhaustion.",
+      "rules": "For each additional hour of travel beyond 8 hours, the characters cover the distance shown for their pace, and each character must make a Constitution saving throw at the end of the hour. The DC is 10 + 1 for each hour past 8 hours. On a failed saving throw, a character suffers one level of exhaustion."
+    },
+
+    "ratios": {
+      "normal": "Normal (SRD)",
+      "half": "1/2 Normal",
+      "quarter": "1/4 Normal",
+      "sixth": "1/6 (Icewind Dale)"
+    },
+
+    "settings": {
+      "forcedMarch": {
+        "name": "Show Forced March Rules",
+        "hint": "Display forced march rules in chat messages when calculating travel time."
+      },
+      "useMetric": {
+        "name": "Use Metric System",
+        "hint": "Use metric measurements (m/km) instead of imperial (ft/mi)."
+      }
+    },
+
+    "units": {
+      "feet": "Feet",
+      "feetAbbr": "ft",
+      "miles": "Miles",
+      "milesAbbr": "mi",
       "meters": "Meters",
       "metersAbbr": "m",
-      "miles": "Miles",
-      "milesAbbr": "mi"
+      "kilometers": "Kilometers",
+      "kilometersAbbr": "km"
     }
   }
 }
