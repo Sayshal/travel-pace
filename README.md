@@ -14,7 +14,7 @@ A simple module that calculates the travel time for D&amp;D5e players. it's just
 
 ### Settings
 
-<img src="https://github.com/rinnocenti/travel-pace/blob/master/img/readme01.jpg" width="70%" height="70%">
+<img src="https://github.com/Sayshal/travel-pace/blob/master/img/readme01.jpg" width="70%" height="70%">
 
 #### Forced March on Chat
 
@@ -26,7 +26,7 @@ if you have a module that changes the measurement values for the metric system, 
 
 ### On Map
 
-<img src="https://github.com/rinnocenti/travel-pace/blob/master/img/readme02.jpg" width="70%" height="70%">
+<img src="https://github.com/Sayshal/travel-pace/blob/master/img/readme02.jpg" width="70%" height="70%">
 In the basic control bar there will be a button called Travel Pace, when clicking a dialog screen will appear.
 
 #### Lowest group speed feets
@@ -65,7 +65,7 @@ decided which type of gear will be used the player / master presses one of the b
 
 ### On Chat
 
-<img src="https://github.com/rinnocenti/travel-pace/blob/master/img/readme03.jpg" width="50%" height="50%">
+<img src="https://github.com/Sayshal/travel-pace/blob/master/img/readme03.jpg" width="50%" height="50%">
 A message will be sent to the chat with a description of what was chosen. containing some information:
 
 - Who measure.
