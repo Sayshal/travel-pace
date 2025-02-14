@@ -84,7 +84,7 @@ jobs:
         run: |
           cat << EOF > payload.json
           {
-            "id": "hero-mancer",
+            "id": "travel-pace",
             "release": {
               "version": "${{ steps.get-version.outputs.version }}",
               "manifest": "${{ env.REPO_URL }}/releases/download/${{ steps.get-version.outputs.version }}/module.json",
