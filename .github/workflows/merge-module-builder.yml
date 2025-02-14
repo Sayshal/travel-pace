@@ -1,0 +1,142 @@
+name: Merge Module Builder
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+env:
+  REPO_URL: https://github.com/${{ github.repository }}
+
+jobs:
+  build:
+    # Only run if the PR was merged, not closed without merging
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      release-notes: ${{ steps.set-release-notes.outputs.release_notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch full history to access merge commit
+          fetch-depth: 0
+
+      - name: Get Version
+        id: get-version
+        run: |
+          # Use the merge commit message for version and notes
+          summary=$(git log -1 --pretty=%s)
+          version=$(echo "$summary" | grep -o -E '[v]?[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^v//')
+
+          version_data=($(node .github/workflows/get-version.js))
+          compat_min=$(echo "${version_data[1]}" | sed 's/COMPAT_MIN://')
+          compat_verified=$(echo "${version_data[2]}" | sed 's/COMPAT_VERIFIED://')
+          compat_max=$(echo "${version_data[3]}" | sed 's/COMPAT_MAX://')
+
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "compat_min=$compat_min" >> $GITHUB_OUTPUT
+          echo "compat_verified=$compat_verified" >> $GITHUB_OUTPUT
+          echo "compat_max=$compat_max" >> $GITHUB_OUTPUT
+
+      - name: Update module.json with Version
+        run: |
+          if [ -z "${{ steps.get-version.outputs.version }}" ]; then
+            echo "Error: No version specified"
+            exit 1
+          fi
+          node .github/workflows/update-module.js "${{ steps.get-version.outputs.version }}"
+
+      - name: Set Release Notes
+        id: set-release-notes
+        run: |
+          # Use PR body as release notes if available
+          release_notes=$(git log -1 --pretty=%B | grep '^-' | sed 's/^ //')
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$release_notes" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$release_notes" > release_notes.txt
+
+      - name: Format Release Notes for Discord
+        id: format-release-notes-discord
+        run: |
+          DISCORD_NOTES=$(awk '{printf "%s\\n", $0}' release_notes.txt | sed 's/\\n$//')
+          echo "release-notes-discord=$DISCORD_NOTES" >> $GITHUB_OUTPUT
+
+      - name: Zip Files
+        run: |
+          zip -r ./module.zip ./ -x @.gitignore
+
+      - name: Create Release
+        id: create-release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          name: Release ${{ steps.get-version.outputs.version }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.set-release-notes.outputs.release_notes }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: './module.zip, ./module.json'
+          tag: ${{ steps.get-version.outputs.version }}
+
+      - name: Release Foundry Package
+        run: |
+          cat << EOF > payload.json
+          {
+            "id": "hero-mancer",
+            "release": {
+              "version": "${{ steps.get-version.outputs.version }}",
+              "manifest": "${{ env.REPO_URL }}/releases/download/${{ steps.get-version.outputs.version }}/module.json",
+              "download": "${{ env.REPO_URL }}/releases/download/${{ steps.get-version.outputs.version }}/module.zip",
+              "notes": "${{ env.REPO_URL }}/releases/tag/${{ steps.get-version.outputs.version }}",
+              "compatibility": {
+                "minimum": "${{ steps.get-version.outputs.compat_min }}",
+                "verified": "${{ steps.get-version.outputs.compat_verified }}",
+                "maximum": "${{ steps.get-version.outputs.compat_max }}"
+              }
+            }
+          }
+          EOF
+
+          cat payload.json  # Debug: Print the payload
+
+          curl -X POST "https://api.foundryvtt.com/_api/packages/release_version" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: ${{ secrets.FOUNDRY_API_TOKEN }}" \
+            -d @payload.json
+
+      - name: Post to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          VERSION="${{ steps.get-version.outputs.version }}"
+          RELEASE_NOTES="${{ steps.format-release-notes-discord.outputs.release-notes-discord }}"
+
+          # Create JSON payload with fields for version, links, and release notes
+          JSON_PAYLOAD=$(jq -n \
+            --arg title "Travel Pace Release" \
+            --arg version "$VERSION" \
+            --arg foundry_url "https://foundryvtt.com/packages/travel-pace" \
+            --arg release_url "${{ env.REPO_URL }}/releases/download/$VERSION/module.json" \
+            --arg download_url "${{ env.REPO_URL }}/releases/download/$VERSION/module.zip" \
+            --arg release_notes "$RELEASE_NOTES" \
+            --arg compat_min "${{ steps.get-version.outputs.compat_min }}" \
+            --arg compat_max "${{ steps.get-version.outputs.compat_max }}" \
+            '{embeds: [{
+              title: $title,
+              fields: [
+                {name: "Version", value: $version, inline: true},
+                {name: "Core Compatibility", value: ($compat_min + " - " + $compat_max), inline: true},
+                {name: "System Compatibility", value:"3.3.1+", inline: true},
+                {name: "Foundry Package", value: $foundry_url, inline: false},
+                {name: "Release Tag", value: $release_url, inline: false},
+                {name: "Manual Download", value: $download_url, inline: false},
+                {name: "Release Notes", value: $release_notes, inline: false}
+              ]
+            }]}')
+
+          curl -H "Content-Type: application/json" \
+                -d "$JSON_PAYLOAD" \
+                $DISCORD_WEBHOOK

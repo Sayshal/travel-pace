@@ -63,11 +63,9 @@ class TravelPaceRequestor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async _prepareContext() {
     const context = {};
-
     const basemed = this.constructor.formatMetricSystem();
     const previewSetting = game.settings.get('travel-pace', 'preview');
     const typeRatio = previewSetting.jratio ?? 1;
-
     const defaultValues = {
       speed: game.settings.get('travel-pace', 'useMetric') ? 9 : 30,
       onRoad: game.settings.get('travel-pace', 'useMetric') ? 5 : 3,
@@ -158,7 +156,6 @@ class TravelPaceRequestor extends HandlebarsApplicationMixin(ApplicationV2) {
   static _setPace(event, pace) {
     event.preventDefault();
     const form = event.currentTarget.closest('form');
-    const formData = new FormDataExtended(form);
 
     // Get values directly from form elements
     const data = {

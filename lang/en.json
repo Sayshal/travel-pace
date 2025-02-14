@@ -1,72 +1,63 @@
 {
   "TravelPace": {
-    "title": "Travel Time Measurement",
     "button": "Travel Pace",
-
-    "preview": {
-      "title": "Estimated Hours",
-      "speed": "Slowest movement speed: {units}",
-      "onroad": "Distance on road/trail: {units}",
-      "offroad": "Distance on difficult terrain: {units}",
-      "ratio": "Speed Ratio"
-    },
-
-    "pace": {
-      "slow": "Slow March",
-      "normal": "Normal March",
-      "fast": "Fast March"
-    },
-
-    "effects": {
-      "slow": "Able to use stealth",
-      "fast": "-5 penalty to passive Wisdom (Perception) scores"
-    },
-
-    "journey": {
-      "time": "{hours}h {minutes}min",
-      "day": " in {days} day",
-      "days": " in {days} days"
-    },
-
     "chat": {
-      "totalTime": "Travel Time",
       "header": "Travel Time Calculation (ratio: 1/{ratio})",
-      "narrative": "The group moves at {values.speed} {units.speed}, covering {values.onRoad} {units.distance} on roads and {values.offRoad} {units.distance} on difficult terrain."
+      "narrative": "The group moves at {values.speed} {units.speed}, covering {values.onRoad} {units.distance} on roads and {values.offRoad} {units.distance} on difficult terrain.",
+      "totalTime": "Travel Time"
     },
-
+    "effects": {
+      "fast": "-5 penalty to passive Wisdom (Perception) scores",
+      "slow": "Able to use stealth"
+    },
     "forcedMarch": {
-      "title": "Forced March",
       "description": "The Travel Pace table assumes that characters travel for 8 hours in day. They can push on beyond that limit, at the risk of exhaustion.",
-      "rules": "For each additional hour of travel beyond 8 hours, the characters cover the distance shown for their pace, and each character must make a Constitution saving throw at the end of the hour. The DC is 10 + 1 for each hour past 8 hours. On a failed saving throw, a character suffers one level of exhaustion."
+      "rules": "For each additional hour of travel beyond 8 hours, the characters cover the distance shown for their pace, and each character must make a Constitution saving throw at the end of the hour. The DC is 10 + 1 for each hour past 8 hours. On a failed saving throw, a character suffers one level of exhaustion.",
+      "title": "Forced March"
     },
-
+    "journey": {
+      "day": " in {days} day",
+      "days": " in {days} days",
+      "time": "{hours}h {minutes}min"
+    },
+    "pace": {
+      "fast": "Fast March",
+      "normal": "Normal March",
+      "slow": "Slow March"
+    },
+    "preview": {
+      "offroad": "Distance on difficult terrain: {units}",
+      "onroad": "Distance on road/trail: {units}",
+      "ratio": "Speed Ratio",
+      "speed": "Slowest movement speed: {units}",
+      "title": "Estimated Hours"
+    },
     "ratios": {
-      "normal": "Normal (SRD)",
       "half": "1/2 Normal",
+      "normal": "Normal (SRD)",
       "quarter": "1/4 Normal",
       "sixth": "1/6 (Icewind Dale)"
     },
-
     "settings": {
       "forcedMarch": {
-        "name": "Show Forced March Rules",
-        "hint": "Display forced march rules in chat messages when calculating travel time."
+        "hint": "Display forced march rules in chat messages when calculating travel time.",
+        "name": "Show Forced March Rules"
       },
       "useMetric": {
-        "name": "Use Metric System",
-        "hint": "Use metric measurements (m/km) instead of imperial (ft/mi)."
+        "hint": "Use metric measurements (m/km) instead of imperial (ft/mi).",
+        "name": "Use Metric System"
       }
     },
-
+    "title": "Travel Pace Calculator",
     "units": {
       "feet": "Feet",
       "feetAbbr": "ft",
-      "miles": "Miles",
-      "milesAbbr": "mi",
+      "kilometers": "Kilometers",
+      "kilometersAbbr": "km",
       "meters": "Meters",
       "metersAbbr": "m",
-      "kilometers": "Kilometers",
-      "kilometersAbbr": "km"
+      "miles": "Miles",
+      "milesAbbr": "mi"
     }
   }
 }
