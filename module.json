@@ -9,14 +9,14 @@
   "readme": "https://github.com/Sayshal/travel-pace?tab=readme-ov-file",
   "authors": [
     {
-      "name": "Innocenti",
-      "discord": "Innocenti#1455",
-      "email": "renato.innocenti@gmail.com"
-    },
-    {
       "name": "Tyler",
       "discord": "Tyler",
       "url": "https://github.com/Sayshal"
+    },
+    {
+      "name": "Innocenti",
+      "discord": "Innocenti#1455",
+      "email": "renato.innocenti@gmail.com"
     }
   ],
   "compatibility": {
