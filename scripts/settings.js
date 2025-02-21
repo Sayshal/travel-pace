@@ -25,7 +25,7 @@ const SETTINGS = {
 
 Hooks.once('init', () => {
   // Register all settings
-  Object.entries(SETTINGS).forEach(([key, data]) => {
+  for (const [key, data] of Object.entries(SETTINGS)) {
     game.settings.register('travel-pace', key, data);
-  });
+  }
 });

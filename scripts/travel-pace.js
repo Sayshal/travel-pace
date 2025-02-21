@@ -2,7 +2,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 class TravelPace {
   static getSceneControlButtons(buttons) {
-    let tokenButton = buttons.find((b) => b.name == 'token');
+    let tokenButton = buttons.find((b) => b.name === 'token');
     if (tokenButton) {
       tokenButton.tools.push({
         name: 'travel-pace',
@@ -133,7 +133,7 @@ class TravelPaceRequestor extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const hours = Math.floor(total);
     const minutes = Math.floor((total * 60) % 60);
-    const days = outDay ? Math.round(total / 8) : null;
+    const days = outDay ? Math.round(total / 8) : undefined;
 
     console.log('Final calculations:', {
       hours,

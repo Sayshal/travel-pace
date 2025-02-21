@@ -1,89 +1,63 @@
-# travel-pace
+# Travel Pace
 
-A simple module that calculates the travel time for D&amp;D5e players. it's just a module I'm using to learn how to make modules for foundry.
+![GitHub release](https://img.shields.io/github/v/release/Sayshal/travel-pace?style=for-the-badge)
+![GitHub all releases](https://img.shields.io/github/downloads/Sayshal/travel-pace/total?style=for-the-badge)
+![Github License](https://img.shields.io/github/license/Sayshal/travel-pace?style=for-the-badge)
 
-- Use the information described in pg.84 of the OGL as a calculation rule.
-- (tips) Use the lowest speed of the group in feet as a reference.
-- (tips) It is implicit that you consider any terrain that does not consist of a road or trail as difficult terrain.
+## Supporting The Module
 
-# Manifest
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/sayshal) [![Discord](https://dcbadge.limes.pink/api/server/PzzUwU9gdz)](https://discord.gg/PzzUwU9gdz)
 
-`https://raw.githubusercontent.com/rinnocenti/travel-pace/master/module.json`
+## Introduction
 
-## How to Use
+**Travel Pace** is a straightforward module for Foundry VTT that helps calculate travel times for D&D 5E parties. Using the official rules from the SRD (pg.84), this module makes
+it easy to determine how long your party's journey will take based on their speed and terrain conditions.
 
-### Settings
+## Features
 
-<img src="https://github.com/Sayshal/travel-pace/blob/master/img/readme01.jpg" width="70%" height="70%">
+- **Simple Calculation**: Input distance and get travel time based on party speed
+- **Terrain Consideration**: Automatically accounts for difficult terrain
+- **Party Speed**: Uses the lowest speed in the party for accurate calculations
+- **Rule Compliance**: Follows official D&D 5E travel pace rules
+- **Easy Interface**: Simple, intuitive controls for quick calculations
+- **Configurable Settings**: Support for metric conversion and forced march rules
+- **Chat Integration**: Detailed travel information sent to chat
 
-#### Forced March on Chat
+## Installation
 
-By activating this setting, a forced march rules message will be sent to the chat to alert players of the forced march rules. Disabling this message is not displayed in the chat.
+Install directly through Foundry's module manager or manually using this manifest URL:  
+`https://github.com/Sayshal/travel-pace/releases/latest/download/module.json`
 
-#### Convert to Metric System
+## Usage
 
-if you have a module that changes the measurement values for the metric system, you can also convert the module to the system, enabling this field
+### Basic Operation
 
-### On Map
+1. Select the tokens of your traveling party members
+2. Click the Travel Pace button in the basic control bar
+3. Input your travel distance for both normal and difficult terrain
+4. Select terrain type (road/trail or difficult terrain)
+5. Choose your speed ratio (Normal, 1/2, 1/4, or 1/6)
+6. Get your calculated travel time instantly
 
-<img src="https://github.com/Sayshal/travel-pace/blob/master/img/readme02.jpg" width="70%" height="70%">
-In the basic control bar there will be a button called Travel Pace, when clicking a dialog screen will appear.
+### Settings Configuration
 
-#### Lowest group speed feets
+- **Forced March on Chat**: Toggle display of forced march rules in chat
+- **Convert to Metric System**: Support for metric measurement systems
 
-Enter the speed of the group. Ideally, it should be the lowest speed among everyone in the group.
+### Speed Ratio Options
 
-#### Miles on the road/trails
+- Normal (SRD) → 3 mi/h
+- 1/2 Normal → 1.5 mi/h
+- 1/4 Normal → 0.75 mi/h
+- 1/6 Normal → 0.5 mi/h (Icewind Dale: Rime of the Frostmaiden rules)
 
-Enter here the distance traveled by the players on the roads or trails. Basically this field considers any movement on NOT difficult terrain
+## Tips
 
-#### Miles on the road/trails
-
-Enter here the distance traveled by the players off the roads or trails. Basically this field considers any movement on the difficult terrain
-
-#### Speed Ratio
-
-sometimes on certain types of land speed is further reduced, usually the players do three miles per hour. however, this average can be changed according to the ground rules.
-
-- Normal (SRD) -> 3 mi/h
-- 1/2 Normal -> 1.5 mi/h
-- 1/4 Normal -> 0.75 mi/h
-- 1/6 Normal -> 0.5 mi/h - ( rules of Icewind Dale: Rime of the Frostmaiden)
-
-#### Estimated Hours
-
-It will display a time estimate for the displayed configuration.It will display a time estimate for the displayed configuration. Presenting the time in the 3 gears, Normal, fast
-and slow, together with the rules of each one.
-
-#### Forced March
-
-A summary of the forced march rules, if you selected in the settings to display forced march, this text will be sent together with the proposed march for the chat.
-
-#### Buttons
-
-decided which type of gear will be used the player / master presses one of the buttons and a summary of the choices will be sent to the chat.
-
-### On Chat
-
-<img src="https://github.com/Sayshal/travel-pace/blob/master/img/readme03.jpg" width="50%" height="50%">
-A message will be sent to the chat with a description of what was chosen. containing some information:
-
-- Who measure.
-- With rate used.
-- Many miles in Dificult and Normal terrain
-- Estimatade time
-- Days for compleat the journey (by rule players can only travel for 8h a day, without the use of forced march.)
-- Nonus and Penalties
-- (Optional) Rules of Forced March.
+- Always use the lowest movement speed in your group for calculations
+- Consider any terrain without a road or trail as difficult terrain
+- Remember players can only travel 8 hours per day without forced march
+- Calculations follow the official rules from pg.84 of the SRD
 
 ## Support
 
-If you like this module and would like to help or found a bug or request new features call me on discord @Innocenti#1455 or create a issue here.
-
-## License
-
-This Foundry VTT module, writen by Innocenti, is licensed under a Creative Commons Attribution 4.0 International License.
-
-# Feedback
-
-For bugs/feedback, create an issue on GitHub, or contact me on Discord at Innocenti#1455
+If you encounter any issues or have feature requests, please file them on the [issue tracker](https://github.com/Sayshal/travel-pace/issues).
