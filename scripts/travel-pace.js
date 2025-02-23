@@ -6,7 +6,7 @@ class TravelPace {
     if (tokenButton) {
       tokenButton.tools.push({
         name: 'travel-pace',
-        title: game.i18n.localize('TravelPace.ButtonName'),
+        title: game.i18n.localize('TravelPace.button'),
         icon: 'fa-regular fa-route',
         visible: true,
         onClick: () => TravelPace.requestMeasure()
