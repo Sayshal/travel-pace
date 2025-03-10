@@ -1,16 +1,35 @@
-.travel-pace-calculator {
-  --spacing: 10px;
+/* -------------------------------- */
+
+/* Travel Pace Calculator Variables */
+
+/* -------------------------------- */
+:root {
+  --travel-pace-spacing: 10px;
+  --travel-pace-border-radius: 5px;
+  --travel-pace-input-height: 25px;
+  --travel-pace-transition: all 0.2s ease;
+  --travel-pace-border-color: var(--color-border-light-2, #c9c7b8);
+  --travel-pace-bg-highlight: var(--color-bg-highlight, #0000000d);
 }
 
+/* -------------------------------- */
+
+/* Main Application Container       */
+
+/* -------------------------------- */
 .travel-calculator-window {
   min-width: 300px;
 }
 
+.travel-pace-calculator {
+  --spacing: var(--travel-pace-spacing);
+}
+
 /* Form Layout */
 .travel-calculator {
-  gap: var(--spacing);
   display: flex;
   flex-direction: column;
+  gap: var(--spacing);
 }
 
 /* Fieldset styling */
@@ -21,7 +40,7 @@
   margin: 1rem 0;
   padding: 2rem;
   border: 1px solid var(--user-color);
-  border-radius: 0.375rem;
+  border-radius: var(--travel-pace-border-radius);
   overflow: auto;
   overflow-x: hidden;
 }
@@ -30,6 +49,11 @@
   margin-top: unset;
 }
 
+/* -------------------------------- */
+
+/* Header and Form Group Styling    */
+
+/* -------------------------------- */
 .travel-calculator .header-group {
   display: flex;
   flex-direction: column;
@@ -64,42 +88,38 @@
   font-size: small;
 }
 
-.application .travel-calculator .form-group input {
-  flex: 0 1 65%;
-  min-width: 38%;
-  max-width: 38%;
-  height: 25px;
-  padding: 0 0.5rem;
-  border-radius: 3px;
-  text-align: center;
-}
-
+/* Form input styling */
+.application .travel-calculator .form-group input,
 .application .travel-calculator .form-group select {
-  flex: 0 0 auto;
-  width: auto;
+  flex: 0 1 38%;
   min-width: 38%;
   max-width: 38%;
-  height: 25px;
+  height: var(--travel-pace-input-height);
   padding: 0 0.5rem;
-  border-radius: 3px;
+  border-radius: var(--travel-pace-border-radius);
   text-align: center;
+  transition: var(--travel-pace-transition);
 }
 
-/* Mode Selector */
+/* -------------------------------- */
+
+/* Mode Selector                    */
+
+/* -------------------------------- */
 .travel-calculator .mode-selector {
-  gap: 1.875rem;
   display: flex;
   justify-content: center;
   width: 100%;
   margin-bottom: 0.5rem;
   text-align: center;
+  gap: 1.875rem;
 }
 
 .travel-calculator .radio-label {
-  gap: 0.3rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.3rem;
   font-weight: normal;
   cursor: pointer;
 }
@@ -112,14 +132,18 @@
   transform: translateY(-15%);
 }
 
-/* Preview Section */
+/* -------------------------------- */
+
+/* Preview Section                  */
+
+/* -------------------------------- */
 .travel-calculator .calculation-preview-container {
   margin: 10px 0 0;
   padding: 0.625rem;
-  border-radius: 5px;
+  border-radius: var(--travel-pace-border-radius);
   text-align: center;
-  border: 1px solid var(--color-light-3);
-  border-radius: 5px;
+  border: 1px solid var(--travel-pace-border-color);
+  transition: var(--travel-pace-transition);
 }
 
 .travel-calculator .calculation-preview-container h3 {
@@ -139,25 +163,38 @@
   margin-top: -2%;
 }
 
-/* Form Buttons */
+/* -------------------------------- */
+
+/* Form Buttons                     */
+
+/* -------------------------------- */
 .travel-calculator .form-buttons {
   margin-top: 10px;
 }
 
 .travel-calculator .submit-button {
-  gap: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--travel-pace-border-radius);
   color: #fff;
   cursor: pointer;
+  gap: 0.5rem;
+  transition: var(--travel-pace-transition);
 }
 
-/* Chat Message Styling */
+.travel-calculator .submit-button:hover {
+  box-shadow: 0 0 5px var(--color-shadow-primary);
+}
+
+/* -------------------------------- */
+
+/* Chat Message Styling             */
+
+/* -------------------------------- */
 .travel-pace-chat {
   padding: 0.625rem;
 }
@@ -176,8 +213,8 @@
 .travel-pace-chat .travel-pace-details {
   margin-bottom: 10px;
   padding: 0.625rem;
-  border-radius: 5px;
-  background-color: #0000000d;
+  border-radius: var(--travel-pace-border-radius);
+  background-color: var(--travel-pace-bg-highlight);
 }
 
 .travel-pace-chat .travel-pace-pace {
@@ -191,7 +228,12 @@
   font-style: italic;
 }
 
-/* Responsive adjustments */
+/* -------------------------------- */
+
+/* Responsive adjustments           */
+
+/* -------------------------------- */
+
 @media (width <= 400px) {
   .application .travel-calculator .form-group {
     flex-direction: column;
@@ -204,4 +246,30 @@
     max-width: 100%;
     margin-top: 5px;
   }
+
+  .travel-calculator .mode-selector {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* -------------------------------- */
+
+/* Mount Configuration Styling      */
+
+/* -------------------------------- */
+.travel-pace-mount-config .notification {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border-radius: var(--travel-pace-border-radius);
+}
+
+.travel-pace-mount-config .notification.error {
+  background-color: #ff00001a;
+  border: 1px solid #ff00004d;
+}
+
+.travel-pace-mount-config .notification.warning {
+  background-color: #ffa5001a;
+  border: 1px solid #ffa5004d;
 }

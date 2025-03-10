@@ -1,4 +1,5 @@
 <div id="travel-pace-calculator" class="travel-calculator">
+	{{!-- Mode Selector --}}
 	<div class="header-group mode-group">
 		<label>{{localize "TravelPace.Labels.CalculationMode"}}</label>
 		<div class="mode-selector">
@@ -12,6 +13,7 @@
 	</div>
 	<hr />
 
+	{{!-- Distance to Time Mode --}}
 	<div class="distance-to-time">
 		<div class="form-group">
 			<label for="distance">{{localize "TravelPace.Labels.Distance"}} ({{units.distance}})</label>
@@ -19,6 +21,7 @@
 		</div>
 	</div>
 
+	{{!-- Time to Distance Mode --}}
 	<div class="time-to-distance" style="display: none;">
 		<div class="form-group">
 			<label for="days">{{localize "TravelPace.Labels.Days"}}</label>
@@ -31,8 +34,8 @@
 		</div>
 	</div>
 
+	{{!-- Pace Selection --}}
 	<div class="form-group">
-		{{log this}}
 		<label for="pace">{{localize "TravelPace.Labels.Pace"}} ({{this.paces.[0].speed}})</label>
 		<select id="pace">
 			{{#each paces}}
@@ -41,6 +44,7 @@
 		</select>
 	</div>
 
+	{{!-- Mount Selection (if available) --}}
 	{{#if hasMounts}}
 		<div class="form-group">
 			<label for="mount">{{localize "TravelPace.Labels.TransportationMethod"}}</label>
@@ -53,13 +57,15 @@
 		</div>
 	{{/if}}
 
+	{{!-- Calculation Preview --}}
 	<div class="calculation-preview-container">
 		<h3>{{localize "TravelPace.Preview.Title"}}</h3>
 		<div class="calculation-preview">
-			<p>{{localize "TravelPace.Preview.Empty"}}</p>
+			{{localize "TravelPace.Preview.Empty"}}
 		</div>
 	</div>
 
+	{{!-- Submit Button --}}
 	<div class="form-buttons">
 		<button type="button" data-action="submitCalculation" class="submit-button">
 			<i class="fas fa-comments"></i>

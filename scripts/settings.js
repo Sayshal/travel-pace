@@ -1,25 +1,33 @@
+import { CONST } from './config.js';
+
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
+// Register module settings
 Hooks.once('init', () => {
-  game.settings.register('travel-pace', 'useMetric', {
+  // Use metric system setting
+  game.settings.register(CONST.moduleId, CONST.settings.useMetric, {
     name: 'TravelPace.Settings.UseMetric.Name',
     hint: 'TravelPace.Settings.UseMetric.Hint',
     scope: 'world',
     config: true,
     type: Boolean,
-    default: false
+    default: false,
+    requiresReload: true
   });
 
-  game.settings.register('travel-pace', 'showEffects', {
+  // Show pace effects in chat setting
+  game.settings.register(CONST.moduleId, CONST.settings.showEffects, {
     name: 'TravelPace.Settings.ShowEffects.Name',
     hint: 'TravelPace.Settings.ShowEffects.Hint',
     scope: 'world',
     config: true,
     type: Boolean,
-    default: true
+    default: true,
+    requiresReload: true
   });
 
-  game.settings.register('travel-pace', 'enabledMounts', {
+  // Enabled mounts and vehicles setting (not visible in settings menu)
+  game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
     name: 'TravelPace.Settings.EnabledMounts.Name',
     hint: 'TravelPace.Settings.EnabledMounts.Hint',
     scope: 'world',
@@ -29,7 +37,7 @@ Hooks.once('init', () => {
   });
 
   // Register the mount configuration menu
-  game.settings.registerMenu('travel-pace', 'mountConfig', {
+  game.settings.registerMenu(CONST.moduleId, 'mountConfig', {
     name: 'TravelPace.Settings.MountConfig.Name',
     label: 'TravelPace.Settings.MountConfig.Label',
     hint: 'TravelPace.Settings.MountConfig.Hint',
@@ -39,8 +47,10 @@ Hooks.once('init', () => {
   });
 });
 
-// Mount configuration menu class
-class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+/**
+ * Mount configuration menu application
+ */
+class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: 'travel-pace-mount-config',
     classes: ['travel-pace-app'],
@@ -74,27 +84,17 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
     }
   };
 
-  /* -------------------------------------------- */
-  /*  Protected Methods                           */
-  /* -------------------------------------------- */
-
   /**
    * Prepare context data for rendering the mount configuration template
    * @param {object} _options - Application render options
    * @returns {Promise<object>} Context data for template rendering
-   * @protected
    */
   async _prepareContext(_options) {
-    console.log('Travel Pace | Beginning _prepareContext');
-
     // Get the currently enabled mounts
-    const enabledMounts = game.settings.get('travel-pace', 'enabledMounts');
-    console.log('Travel Pace | Currently enabled mounts:', enabledMounts);
+    const enabledMounts = game.settings.get(CONST.moduleId, CONST.settings.enabledMounts);
 
     // Get potential mounts and vehicles
-    console.log('Travel Pace | Fetching potential mounts...');
     const actors = await this._getPotentialMounts();
-    console.log('Travel Pace | Potential mounts returned:', actors);
 
     // Store actors in the instance for use in the widget
     this.actors = actors;
@@ -108,46 +108,55 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
       )
     });
 
-    // Create a virtual document
+    // Create a virtual document with selected mounts
     const selectedMounts = Object.keys(enabledMounts).filter((id) => enabledMounts[id]);
-    console.log('Travel Pace | Selected mounts for context:', selectedMounts);
-
     const document = {
       schema: settingSchema,
       mounts: selectedMounts
     };
 
-    const context = {
+    return {
       document,
       fields: settingSchema.fields,
       mountsWidget: this._createMountsWidget.bind(this),
       buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'TravelPace.Buttons.Save' }],
       actors: actors
     };
+  }
 
-    console.log('Travel Pace | Returning context:', context);
-    return context;
+  /**
+   * Shows a confirmation dialog for reloading the world/application
+   * @param {object} options - Configuration options
+   * @param {boolean} options.world - Whether to reload the entire world
+   * @returns {Promise<void>}
+   * @static
+   */
+  static async reloadConfirm({ world = false } = {}) {
+    const reload = await DialogV2.confirm({
+      id: 'reload-world-confirm',
+      modal: true,
+      rejectClose: false,
+      window: { title: 'SETTINGS.ReloadPromptTitle' },
+      position: { width: 400 },
+      content: `<p>${game.i18n.localize('SETTINGS.ReloadPromptBody')}</p>`
+    });
+    if (!reload) return;
+    if (world && game.user.can('SETTINGS_MODIFY')) game.socket.emit('reload');
+    foundry.utils.debouncedReload();
   }
 
   /**
    * Get all potential mounts and vehicles
    * @returns {Promise<Array>} Array of actor data objects
-   * @private
    */
   async _getPotentialMounts() {
-    console.log('Travel Pace | Beginning _getPotentialMounts');
     const actors = [];
 
     // 1. Get NPCs from the Mounts folder in the world
     const mountFolder = game.folders.find((f) => f.name === 'Mounts' && f.type === 'Actor');
-    console.log('Travel Pace | Mounts folder found:', mountFolder);
-
     if (mountFolder) {
       const folderMounts = game.actors.filter((a) => a.folder?.id === mountFolder.id);
-      console.log(`Travel Pace | Found ${folderMounts.length} actors in the Mounts folder`);
-
-      folderMounts.forEach((actor) => {
-        console.log(`Travel Pace | Adding folder mount: ${actor.name}`);
+      for (const actor of folderMounts) {
         actors.push({
           id: actor.id,
           name: actor.name,
@@ -156,36 +165,23 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
           img: actor.img,
           isWorld: true
         });
-      });
+      }
     }
 
     // 2. Scan through all compendium packs for vehicles
-    console.log(`Travel Pace | Scanning ${game.packs.size} compendium packs`);
-    let packCount = 0;
-    let vehicleCount = 0;
-
     for (const pack of game.packs) {
       if (pack.documentName === 'Actor') {
-        packCount++;
-        console.log(`Travel Pace | Scanning pack: ${pack.collection}`);
-
         try {
           // Get the index for the pack
           const index = await pack.getIndex();
-          console.log(`Travel Pace | Pack ${pack.collection} has ${index.size} entries`);
 
           // Filter for vehicles
           const vehicleIndices = index.filter((i) => i.type === 'vehicle');
-          console.log(`Travel Pace | Found ${vehicleIndices.length} vehicles in pack ${pack.collection}`);
 
-          // If any vehicles are found, add them to the actors array
+          // Add each vehicle to the actors array
           for (const vehicleIndex of vehicleIndices) {
-            vehicleCount++;
-            // Get the full document for each vehicle
             try {
               const vehicle = await pack.getDocument(vehicleIndex._id);
-              console.log(`Travel Pace | Adding compendium vehicle: ${vehicle.name}`);
-
               actors.push({
                 id: `${pack.collection}.${vehicleIndex._id}`, // Use compendium UUID format
                 name: vehicle.name,
@@ -196,23 +192,17 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
                 packId: pack.collection
               });
             } catch (docError) {
-              console.error(`Travel Pace | Error getting document for ${vehicleIndex.name}:`, docError);
+              // Skip this vehicle
             }
           }
         } catch (error) {
-          console.error(`Travel Pace | Error scanning pack ${pack.collection}:`, error);
+          // Skip this pack
         }
       }
     }
 
-    console.log(`Travel Pace | Finished scanning ${packCount} actor packs, found ${vehicleCount} vehicles`);
-    console.log(`Travel Pace | Total potential mounts collected: ${actors.length}`);
     return actors;
   }
-
-  /* -------------------------------------------- */
-  /*  Widget Creation                             */
-  /* -------------------------------------------- */
 
   /**
    * Create a custom widget for the mounts selection
@@ -220,14 +210,8 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
    * @param {object} groupConfig - Configuration for the form group
    * @param {object} inputConfig - Configuration for the input
    * @returns {HTMLElement} The custom form group element
-   * @private
    */
   _createMountsWidget(field, groupConfig, inputConfig) {
-    console.log('Travel Pace | Creating mounts widget');
-    console.log('Travel Pace | Field:', field);
-    console.log('Travel Pace | Group config:', groupConfig);
-    console.log('Travel Pace | Input config:', inputConfig);
-
     // Create the form group container
     const fg = document.createElement('div');
     fg.className = 'form-group stacked mounts';
@@ -241,27 +225,22 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
       fg.insertAdjacentHTML('beforeend', `<p class="hint">${groupConfig.hint}</p>`);
     }
 
-    // Get all potential mounts/vehicles
-    // Access the actors from the instance directly since this is a bound method
+    // Access the actors from the instance directly
     const actors = this.actors || [];
-    console.log('Travel Pace | Widget actors access:', actors);
 
     // If no actors found, add a message
     if (!actors || actors.length === 0) {
-      console.log('Travel Pace | No actors found for the widget');
       ff.insertAdjacentHTML('beforeend', `<p class="notification warning">${game.i18n.localize('TravelPace.Settings.MountConfig.NoMounts')}</p>`);
       return fg;
     }
-
-    // Create options for the multi-select
-    const options = [];
 
     // Group actors by source and type
     const worldVehicles = game.i18n.localize('TravelPace.Settings.MountConfig.WorldVehicles');
     const worldNPCs = game.i18n.localize('TravelPace.Settings.MountConfig.WorldNPCs');
     const compendiumVehicles = game.i18n.localize('TravelPace.Settings.MountConfig.CompendiumVehicles');
 
-    for (const actor of actors) {
+    // Create options for the multi-select
+    const options = actors.map((actor) => {
       let group;
       if (actor.isCompendium) {
         group = compendiumVehicles;
@@ -269,14 +248,12 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
         group = actor.type === 'vehicle' ? worldVehicles : worldNPCs;
       }
 
-      options.push({
+      return {
         group,
         value: actor.id,
         label: `${actor.name} (${actor.speed})`
-      });
-    }
-
-    console.log('Travel Pace | Options for multi-select:', options);
+      };
+    });
 
     // Create the multi-select element
     const multiSelect = foundry.applications.fields.createMultiSelectInput({
@@ -287,28 +264,21 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
       value: inputConfig.value || []
     });
 
-    console.log('Travel Pace | Created multi-select element:', multiSelect);
     ff.appendChild(multiSelect);
-
     return fg;
   }
-
-  /* -------------------------------------------- */
-  /*  Utility Methods                             */
-  /* -------------------------------------------- */
 
   /**
    * Get the speed value for an actor, formatting it appropriately
    * @param {Actor} actor - The actor to get speed for
    * @returns {string} Formatted speed value
-   * @private
    */
   _getActorSpeed(actor) {
     if (actor.type === 'vehicle') {
       // Handle vehicle speeds which might be in miles or kilometers per hour
       const movement = actor.system.attributes?.movement || {};
       if (movement.units === 'mi' || movement.units === 'km') {
-        // For simplicity, we'll just take the highest speed
+        // Take the highest speed
         const speeds = Object.entries(movement)
           .filter(([key, value]) => typeof value === 'number' && key !== 'units')
           .map(([key, value]) => value);
@@ -323,20 +293,16 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
     return `${speed} ft`;
   }
 
-  /* -------------------------------------------- */
-  /*  Static Form Handler                         */
-  /* -------------------------------------------- */
-
   /**
    * Process form submission for the mount configuration
    * @param {Event} _event - The form submission event
    * @param {HTMLFormElement} _form - The form element
    * @param {FormDataExtended} formData - The processed form data
    * @returns {Promise<void>}
-   * @static
    */
   static async formHandler(_event, _form, formData) {
     const enabledMounts = {};
+    const requiresWorldReload = true; // Settings changes require world reload
 
     // Get the selected mounts from the multi-select
     const selectedMounts = formData.object.mounts || [];
@@ -351,60 +317,32 @@ class MountConfigMenu extends HandlebarsApplicationMixin(foundry.applications.ap
       enabledMounts[selectedMounts] = true;
     }
 
-    await game.settings.set('travel-pace', 'enabledMounts', enabledMounts);
+    this.constructor.reloadConfirm({ world: requiresWorldReload });
+
+    await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
     ui.notifications.info('TravelPace.Settings.MountConfig.Saved', { localize: true });
   }
 }
 
-// Helper function to create the Mounts folder if it doesn't exist
+/**
+ * Create the Mounts folder if it doesn't exist
+ */
 async function createMountsFolder() {
   if (!game.folders.find((f) => f.name === 'Mounts' && f.type === 'Actor')) {
     await Folder.create({
       name: 'Mounts',
       type: 'Actor',
-      color: '#a97f33', // Horse-brown color
-      icon: 'fas fa-horse',
-      sort: 30000 // Sort at the end
+      color: '#a97f33',
+      sort: 30000,
+      sorting: 'a',
+      descriptions: 'Mounts folder created by the Travel Pace Calculator module.'
     });
-    console.log('Travel Pace | Created Mounts folder for organizing mount NPCs');
   }
 }
 
-/**
- * Get an actor by ID, whether from world or compendium
- * @param {string} id - The actor ID, which might be a world ID or compendium UUID
- * @returns {Promise<Actor|null>} The resolved actor or null
- */
-async function getActorById(id) {
-  // Check if this is a compendium UUID (contains a period)
-  if (id.includes('.')) {
-    // It's a compendium reference, use fromUuid
-    return await fromUuid(id);
-  } else {
-    // It's a world actor ID
-    return game.actors.get(id);
-  }
-}
-
-// Add this to your initialization hooks
+// Create Mounts folder when ready (if GM)
 Hooks.once('ready', () => {
-  // Create Mounts folder if it doesn't exist
   if (game.user.isGM) {
     createMountsFolder();
   }
-});
-
-// Update the settings registration to use the new class
-Hooks.once('init', () => {
-  // Other settings registrations remain the same...
-
-  // Register the mount configuration menu
-  game.settings.registerMenu('travel-pace', 'mountConfig', {
-    name: 'TravelPace.Settings.MountConfig.Name',
-    label: 'TravelPace.Settings.MountConfig.Label',
-    hint: 'TravelPace.Settings.MountConfig.Hint',
-    icon: 'fas fa-horse',
-    type: MountConfigMenu,
-    restricted: true
-  });
 });

@@ -11,12 +11,12 @@
       "Pace": "pace",
       "Time": "Travel Time",
       "Title": "Travel Pace Calculation",
-      "UsingMount": "Using mount/vehicle"
+      "UsingMount": "Traveling on"
     },
     "Effects": {
-      "Fast": "Fast pace imposes disadvantage on Wisdom (Perception or Survival) and Dexterity (Stealth) checks.",
-      "Normal": "Normal pace imposes disadvantage on Dexterity (Stealth) checks.",
-      "Slow": "Slow pace grants advantage on Wisdom (Perception or Survival) checks."
+      "Fast": "Fast pace imposes disadvantage on &Reference[Perception] or &Reference[Survival], and &Reference[Stealth] checks.",
+      "Normal": "Normal pace imposes disadvantage on &Reference[Stealth] checks.",
+      "Slow": "Slow pace grants advantage on &Reference[Perception] or &Reference[Survival] checks."
     },
     "Labels": {
       "CalculationMode": "Calculation Mode",

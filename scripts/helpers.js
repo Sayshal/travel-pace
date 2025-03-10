@@ -1,21 +1,27 @@
+import { CONST } from './config.js';
+
 /**
  * Convert between different distance units
  * @param {number} value - The value to convert
  * @param {string} from - The unit to convert from ('ft', 'm', 'mi', 'km')
  * @param {string} to - The unit to convert to ('ft', 'm', 'mi', 'km')
- * @param {boolean} useDndConversion - Whether to use D&D simplified conversions (default: true)
+ * @param {boolean} useDndConversion - Whether to use D&D simplified conversions
  * @returns {number} - The converted value
  */
 export function convertDistance(value, from, to, useDndConversion = true) {
-  // Conversion factors
-  let ftPerMile = useDndConversion ? 6000 : 5280;
-  let ftPerKm = useDndConversion ? 3000 : 3280.84;
-  let mPerFt = 0.3048; // Standard meters per foot
+  if (value === 0 || from === to) return value;
+
+  // Select conversion factors based on whether to use D&D simplified values
+  const ftPerMile = useDndConversion ? CONST.conversion.dndFtPerMile : CONST.conversion.ftPerMile;
+  const ftPerKm = useDndConversion ? CONST.conversion.dndFtPerKm : CONST.conversion.ftPerKm;
+  const mPerFt = CONST.conversion.mPerFt;
 
   // First convert to feet as the base unit
-  let inFeet = value;
-
+  let inFeet;
   switch (from) {
+    case 'ft':
+      inFeet = value;
+      break;
     case 'm':
       inFeet = value / mPerFt;
       break;
@@ -25,6 +31,8 @@ export function convertDistance(value, from, to, useDndConversion = true) {
     case 'km':
       inFeet = value * ftPerKm;
       break;
+    default:
+      return value;
   }
 
   // Then convert from feet to the target unit
@@ -37,21 +45,9 @@ export function convertDistance(value, from, to, useDndConversion = true) {
       return inFeet / ftPerMile;
     case 'km':
       return inFeet / ftPerKm;
+    default:
+      return inFeet;
   }
-
-  return inFeet; // Default to feet if unit not recognized
-}
-
-/**
- * Get the travel speeds for different paces in feet per minute
- * @returns {Object} - Speeds for different paces
- */
-export function getTravelSpeeds() {
-  return {
-    normal: 300, // 300 feet per minute
-    fast: 400, // 400 feet per minute
-    slow: 200 // 200 feet per minute
-  };
 }
 
 /**
@@ -59,107 +55,72 @@ export function getTravelSpeeds() {
  * @param {number} distance - Distance in feet
  * @param {string} pace - Travel pace ('fast', 'normal', 'slow')
  * @param {number|string} speedModifier - Modifier or direct speed (e.g. "8 mi/hour")
+ * @param {boolean} useDndConversion - Whether to use D&D simplified conversions
  * @returns {Object} - Time breakdown in minutes, hours, and days
  */
-export function calculateTime(distance, pace, speedModifier = 1) {
-  console.log(`Calculating time with:
-    - Distance: ${distance} feet
-    - Pace: ${pace}
-    - Speed modifier: ${speedModifier}`);
-
-  // Pace modifiers - these are the standard D&D ratios
-  const paceMultipliers = {
-    fast: 1.33,
-    normal: 1.0,
-    slow: 0.67
-  };
-
-  // Check if speedModifier is a string with direct speed notation
+export function calculateTime(distance, pace, speedModifier = 1, useDndConversion = true) {
+  // Handle direct vehicle speed notation (e.g., "8 mi/hour")
   if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) {
-    // Direct vehicle speed calculation (e.g., "8 mi/hour")
-    const speedMatch = speedModifier.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
-
-    if (speedMatch) {
-      const baseSpeed = parseFloat(speedMatch[1]);
-      const unit = speedMatch[3];
-
-      // Apply pace multiplier to the vehicle's speed
-      const adjustedSpeed = baseSpeed * paceMultipliers[pace];
-
-      // We need to convert between our distance (in feet) and our speed unit (mi/hour or km/hour)
-      let totalHours;
-
-      if (unit === 'mi') {
-        // Standard conversion: 5280 feet per mile
-        const distanceInMiles = distance / 5280;
-        totalHours = distanceInMiles / adjustedSpeed;
-      } else if (unit === 'km') {
-        // Standard conversion: 3280.84 feet per kilometer
-        const distanceInKm = distance / 3280.84;
-        totalHours = distanceInKm / adjustedSpeed;
-      }
-
-      const totalMinutes = totalHours * 60;
-
-      const days = Math.floor(totalHours / 8); // Assuming 8-hour travel days
-      const remainingHours = totalHours % 8;
-      const hours = Math.floor(remainingHours);
-      const minutes = Math.round((remainingHours - hours) * 60);
-
-      console.log(`Direct speed calculation result with pace ${pace} (${paceMultipliers[pace]}x):
-        - Base speed: ${baseSpeed} ${unit}/hour
-        - Adjusted speed: ${adjustedSpeed} ${unit}/hour
-        - Total hours: ${totalHours}
-        - Total minutes: ${totalMinutes}
-        - Days: ${days}
-        - Hours: ${hours}
-        - Minutes: ${minutes}`);
-
-      return {
-        totalMinutes,
-        minutes,
-        hours,
-        days
-      };
-    }
+    return calculateTimeWithVehicleSpeed(distance, pace, speedModifier);
   }
 
-  // These are the D&D standard distances for 8 hours of travel
-  const milesPerDay = {
-    fast: 30,
-    normal: 24,
-    slow: 18
-  };
+  // Standard calculation based on pace and modifier
+  const milesPerDay = CONST.milesPerDay[pace];
 
-  // For each pace, this is the feet that should equal exactly 8 hours
-  // Using the D&D simplified 6000ft/mile for on-foot travel
-  const feetPerDay = {
-    fast: milesPerDay.fast * 6000,
-    normal: milesPerDay.normal * 6000,
-    slow: milesPerDay.slow * 6000
-  };
+  // Select the appropriate conversion factor based on whether to use DnD conversions
+  const ftPerMile = useDndConversion ? CONST.conversion.dndFtPerMile : CONST.conversion.ftPerMile;
+  const feetPerDay = milesPerDay * ftPerMile;
 
   // Calculate what percentage of a day this travel represents
-  const dayFraction = (distance / feetPerDay[pace]) * (1 / speedModifier);
-  const totalMinutes = dayFraction * 8 * 60; // 8 hours = 480 minutes
+  const dayFraction = (distance / feetPerDay) * (1 / speedModifier);
+  const totalMinutes = dayFraction * CONST.timeUnits.minutesPerDay;
 
-  // Break down into days, hours, minutes
-  const totalDays = Math.floor(totalMinutes / 480); // 480 minutes = 8 hours = 1 travel day
-  const remainingMinutes = totalMinutes % 480;
-  const hours = Math.floor(remainingMinutes / 60);
-  const minutes = Math.floor(remainingMinutes % 60);
+  return breakdownMinutesToTimeUnits(totalMinutes);
+}
 
-  console.log(`Standard time calculation result:
-    - Total minutes: ${totalMinutes}
-    - Days: ${totalDays}
-    - Hours: ${hours}
-    - Minutes: ${minutes}`);
+/**
+ * Calculate time using vehicle speed notation
+ * @param {number} distance - Distance in feet
+ * @param {string} pace - Travel pace ('fast', 'normal', 'slow')
+ * @param {string} speedNotation - Speed in format "X mi/hour" or "X km/hour"
+ * @returns {Object} - Time breakdown
+ */
+function calculateTimeWithVehicleSpeed(distance, pace, speedNotation) {
+  const speedMatch = speedNotation.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
+  if (!speedMatch) return breakdownMinutesToTimeUnits(0);
+
+  const baseSpeed = parseFloat(speedMatch[1]);
+  const unit = speedMatch[3];
+  const paceMultiplier = CONST.multipliers[pace];
+  const adjustedSpeed = baseSpeed * paceMultiplier;
+
+  // Convert distance from feet to the appropriate unit using STANDARD conversions
+  // Always use standard conversions for vehicles with direct speed
+  const distanceInUnit = convertDistance(distance, 'ft', unit, false);
+
+  // Calculate time in hours
+  const totalHours = distanceInUnit / adjustedSpeed;
+  const totalMinutes = totalHours * CONST.timeUnits.minutesPerHour;
+
+  return breakdownMinutesToTimeUnits(totalMinutes);
+}
+
+/**
+ * Break down minutes into days, hours, and minutes
+ * @param {number} totalMinutes - Total minutes
+ * @returns {Object} - Time breakdown
+ */
+function breakdownMinutesToTimeUnits(totalMinutes) {
+  const days = Math.floor(totalMinutes / CONST.timeUnits.minutesPerDay);
+  const remainingMinutes = totalMinutes % CONST.timeUnits.minutesPerDay;
+  const hours = Math.floor(remainingMinutes / CONST.timeUnits.minutesPerHour);
+  const minutes = Math.floor(remainingMinutes % CONST.timeUnits.minutesPerHour);
 
   return {
     totalMinutes,
     minutes,
     hours,
-    days: totalDays
+    days
   };
 }
 
@@ -167,86 +128,68 @@ export function calculateTime(distance, pace, speedModifier = 1) {
  * Calculate travel distance based on time and pace
  * @param {number} minutes - Time in minutes
  * @param {string} pace - Travel pace ('fast', 'normal', 'slow')
- * @param {number|string} speedModifier - Modifier or direct speed (e.g. "8 mi/hour")
+ * @param {number|string} speedModifier - Modifier or direct speed
  * @returns {Object} - Distance in different units
  */
 export function calculateDistance(minutes, pace, speedModifier = 1) {
-  // Pace modifiers - these are the standard D&D ratios
-  const paceMultipliers = {
-    fast: 1.33,
-    normal: 1.0,
-    slow: 0.67
-  };
-
-  // Check if speedModifier is a string with direct speed notation
+  // Handle direct vehicle speed notation
   if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) {
-    // Direct vehicle speed calculation (e.g., "8 mi/hour")
-    const speedMatch = speedModifier.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
-
-    if (speedMatch) {
-      const baseSpeed = parseFloat(speedMatch[1]);
-      const unit = speedMatch[3];
-
-      // Apply pace multiplier
-      const adjustedSpeed = baseSpeed * paceMultipliers[pace];
-
-      // Convert minutes to hours
-      const hours = minutes / 60;
-
-      // Simple calculation: distance = speed * time
-      const directDistance = adjustedSpeed * hours;
-
-      console.log(`Direct distance calculation with pace ${pace} (${paceMultipliers[pace]}x):
-        - Base speed: ${baseSpeed} ${unit}/hour
-        - Adjusted speed: ${adjustedSpeed} ${unit}/hour
-        - Hours: ${hours}
-        - Distance: ${directDistance} ${unit}`);
-
-      // Create a complete return object with standard conversions
-      let result = {};
-
-      if (unit === 'mi') {
-        result = {
-          miles: directDistance,
-          feet: directDistance * 5280, // Standard feet per mile
-          meters: directDistance * 1609.34, // Standard meters per mile
-          kilometers: directDistance * 1.60934 // Standard km per mile
-        };
-      } else if (unit === 'km') {
-        result = {
-          kilometers: directDistance,
-          meters: directDistance * 1000, // Standard meters per km
-          feet: directDistance * 3280.84, // Standard feet per km (proper conversion)
-          miles: directDistance * 0.621371 // Standard miles per km
-        };
-      }
-
-      return result;
-    }
+    return calculateDistanceWithVehicleSpeed(minutes, pace, speedModifier);
   }
 
-  // D&D Standard: 8 hours (480 minutes) of travel results in:
-  const milesPerDay = {
-    fast: 30,
-    normal: 24,
-    slow: 18
-  };
+  // Convert minutes to days
+  const dayFraction = minutes / CONST.timeUnits.minutesPerDay;
 
-  // Calculate what fraction of a day this represents
-  const dayFraction = minutes / 480; // 480 minutes = 8 hours
+  // Calculate miles based on pace and time
+  const miles = CONST.milesPerDay[pace] * dayFraction * speedModifier;
 
-  // Calculate miles based on that fraction
-  const miles = milesPerDay[pace] * dayFraction * speedModifier;
-
-  // Convert to feet using D&D's 6000ft/mile for on-foot travel
-  const feet = miles * 6000;
-
+  // Create result with all unit conversions
   return {
-    feet,
     miles,
-    meters: convertDistance(feet, 'ft', 'm'),
-    kilometers: convertDistance(feet, 'ft', 'km')
+    feet: miles * CONST.conversion.ftPerMile,
+    kilometers: miles * CONST.conversion.miToKm,
+    meters: miles * CONST.conversion.ftPerMile * CONST.conversion.mPerFt
   };
+}
+
+/**
+ * Calculate distance using vehicle speed notation
+ * @param {number} minutes - Time in minutes
+ * @param {string} pace - Travel pace ('fast', 'normal', 'slow')
+ * @param {string} speedNotation - Speed in format "X mi/hour" or "X km/hour"
+ * @returns {Object} - Distance in different units
+ */
+function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
+  const speedMatch = speedNotation.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
+  if (!speedMatch) return { miles: 0, feet: 0, kilometers: 0, meters: 0 };
+
+  const baseSpeed = parseFloat(speedMatch[1]);
+  const unit = speedMatch[3];
+  const paceMultiplier = CONST.multipliers[pace];
+  const adjustedSpeed = baseSpeed * paceMultiplier;
+
+  // Convert minutes to hours
+  const hours = minutes / CONST.timeUnits.minutesPerHour;
+
+  // Calculate direct distance in the unit specified
+  const directDistance = adjustedSpeed * hours;
+
+  // Create a complete return object with all units
+  if (unit === 'mi') {
+    return {
+      miles: directDistance,
+      feet: directDistance * CONST.conversion.ftPerMile,
+      kilometers: directDistance * CONST.conversion.miToKm,
+      meters: directDistance * CONST.conversion.ftPerMile * CONST.conversion.mPerFt
+    };
+  } else {
+    return {
+      kilometers: directDistance,
+      meters: directDistance * 1000,
+      feet: directDistance * CONST.conversion.ftPerKm,
+      miles: directDistance * CONST.conversion.kmToMi
+    };
+  }
 }
 
 /**
@@ -255,12 +198,12 @@ export function calculateDistance(minutes, pace, speedModifier = 1) {
  * @returns {string} - Formatted time string
  */
 export function formatTime(timeData) {
-  // Get original values
-  let minutes = timeData.minutes;
-  let hours = timeData.hours;
-  let days = timeData.days;
+  if (!timeData) return '0 minutes';
 
-  // Round minutes and cascade if necessary
+  // Extract time components
+  let { minutes, hours, days } = timeData;
+
+  // Round minutes and handle overflow
   if (minutes >= 59.5) {
     minutes = 0;
     hours += 1;
@@ -268,90 +211,34 @@ export function formatTime(timeData) {
     minutes = Math.round(minutes);
   }
 
-  // Cascade hours to days if necessary
-  if (hours >= 23.5) {
-    hours = 0;
-    days += 1;
-  } else if (hours > 8) {
-    // For hours not quite at a full day but close enough to round
-    // This is a design choice - you may want to adjust this threshold
-    const extraDays = Math.floor(hours / 8);
-    if (hours % 8 >= 7.5) {
-      days += extraDays + 1;
-      hours = 0;
-    } else {
-      days += extraDays;
-      hours = hours % 8;
-    }
+  // Handle hour overflow
+  if (hours >= 8) {
+    const additionalDays = Math.floor(hours / 8);
+    days += additionalDays;
+    hours %= 8;
   }
 
-  // Calculate weeks, months, years, decades
-  const decades = Math.floor(days / 3650); // 365 days * 10 years
-  days = days % 3650;
-
-  const years = Math.floor(days / 365);
-  days = days % 365;
-
-  const months = Math.floor(days / 30);
-  days = days % 30;
-
+  // Handle larger time units
   const weeks = Math.floor(days / 7);
-  days = days % 7;
+  days %= 7;
 
+  const months = Math.floor(weeks / 4);
+  const remainingWeeks = weeks % 4;
+
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+
+  // Build the output string
   const parts = [];
 
-  // Add decades if any
-  if (decades > 0) {
-    parts.push(`${decades} decade${decades > 1 ? 's' : ''}`);
-  }
+  if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+  if (remainingMonths > 0) parts.push(`${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`);
+  if (remainingWeeks > 0) parts.push(`${remainingWeeks} week${remainingWeeks > 1 ? 's' : ''}`);
+  if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+  if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+  if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
 
-  // Add years if any
-  if (years > 0) {
-    parts.push(`${years} year${years > 1 ? 's' : ''}`);
-  }
-
-  // Add months if any
-  if (months > 0) {
-    parts.push(`${months} month${months > 1 ? 's' : ''}`);
-  }
-
-  // Add weeks if any
-  if (weeks > 0) {
-    parts.push(`${weeks} week${weeks > 1 ? 's' : ''}`);
-  }
-
-  // Add days if any
-  if (days > 0) {
-    parts.push(`${days} day${days > 1 ? 's' : ''}`);
-  }
-
-  // Add hours based on conditions
-  if (hours > 0) {
-    parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-  }
-
-  // Add minutes based on specific rules
-  // 1. Show minutes if it's the only unit (no days, no hours)
-  // 2. Show minutes if there are hours but no days
-  // 3. Show minutes if there are days AND hours > 0 AND minutes > 15
-  const originalDays = timeData.days;
-  const originalHours = timeData.hours;
-  const showMinutes =
-    parts.length === 0 || // No parts yet
-    (originalDays === 0 && originalHours === 0) || // Only minutes
-    (originalDays === 0 && hours > 0) || // Hours and minutes, no days
-    (originalDays > 0 && hours > 0 && minutes > 15); // Days, hours > 0, and minutes > 15
-
-  if (minutes > 0 && showMinutes) {
-    parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-  }
-
-  // If no parts, return "0 minutes"
-  if (parts.length === 0) {
-    return '0 minutes';
-  }
-
-  return parts.join(', ');
+  return parts.length > 0 ? parts.join(', ') : '0 minutes';
 }
 
 /**
@@ -362,20 +249,18 @@ export function formatTime(timeData) {
 export function getMountSpeedModifier(actorId) {
   if (!actorId) return 1;
 
-  // Try to get actor from world or compendium
-  let actor;
-  if (actorId.includes('.')) {
-    // It's a compendium actor, use fromUuid asynchronously
-    fromUuid(actorId).then((result) => {
-      actor = result;
-    });
-    if (!actor) return 1;
-  } else {
-    actor = game.actors.get(actorId);
-    if (!actor) return 1;
+  // Try to get actor from world
+  const actor = game.actors.get(actorId);
+  if (!actor) {
+    // If not found, it might be a compendium actor
+    if (actorId.includes('.')) {
+      // Return 1 as default, and let the async method handle it later
+      return 1;
+    }
+    return 1;
   }
 
-  // Default walking speed is 30ft per round = 300ft per minute
+  // Default walking speed is 30ft per round
   const baseSpeed = 30;
 
   if (actor.type === 'vehicle') {
@@ -383,18 +268,19 @@ export function getMountSpeedModifier(actorId) {
     const movement = actor.system.attributes?.movement || {};
     if (movement.units === 'mi' || movement.units === 'km') {
       // Get the highest speed
-      const speedValue = Math.max(
-        ...Object.entries(movement)
-          .filter(([key, value]) => typeof value === 'number' && key !== 'units')
-          .map(([key, value]) => value)
-      );
+      const speeds = Object.entries(movement)
+        .filter(([key, value]) => typeof value === 'number' && key !== 'units')
+        .map(([key, value]) => value);
+
+      if (speeds.length === 0) return 1;
 
       // Return as a direct speed string
+      const speedValue = Math.max(...speeds);
       return `${speedValue} ${movement.units}/hour`;
     }
   }
 
-  // For NPCs, use their walk speed
+  // For NPCs, use their walk speed as a multiplier
   const walkSpeed = actor.system.attributes?.movement?.walk || baseSpeed;
   return walkSpeed / baseSpeed;
 }
@@ -405,33 +291,14 @@ export function getMountSpeedModifier(actorId) {
  * @returns {string} - Description of the pace effects
  */
 export function getPaceEffects(pace) {
-  switch (pace) {
-    case 'fast':
-      return game.i18n.localize('TravelPace.Effects.Fast');
-    case 'normal':
-      return game.i18n.localize('TravelPace.Effects.Normal');
-    case 'slow':
-      return game.i18n.localize('TravelPace.Effects.Slow');
-    default:
-      return '';
-  }
+  const key = `TravelPace.Effects.${pace.charAt(0).toUpperCase() + pace.slice(1)}`;
+  return game.i18n.localize(key);
 }
 
-// Add to the init hook in settings.js
+// Register Handlebars helpers
 Hooks.once('init', () => {
-  Handlebars.registerHelper('neq', function (a, b) {
-    return a !== b;
-  });
-
-  Handlebars.registerHelper('concat', function (a, b) {
-    return a + b;
-  });
-
-  Handlebars.registerHelper('capitalize', function (str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  });
-
-  Handlebars.registerHelper('multiply', function (a, b) {
-    return a * b;
-  });
+  Handlebars.registerHelper('neq', (a, b) => a !== b);
+  Handlebars.registerHelper('concat', (a, b) => a + b);
+  Handlebars.registerHelper('capitalize', (str) => str.charAt(0).toUpperCase() + str.slice(1));
+  Handlebars.registerHelper('multiply', (a, b) => a * b);
 });
