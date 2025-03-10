@@ -1,0 +1,69 @@
+<div id="travel-pace-calculator" class="travel-calculator">
+	<div class="header-group mode-group">
+		<label>{{localize "TravelPace.Labels.CalculationMode"}}</label>
+		<div class="mode-selector">
+			{{#each modes}}
+				<label class="radio-label">
+					<input type="radio" name="mode" value="{{this.id}}" {{#if @first}}checked{{/if}}>
+					{{localize this.label}}
+				</label>
+			{{/each}}
+		</div>
+	</div>
+	<hr />
+
+	<div class="distance-to-time">
+		<div class="form-group">
+			<label for="distance">{{localize "TravelPace.Labels.Distance"}} ({{units.distance}})</label>
+			<input type="number" id="distance" placeholder="0" min="0" step="0.1">
+		</div>
+	</div>
+
+	<div class="time-to-distance" style="display: none;">
+		<div class="form-group">
+			<label for="days">{{localize "TravelPace.Labels.Days"}}</label>
+			<input type="number" id="days" value="0" min="0">
+		</div>
+
+		<div class="form-group">
+			<label for="hours">{{localize "TravelPace.Labels.Hours"}}</label>
+			<input type="number" id="hours" value="0" min="0" max="23">
+		</div>
+	</div>
+
+	<div class="form-group">
+		{{log this}}
+		<label for="pace">{{localize "TravelPace.Labels.Pace"}} ({{this.paces.[0].speed}})</label>
+		<select id="pace">
+			{{#each paces}}
+				<option value="{{this.id}}">{{localize this.label}}</option>
+			{{/each}}
+		</select>
+	</div>
+
+	{{#if hasMounts}}
+		<div class="form-group">
+			<label for="mount">{{localize "TravelPace.Labels.TransportationMethod"}}</label>
+			<select id="mount">
+				<option value="">{{localize "TravelPace.Labels.NoMount"}}</option>
+				{{#each mounts}}
+					<option value="{{this.id}}">{{this.name}}</option>
+				{{/each}}
+			</select>
+		</div>
+	{{/if}}
+
+	<div class="calculation-preview-container">
+		<h3>{{localize "TravelPace.Preview.Title"}}</h3>
+		<div class="calculation-preview">
+			<p>{{localize "TravelPace.Preview.Empty"}}</p>
+		</div>
+	</div>
+
+	<div class="form-buttons">
+		<button type="button" data-action="submitCalculation" class="submit-button">
+			<i class="fas fa-comments"></i>
+			{{localize "TravelPace.Buttons.Calculate"}}
+		</button>
+	</div>
+</div>

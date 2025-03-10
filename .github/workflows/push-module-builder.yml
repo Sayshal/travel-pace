@@ -57,12 +57,6 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "$release_notes" > release_notes.txt
 
-      - name: Format Release Notes for Discord
-        id: format-release-notes-discord
-        run: |
-          DISCORD_NOTES=$(awk '{printf "%s\\n", $0}' release_notes.txt | sed 's/\\n$//')
-          echo "release-notes-discord=$DISCORD_NOTES" >> $GITHUB_OUTPUT
-
       - name: Zip Files
         run: |
           zip -r ./module.zip ./ -x @.gitignore
@@ -87,8 +81,8 @@ jobs:
             "id": "travel-pace",
             "release": {
               "version": "${{ steps.get-version.outputs.version }}",
-              "manifest": "${{ env.REPO_URL }}/releases/download/${{ steps.get-version.outputs.version }}/module.json",
-              "download": "${{ env.REPO_URL }}/releases/download/${{ steps.get-version.outputs.version }}/module.zip",
+              "manifest": "${{ env.REPO_URL }}/releases/latest/download/module.json",
+              "download": "${{ env.REPO_URL }}/releases/latest/download/module.zip",
               "notes": "${{ env.REPO_URL }}/releases/tag/${{ steps.get-version.outputs.version }}",
               "compatibility": {
                 "minimum": "${{ steps.get-version.outputs.compat_min }}",
@@ -111,9 +105,9 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           VERSION="${{ steps.get-version.outputs.version }}"
-          RELEASE_NOTES="${{ steps.format-release-notes-discord.outputs.release-notes-discord }}"
-            # Create JSON payload with fields for version, links, and release notes
-            JSON_PAYLOAD=$(jq -n \
+          RELEASE_NOTES=$(< release_notes.txt)
+
+          JSON_PAYLOAD=$(jq -n \
             --arg title "Travel Pace Release" \
             --arg version "$VERSION" \
             --arg foundry_url "https://foundryvtt.com/packages/travel-pace" \
@@ -122,19 +116,24 @@ jobs:
             --arg release_notes "$RELEASE_NOTES" \
             --arg compat_min "${{ steps.get-version.outputs.compat_min }}" \
             --arg compat_max "${{ steps.get-version.outputs.compat_max }}" \
-            '{embeds: [{
-              title: $title,
-              fields: [
-                {name: "Version", value: $version, inline: true},
-                {name: "Core Compatibility", value: ($compat_min + " - " + $compat_max), inline: true},
-                {name: "System Compatibility", value:"3.3.1+", inline: true},
-                {name: "Foundry Package", value: $foundry_url, inline: false},
-                {name: "Release Tag", value: $release_url, inline: false},
-                {name: "Manual Download", value: $download_url, inline: false},
-                {name: "Release Notes", value: $release_notes, inline: false}
-              ]
-            }]}')
+            '{
+              embeds: [{
+                title: $title,
+                fields: [
+                  {name: "Version", value: $version, inline: true},
+                  {name: "Core Compatibility", value: ($compat_min + " - " + $compat_max), inline: true},
+                  {name: "System Compatibility", value:"3.3.1+", inline: true},
+                  {name: "Foundry Package", value: $foundry_url, inline: false},
+                  {name: "Release Tag", value: $release_url, inline: false},
+                  {name: "Manual Download", value: $download_url, inline: false},
+                  {name: "Release Notes", value: $release_notes, inline: false}
+                ]
+              }]
+            }')
+
+          echo "JSON Payload:"
+          echo "$JSON_PAYLOAD" | jq '.'
 
           curl -H "Content-Type: application/json" \
-                -d "$JSON_PAYLOAD" \
-                $DISCORD_WEBHOOK
+              -d "$JSON_PAYLOAD" \
+              $DISCORD_WEBHOOK

@@ -1,8 +1,8 @@
 {
   "id": "travel-pace",
   "title": "Travel Pace Calculator",
-  "description": "Calculate player's journey time in Travel Pace",
-  "version": "3.0.0",
+  "description": "Calculate travel times and distances based on D&D 5E travel pace rules.",
+  "version": "",
   "bugs": "https://github.com/Sayshal/travel-pace/issues",
   "changelog": "https://github.com/Sayshal/travel-pace/releases",
   "license": "https://github.com/Sayshal/travel-pace?tab=License-1-ov-file",
@@ -20,12 +20,12 @@
     }
   ],
   "compatibility": {
-    "maximum": "13.999",
+    "maximum": "13",
     "minimum": "11",
     "verified": "12.331"
   },
   "download": "",
-  "esmodules": ["scripts/settings.js", "scripts/travel-pace.js"],
+  "esmodules": ["scripts/settings.js", "scripts/travel-calculator.js", "scripts/app.js", "scripts/helpers.js"],
   "flags": {
     "hotReload": {
       "extensions": ["css", "html", "hbs", "json"],

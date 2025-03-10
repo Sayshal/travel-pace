@@ -1,0 +1,17 @@
+# Treat all text files as UTF-8
+*.md     text eol=lf
+*.json   text eol=lf
+*.js     text eol=lf
+*.txt    text eol=lf
+
+
+# Handle merge conflicts for specific file types
+*.json   merge=union
+
+# Set diff for specific file types
+*.md     diff=markdown
+*.js     diff=javascript
+*.json   diff=json
+
+# Handle line endings properly
+*         text=auto

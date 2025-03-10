@@ -1,0 +1,43 @@
+<div class="travel-pace-chat">
+	<h2>{{localize "TravelPace.ChatMessage.Title"}}</h2>
+
+	{{#if result.speedModifier}}
+		{{#if (neq result.speedModifier 1)}}
+			<p class="travel-pace-mount">
+				{{localize "TravelPace.ChatMessage.UsingMount"}} ({{multiply result.speedModifier 100}}%
+				{{localize "TravelPace.ChatMessage.OfNormalSpeed"}})
+			</p>
+		{{/if}}
+	{{/if}}
+
+	<div class="travel-pace-details">
+		<p class="travel-pace-pace">
+			{{localize (concat "TravelPace.Paces." (capitalize result.input.pace))}}
+			{{localize "TravelPace.ChatMessage.Pace"}}
+		</p>
+
+		{{#if (eq result.mode "distance")}}
+			<p class="travel-pace-input">
+				{{localize "TravelPace.ChatMessage.Distance"}}: {{result.input.distance}} {{result.input.unit}}
+			</p>
+			<p class="travel-pace-output">
+				{{localize "TravelPace.ChatMessage.Time"}}: {{result.output.timeFormatted}}
+			</p>
+		{{else}}
+			<p class="travel-pace-input">
+				{{localize "TravelPace.ChatMessage.Time"}}:
+				{{#if result.input.time.hours}}{{result.input.time.hours}}h {{/if}}
+				{{#if result.input.time.minutes}}{{result.input.time.minutes}}m{{/if}}
+			</p>
+			<p class="travel-pace-output">
+				{{localize "TravelPace.ChatMessage.Distance"}}: {{result.output.distance}} {{result.output.unit}}
+			</p>
+		{{/if}}
+	</div>
+
+	{{#if showEffects}}
+		<div class="travel-pace-effects">
+			<p>{{result.paceEffect}}</p>
+		</div>
+	{{/if}}
+</div>
