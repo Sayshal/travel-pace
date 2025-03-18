@@ -1,0 +1,5 @@
+- Complete rewrite of module (again)
+- Fix math, again. I hope. Closes #17
+- Fixed being unable to re-open calculator. Closes #16
+- Added support for vehicles, you must add NPCs to the folder (npcs or vehicle actors), and then configure which are selectable in the settings menu. Closes #14
+- Add better support for different speed options and distances, should close #12 and close #9

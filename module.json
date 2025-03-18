@@ -2,7 +2,7 @@
   "id": "travel-pace",
   "title": "Travel Pace Calculator",
   "description": "Calculate travel times and distances based on D&D 5E travel pace rules.",
-  "version": "",
+  "version": "4.0.0",
   "bugs": "https://github.com/Sayshal/travel-pace/issues",
   "changelog": "https://github.com/Sayshal/travel-pace/releases",
   "license": "https://github.com/Sayshal/travel-pace?tab=License-1-ov-file",
@@ -24,12 +24,26 @@
     "minimum": "11",
     "verified": "12.331"
   },
-  "download": "",
-  "esmodules": ["scripts/settings.js", "scripts/travel-calculator.js", "scripts/app.js", "scripts/helpers.js"],
+  "download": "https://github.com/Sayshal/travel-pace/releases/download/4.0.0/module.zip",
+  "esmodules": [
+    "scripts/settings.js",
+    "scripts/travel-calculator.js",
+    "scripts/app.js",
+    "scripts/helpers.js"
+  ],
   "flags": {
     "hotReload": {
-      "extensions": ["css", "html", "hbs", "json"],
-      "paths": ["styles", "lang", "templates"]
+      "extensions": [
+        "css",
+        "html",
+        "hbs",
+        "json"
+      ],
+      "paths": [
+        "styles",
+        "lang",
+        "templates"
+      ]
     }
   },
   "languages": [
@@ -39,7 +53,7 @@
       "path": "lang/en.json"
     }
   ],
-  "manifest": "",
+  "manifest": "https://github.com/Sayshal/travel-pace/releases/download/4.0.0/module.json",
   "relationships": {
     "systems": [
       {
@@ -54,6 +68,8 @@
     ]
   },
   "socket": true,
-  "styles": ["styles/travel-pace.css"],
+  "styles": [
+    "styles/travel-pace.css"
+  ],
   "url": "https://github.com/Sayshal/travel-pace"
 }
