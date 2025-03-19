@@ -6,15 +6,13 @@ on:
       - closed
     branches:
       - main
-  push:
-    tags:
-      - '[0-9].[0-9].[0-9]'
 
 env:
   REPO_URL: https://github.com/${{ github.repository }}
 
 jobs:
   build:
+    # Only run when PR is merged
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
@@ -24,11 +22,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Version
+      - name: Check for version in PR title
+        id: check-pr-version
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ $PR_TITLE =~ [0-9]\.[0-9]\.[0-9] ]]; then
+            echo "Version found in PR title: $PR_TITLE"
+            echo "has_version=true" >> $GITHUB_OUTPUT
+            VERSION=$(echo $PR_TITLE | grep -o -E '[v]?[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^v//')
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "No version pattern found in PR title"
+            echo "has_version=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Skip remaining steps if PR doesn't have version in title
+      - name: Exit if PR lacks version
+        if: steps.check-pr-version.outputs.has_version != 'true'
+        run: |
+          echo "Pull request title does not contain version number (format: #.#.#). Skipping release."
+          exit 0
+
+      - name: Get Version data
         id: get-version
         run: |
-          summary=$(git log -1 --pretty=%s)
-          version=$(echo "$summary" | grep -o -E '[v]?[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^v//')
+          # Use version from PR title
+          version="${{ steps.check-pr-version.outputs.version }}"
 
           version_data=($(node .github/workflows/get-version.js))
           compat_min=$(echo "${version_data[1]}" | sed 's/COMPAT_MIN://')
