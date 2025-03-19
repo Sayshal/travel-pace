@@ -6,6 +6,9 @@ on:
       - closed
     branches:
       - main
+  push:
+    tags:
+      - '[0-9].[0-9].[0-9]'
 
 env:
   REPO_URL: https://github.com/${{ github.repository }}
@@ -56,7 +59,13 @@ jobs:
 
       - name: Zip Files
         run: |
-          zip -r ./module.zip ./ -x @.gitignore
+          zip -r ./module.zip ./ \
+            -x @.gitignore \
+            -x ".gitattributes" \
+            -x ".git/**" \
+            -x ".github/**" \
+            -x "release_notes.txt" \
+            -x "tour-assets/**"
 
       - name: Create Release
         id: create-release
