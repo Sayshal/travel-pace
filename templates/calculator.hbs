@@ -5,7 +5,7 @@
 		<div class="mode-selector">
 			{{#each modes}}
 				<label class="radio-label">
-					<input type="radio" name="mode" value="{{this.id}}" {{#if @first}}checked{{/if}}>
+					<input type="radio" name="travelpace_mode" value="{{this.id}}" {{#if @first}}checked{{/if}}>
 					{{localize this.label}}
 				</label>
 			{{/each}}
@@ -16,28 +16,28 @@
 	{{!-- Distance to Time Mode --}}
 	<div class="distance-to-time">
 		<div class="form-group">
-			<label for="distance">{{localize "TravelPace.Labels.Distance"}} ({{units.distance}})</label>
-			<input type="number" id="distance" placeholder="0" min="0" step="0.1">
+			<label for="travelpace_distance">{{localize "TravelPace.Labels.Distance"}} ({{units.distance}})</label>
+			<input type="number" id="travelpace_distance" placeholder="0" min="0" step="0.1">
 		</div>
 	</div>
 
 	{{!-- Time to Distance Mode --}}
 	<div class="time-to-distance" style="display: none;">
 		<div class="form-group">
-			<label for="days">{{localize "TravelPace.Labels.Days"}}</label>
-			<input type="number" id="days" value="0" min="0">
+			<label for="travelpace_days">{{localize "TravelPace.Labels.Days"}}</label>
+			<input type="number" id="travelpace_days" value="0" min="0">
 		</div>
 
 		<div class="form-group">
-			<label for="hours">{{localize "TravelPace.Labels.Hours"}}</label>
-			<input type="number" id="hours" value="0" min="0" max="23">
+			<label for="travelpace_hours">{{localize "TravelPace.Labels.Hours"}}</label>
+			<input type="number" id="travelpace_hours" value="0" min="0" max="23">
 		</div>
 	</div>
 
 	{{!-- Pace Selection --}}
 	<div class="form-group">
-		<label for="pace">{{localize "TravelPace.Labels.Pace"}} ({{this.paces.[0].speed}})</label>
-		<select id="pace">
+		<label for="travelpace_pace">{{localize "TravelPace.Labels.Pace"}} ({{this.paces.[0].speed}})</label>
+		<select id="travelpace_pace">
 			{{#each paces}}
 				<option value="{{this.id}}">{{localize this.label}}</option>
 			{{/each}}
@@ -47,8 +47,8 @@
 	{{!-- Mount Selection (if available) --}}
 	{{#if hasMounts}}
 		<div class="form-group">
-			<label for="mount">{{localize "TravelPace.Labels.TransportationMethod"}}</label>
-			<select id="mount">
+			<label for="travelpace_mount">{{localize "TravelPace.Labels.TransportationMethod"}}</label>
+			<select id="travelpace_mount">
 				<option value="">{{localize "TravelPace.Labels.NoMount"}}</option>
 				{{#each mounts}}
 					<option value="{{this.id}}">{{this.name}}</option>

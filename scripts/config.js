@@ -1,9 +1,11 @@
 /**
- * Configuration constants for the Travel Pace Calculator
+ * Configuration constants for the Travel Pace Calculator module
+ * @module travel-pace/config
  */
 export const CONST = {
   /**
-   * Pace multipliers relative to normal pace
+   * Pace multipliers relative to normal pace (1.0)
+   * @type {Object<string, number>}
    */
   multipliers: {
     fast: 1.33,
@@ -13,6 +15,7 @@ export const CONST = {
 
   /**
    * Standard D&D 5e travel distances in miles per day (8 hours)
+   * @type {Object<string, number>}
    */
   milesPerDay: {
     fast: 30,
@@ -22,6 +25,7 @@ export const CONST = {
 
   /**
    * Standard speeds in feet per minute
+   * @type {Object<string, number>}
    */
   speedsInFeet: {
     fast: 400,
@@ -31,6 +35,7 @@ export const CONST = {
 
   /**
    * Unit conversion factors
+   * @type {Object}
    */
   conversion: {
     // Standard conversions
@@ -46,7 +51,8 @@ export const CONST = {
   },
 
   /**
-   * Travel day parameters
+   * Travel day parameters in minutes
+   * @type {Object}
    */
   timeUnits: {
     hoursPerDay: 8,
@@ -56,6 +62,7 @@ export const CONST = {
 
   /**
    * Module settings keys
+   * @type {Object<string, string>}
    */
   settings: {
     useMetric: 'useMetric',
@@ -65,6 +72,7 @@ export const CONST = {
 
   /**
    * Module identifiers
+   * @type {string}
    */
   moduleId: 'travel-pace'
 };

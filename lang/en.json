@@ -18,6 +18,12 @@
       "Normal": "Normal pace imposes disadvantage on &Reference[Stealth] checks.",
       "Slow": "Slow pace grants advantage on &Reference[Perception] or &Reference[Survival] checks."
     },
+    "Errors": {
+      "CalculationFailed": "Failed to calculate travel results. Please check your inputs.",
+      "MessageCreationFailed": "Failed to create chat message with travel results.",
+      "OpeningCalculator": "There was an error opening the Travel Pace calculator.",
+      "SaveFailed": "Failed to save mount configuration settings."
+    },
     "Labels": {
       "CalculationMode": "Calculation Mode",
       "Days": "Days",
