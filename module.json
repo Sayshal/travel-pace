@@ -25,25 +25,11 @@
     "verified": "12.331"
   },
   "download": "https://github.com/Sayshal/travel-pace/releases/download/4.0.0/module.zip",
-  "esmodules": [
-    "scripts/settings.js",
-    "scripts/travel-calculator.js",
-    "scripts/app.js",
-    "scripts/helpers.js"
-  ],
+  "esmodules": ["scripts/settings.js", "scripts/travel-calculator.js", "scripts/app.js", "scripts/helpers.js"],
   "flags": {
     "hotReload": {
-      "extensions": [
-        "css",
-        "html",
-        "hbs",
-        "json"
-      ],
-      "paths": [
-        "styles",
-        "lang",
-        "templates"
-      ]
+      "extensions": ["css", "html", "hbs", "json"],
+      "paths": ["styles", "lang", "templates"]
     }
   },
   "languages": [
@@ -53,7 +39,7 @@
       "path": "lang/en.json"
     }
   ],
-  "manifest": "https://github.com/Sayshal/travel-pace/releases/download/4.0.0/module.json",
+  "manifest": "https://github.com/Sayshal/travel-pace/releases/latest/module.json",
   "relationships": {
     "systems": [
       {
@@ -68,8 +54,6 @@
     ]
   },
   "socket": true,
-  "styles": [
-    "styles/travel-pace.css"
-  ],
+  "styles": ["styles/travel-pace.css"],
   "url": "https://github.com/Sayshal/travel-pace"
 }

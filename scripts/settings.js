@@ -94,7 +94,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     const enabledMounts = game.settings.get(CONST.moduleId, CONST.settings.enabledMounts);
 
     // Get potential mounts and vehicles
-    const actors = await this._getPotentialMounts();
+    const actors = await MountConfigMenu._getPotentialMounts();
 
     // Store actors in the instance for use in the widget
     this.actors = actors;
@@ -115,10 +115,16 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
       mounts: selectedMounts
     };
 
+    // Bind the widget creator with the current instance
+    const app = this;
+    const mountsWidget = (field, groupConfig, inputConfig) => {
+      return MountConfigMenu._createMountsWidget(field, groupConfig, inputConfig, app);
+    };
+
     return {
       document,
       fields: settingSchema.fields,
-      mountsWidget: this._createMountsWidget.bind(this),
+      mountsWidget,
       buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'TravelPace.Buttons.Save' }],
       actors: actors
     };
@@ -149,7 +155,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    * Get all potential mounts and vehicles
    * @returns {Promise<Array>} Array of actor data objects
    */
-  async _getPotentialMounts() {
+  static async _getPotentialMounts() {
     const actors = [];
 
     // 1. Get NPCs from the Mounts folder in the world
@@ -161,7 +167,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
           id: actor.id,
           name: actor.name,
           type: actor.type,
-          speed: this._getActorSpeed(actor),
+          speed: MountConfigMenu._getActorSpeed(actor),
           img: actor.img,
           isWorld: true
         });
@@ -186,7 +192,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
                 id: `${pack.collection}.${vehicleIndex._id}`, // Use compendium UUID format
                 name: vehicle.name,
                 type: 'vehicle',
-                speed: this._getActorSpeed(vehicle),
+                speed: MountConfigMenu._getActorSpeed(vehicle),
                 img: vehicle.img,
                 isCompendium: true,
                 packId: pack.collection
@@ -209,9 +215,10 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {DataField} field - The field being rendered
    * @param {object} groupConfig - Configuration for the form group
    * @param {object} inputConfig - Configuration for the input
+   * @param {MountConfigMenu} app - The application instance
    * @returns {HTMLElement} The custom form group element
    */
-  _createMountsWidget(field, groupConfig, inputConfig) {
+  static _createMountsWidget(field, groupConfig, inputConfig, app) {
     // Create the form group container
     const fg = document.createElement('div');
     fg.className = 'form-group stacked mounts';
@@ -226,7 +233,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Access the actors from the instance directly
-    const actors = this.actors || [];
+    const actors = app.actors || [];
 
     // If no actors found, add a message
     if (!actors || actors.length === 0) {
@@ -273,7 +280,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {Actor} actor - The actor to get speed for
    * @returns {string} Formatted speed value
    */
-  _getActorSpeed(actor) {
+  static _getActorSpeed(actor) {
     if (actor.type === 'vehicle') {
       // Handle vehicle speeds which might be in miles or kilometers per hour
       const movement = actor.system.attributes?.movement || {};
@@ -317,7 +324,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
       enabledMounts[selectedMounts] = true;
     }
 
-    this.constructor.reloadConfirm({ world: requiresWorldReload });
+    MountConfigMenu.reloadConfirm({ world: requiresWorldReload });
 
     await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
     ui.notifications.info('TravelPace.Settings.MountConfig.Saved', { localize: true });

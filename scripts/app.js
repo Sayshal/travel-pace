@@ -42,7 +42,6 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   constructor(options = {}) {
     super(options);
-    game.users.apps.push(this);
 
     // Store mount data for reference
     this.mounts = [];
@@ -65,7 +64,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
 
     // Get mounted actors with their speeds
-    const mounts = await this._getAvailableMounts(enabledMounts, useMetric);
+    const mounts = await TravelPaceApp._getAvailableMounts(enabledMounts, useMetric);
 
     // Get default speeds in appropriate units
     const speedUnit = useMetric ? 'm' : 'ft';
@@ -103,7 +102,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {boolean} useMetric - Whether to use metric units
    * @returns {Promise<Array>} - Array of available mounts
    */
-  async _getAvailableMounts(enabledMounts, useMetric) {
+  static async _getAvailableMounts(enabledMounts, useMetric) {
     const mounts = [];
 
     for (const id in enabledMounts) {
@@ -123,11 +122,11 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
           mounts.push({
             id: id,
             name: actor.name,
-            speed: await this._getMountSpeed(actor, useMetric)
+            speed: await TravelPaceApp._getMountSpeed(actor, useMetric)
           });
         }
       } catch (error) {
-        // Skip this mount if there's an error
+        throw new Error(error);
       }
     }
 
@@ -135,76 +134,87 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Setup after first render
+   * Setup after render
    * @param {Object} context - Application context
    * @param {Object} options - Render options
    */
-  _onFirstRender(context, options) {
-    super._onFirstRender?.(context, options);
-
+  _onRender(context, options) {
     // Set up form event listeners
-    this._setupEventListeners();
+    TravelPaceApp._setupEventListeners(this);
 
     // Initialize the display for the default mode
-    this._setupInitialMode();
+    TravelPaceApp._setupInitialMode(this);
+
+    // Update the preview
+    TravelPaceApp._updatePreview(this);
 
     // Store mount data for future reference
     this.mounts = context.mounts || [];
 
     // Update pace label with appropriate speed
-    this._updatePaceLabel();
+    TravelPaceApp._updatePaceLabel(this);
   }
 
   /**
    * Set up event listeners for the calculator form
+   * @param {TravelPaceApp} app - The application instance
    */
-  _setupEventListeners() {
-    // Use event delegation for input changes
-    this.element.addEventListener('input', this._handleInputChange.bind(this));
-    this.element.addEventListener('change', this._handleInputChange.bind(this));
+  static _setupEventListeners(app) {
+    if (!app.element) return;
+
+    // Use static methods with explicit app reference
+    app.element.addEventListener('input', (event) => {
+      TravelPaceApp._handleInputChange(event, app);
+    });
+
+    app.element.addEventListener('change', (event) => {
+      TravelPaceApp._handleInputChange(event, app);
+    });
   }
 
   /**
    * Handle input or change events for any form control
    * @param {Event} event - The input or change event
+   * @param {TravelPaceApp} app - The application instance
    */
-  _handleInputChange(event) {
+  static _handleInputChange(event, app) {
+    if (!app.element || !app.element.contains(event.target)) return;
+
     const input = event.target;
 
     // Handle mode switching
     if (input.name === 'mode' && input.type === 'radio') {
-      this._switchMode(input.value);
+      TravelPaceApp._switchMode(input.value, app);
     }
 
     // Update pace speed display when pace or mount changes
     if (input.id === 'pace' || input.id === 'mount') {
-      setTimeout(() => this._updatePaceLabel(), 0);
+      setTimeout(() => TravelPaceApp._updatePaceLabel(app), 0);
     }
 
     // Update preview for any input change
-    this._updatePreview();
+    TravelPaceApp._updatePreview(app);
   }
 
   /**
    * Set up initial mode display based on default selection
+   * @param {TravelPaceApp} app - The application instance
    */
-  _setupInitialMode() {
-    const modeInput = this.element.querySelector('input[name="mode"]:checked');
+  static _setupInitialMode(app) {
+    const modeInput = app.element.querySelector('input[name="mode"]:checked');
     if (modeInput) {
-      this._switchMode(modeInput.value);
+      TravelPaceApp._switchMode(modeInput.value, app);
     }
-
-    // Initial preview update
-    this._updatePreview();
   }
 
   /**
    * Switch between calculator modes
    * @param {string} mode - The mode to switch to ('distance' or 'time')
+   * @param {TravelPaceApp} app - The application instance
    */
-  _switchMode(mode) {
-    const distanceSection = this.element.querySelector('.distance-to-time');
-    const timeSection = this.element.querySelector('.time-to-distance');
+  static _switchMode(mode, app) {
+    const distanceSection = app.element.querySelector('.distance-to-time');
+    const timeSection = app.element.querySelector('.time-to-distance');
 
     if (distanceSection && timeSection) {
       distanceSection.style.display = mode === 'distance' ? 'block' : 'none';
@@ -214,9 +224,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Update UI with preview calculations
+   * @param {TravelPaceApp} app - The application instance
    */
-  _updatePreview() {
-    const container = this.element;
+  static _updatePreview(app) {
+    const container = app.element;
     if (!container) return;
 
     const modeInput = container.querySelector('input[name="mode"]:checked');
@@ -237,9 +248,9 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       let preview = '';
 
       if (mode === 'distance') {
-        preview = this._getDistancePreview(container, pace, mountId);
+        preview = TravelPaceApp._getDistancePreview(container, pace, mountId);
       } else {
-        preview = this._getTimePreview(container, pace, mountId);
+        preview = TravelPaceApp._getTimePreview(container, pace, mountId);
       }
 
       previewEl.textContent = preview || game.i18n.localize('TravelPace.Preview.Empty');
@@ -255,7 +266,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {string} mountId - The selected mount ID
    * @returns {string} - The preview text
    */
-  _getDistancePreview(container, pace, mountId) {
+  static _getDistancePreview(container, pace, mountId) {
     const distanceInput = container.querySelector('#distance');
     if (!distanceInput) return '';
 
@@ -275,7 +286,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {string} mountId - The selected mount ID
    * @returns {string} - The preview text
    */
-  _getTimePreview(container, pace, mountId) {
+  static _getTimePreview(container, pace, mountId) {
     const daysInput = container.querySelector('#days');
     const hoursInput = container.querySelector('#hours');
     if (!daysInput || !hoursInput) return '';
@@ -302,7 +313,16 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {Object} options - Closing options
    */
   _onClose(options) {
-    super._onClose?.(options);
+    if (super._onClose) {
+      super._onClose(options);
+    }
+
+    // Explicitly remove event listeners for this application
+    if (this.element) {
+      const element = this.element;
+      // Remove all event listeners by replacing the element with its clone
+      element.replaceWith(element.cloneNode(true));
+    }
 
     // Clean up the static requestor reference
     if (TravelCalculator.requestor === this) {
@@ -380,9 +400,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Update the pace label with speed information
+   * @param {TravelPaceApp} app - The application instance
    */
-  _updatePaceLabel() {
-    const container = this.element;
+  static _updatePaceLabel(app) {
+    const container = app.element;
     if (!container) return;
 
     const paceSelect = container.querySelector('#pace');
@@ -404,7 +425,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // If mount is selected, update the speed text
     if (mountSelect?.value) {
-      this._updateMountSpeedLabel(paceLabel, mountSelect.value, pace);
+      TravelPaceApp._updateMountSpeedLabel(paceLabel, mountSelect.value, pace);
       return;
     }
 
@@ -418,9 +439,9 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {string} mountId - The mount ID
    * @param {string} pace - The selected pace
    */
-  async _updateMountSpeedLabel(paceLabel, mountId, pace) {
+  static async _updateMountSpeedLabel(paceLabel, mountId, pace) {
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-    const mountSpeed = await this._getMountSpeed(mountId);
+    const mountSpeed = await TravelPaceApp._getMountSpeed(mountId, useMetric);
 
     if (!mountSpeed) {
       const defaultSpeed = useMetric ? '100 m/min' : '300 ft/min';
@@ -434,10 +455,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // If it's a vehicle with mi/hr or km/hr format
     if (mountSpeed.includes('/hour')) {
-      adjustedSpeedText = this._formatVehicleSpeed(mountSpeed, multiplier, useMetric);
+      adjustedSpeedText = TravelPaceApp._formatVehicleSpeed(mountSpeed, multiplier, useMetric);
     } else {
       // For standard walking speeds (ft or m)
-      adjustedSpeedText = this._formatWalkingSpeed(mountSpeed, multiplier, useMetric);
+      adjustedSpeedText = TravelPaceApp._formatWalkingSpeed(mountSpeed, multiplier, useMetric);
     }
 
     // Update the label with the speed
@@ -451,7 +472,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {boolean} useMetric - Whether to use metric units
    * @returns {string} - Formatted speed text
    */
-  _formatVehicleSpeed(mountSpeed, multiplier, useMetric) {
+  static _formatVehicleSpeed(mountSpeed, multiplier, useMetric) {
     const speedRegex = /^(\d+(\.\d+)?)\s*(mi|km)\/hour$/;
     const match = mountSpeed.match(speedRegex);
 
@@ -480,7 +501,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {boolean} useMetric - Whether to use metric units
    * @returns {string} - Formatted speed text
    */
-  _formatWalkingSpeed(mountSpeed, multiplier, useMetric) {
+  static _formatWalkingSpeed(mountSpeed, multiplier, useMetric) {
     const speedRegex = /^(\d+(\.\d+)?)\s*(ft|m)$/;
     const match = mountSpeed.match(speedRegex);
 
@@ -508,7 +529,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {boolean} [useMetric] - Whether to use metric units
    * @returns {Promise<string|null>} - The mount's speed or null if not found
    */
-  async _getMountSpeed(mountIdOrActor, useMetric) {
+  static async _getMountSpeed(mountIdOrActor, useMetric) {
     if (!mountIdOrActor) return null;
 
     // If the input is a string (ID), resolve to an actor
@@ -534,11 +555,11 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Extract speed from the actor
     if (actor.type === 'vehicle') {
-      return this._getVehicleSpeed(actor, useMetric);
+      return TravelPaceApp._getVehicleSpeed(actor, useMetric);
     }
 
     // For NPCs and other actor types (walking speed)
-    return this._getWalkingSpeed(actor, useMetric);
+    return TravelPaceApp._getWalkingSpeed(actor, useMetric);
   }
 
   /**
@@ -547,7 +568,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {boolean} useMetric - Whether to use metric units
    * @returns {string} - The vehicle's speed
    */
-  _getVehicleSpeed(actor, useMetric) {
+  static _getVehicleSpeed(actor, useMetric) {
     const movement = actor.system.attributes?.movement || {};
 
     if (movement.units === 'mi' || movement.units === 'km') {
@@ -570,7 +591,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
-    return this._getWalkingSpeed(actor, useMetric);
+    return TravelPaceApp._getWalkingSpeed(actor, useMetric);
   }
 
   /**
@@ -579,7 +600,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {boolean} useMetric - Whether to use metric units
    * @returns {string} - The walking speed
    */
-  _getWalkingSpeed(actor, useMetric) {
+  static _getWalkingSpeed(actor, useMetric) {
     const speed = actor.system.attributes?.movement?.walk || 0;
 
     if (useMetric) {

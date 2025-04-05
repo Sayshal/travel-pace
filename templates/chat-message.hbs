@@ -7,10 +7,10 @@
 			{{localize "TravelPace.ChatMessage.UsingMount"}}: {{vehicleInfo.embed}} ({{vehicleInfo.speed}})
 		</p>
 	{{else if result.speedModifier}}
-		{{#if (neq result.speedModifier 1)}}
+		{{#if (ne result.speedModifier 1)}}
 			<p class="travel-pace-mount">
 				{{localize "TravelPace.ChatMessage.UsingMount"}}
-				({{multiply result.speedModifier 100}}% {{localize "TravelPace.ChatMessage.OfNormalSpeed"}})
+				({{travelpace_multiply result.speedModifier 100}}% {{localize "TravelPace.ChatMessage.OfNormalSpeed"}})
 			</p>
 		{{/if}}
 	{{/if}}
@@ -18,7 +18,7 @@
 	{{!-- Calculation Details --}}
 	<div class="travel-pace-details">
 		<p class="travel-pace-pace">
-			{{localize (concat "TravelPace.Paces." (capitalize result.input.pace))}}
+			{{localize (travelpace_concat "TravelPace.Paces." (travelpace_capitalize result.input.pace))}}
 			{{localize "TravelPace.ChatMessage.Pace"}}
 		</p>
 

@@ -52,13 +52,13 @@ export class TravelCalculator {
 
     // Distance → Time calculation
     if (mode === 'distance') {
-      const result = this.calculateDistanceToTime(distance, pace, speedModifier, useMetric, isVehicleWithDirectSpeed);
+      const result = TravelCalculator.calculateDistanceToTime(distance, pace, speedModifier, useMetric, isVehicleWithDirectSpeed);
       result.mountId = mountId; // Add mountId to the result
       return result;
     }
     // Time → Distance calculation
     else if (mode === 'time') {
-      const result = this.calculateTimeToDistance(time, pace, speedModifier, useMetric);
+      const result = TravelCalculator.calculateTimeToDistance(time, pace, speedModifier, useMetric);
       result.mountId = mountId; // Add mountId to the result
       return result;
     }
@@ -170,10 +170,9 @@ export class TravelCalculator {
         }
 
         if (actor) {
-          console.error('ACTOR:', actor);
           // Get the speed based on the pace
           const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-          const speedText = await this.getFormattedVehicleSpeed(actor, result.input.pace, useMetric);
+          const speedText = await TravelCalculator.getFormattedVehicleSpeed(actor, result.input.pace, useMetric);
 
           vehicleInfo = {
             name: actor.name,
@@ -255,5 +254,5 @@ export class TravelCalculator {
   }
 }
 
-// Register hooks
-Hooks.on('getSceneControlButtons', TravelCalculator.getSceneControlButtons);
+// Register hooks with explicit function reference
+Hooks.on('getSceneControlButtons', (buttons) => TravelCalculator.getSceneControlButtons(buttons));

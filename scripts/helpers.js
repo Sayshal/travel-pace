@@ -295,10 +295,9 @@ export function getPaceEffects(pace) {
   return game.i18n.localize(key);
 }
 
-// Register Handlebars helpers
+// Register Handlebars helpers with explicit function references
 Hooks.once('init', () => {
-  Handlebars.registerHelper('neq', (a, b) => a !== b);
-  Handlebars.registerHelper('concat', (a, b) => a + b);
-  Handlebars.registerHelper('capitalize', (str) => str.charAt(0).toUpperCase() + str.slice(1));
-  Handlebars.registerHelper('multiply', (a, b) => a * b);
+  Handlebars.registerHelper('travelpace_concat', (a, b) => a + b);
+  Handlebars.registerHelper('travelpace_capitalize', (str) => str.charAt(0).toUpperCase() + str.slice(1));
+  Handlebars.registerHelper('travelpace_multiply', (a, b) => a * b);
 });
