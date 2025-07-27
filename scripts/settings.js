@@ -1,6 +1,6 @@
 import { CONST } from './config.js';
 
-const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 
 /**
  * Register module settings and configuration
