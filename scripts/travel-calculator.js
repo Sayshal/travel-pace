@@ -12,21 +12,20 @@ export class TravelCalculator {
 
   /**
    * Add the travel pace button to the token controls
-   * @param {Array} buttons - The array of control buttons
+   * @param {Object} controls - The scene controls object in V13
    * @static
    */
-  static getSceneControlButtons(buttons) {
+  static getSceneControlButtons(controls) {
     try {
-      const tokenButton = buttons.find((b) => b.name === 'token');
-      if (tokenButton) {
-        tokenButton.tools.push({
+      if (controls.tokens && controls.tokens.tools) {
+        controls.tokens.tools['travel-pace'] = {
           name: 'travel-pace',
           title: game.i18n.localize('TravelPace.Button'),
           icon: 'fas fa-route',
           visible: true,
-          onClick: () => TravelCalculator.openCalculator(),
+          onChange: () => TravelCalculator.openCalculator(),
           button: false
-        });
+        };
       }
     } catch (error) {
       console.error('TravelPace | Error adding scene control button:', error);
@@ -242,7 +241,7 @@ export class TravelCalculator {
       }
 
       // Render the chat message template
-      const content = await renderTemplate('modules/travel-pace/templates/chat-message.hbs', {
+      const content = await foundry.applications.handlebars.renderTemplate('modules/travel-pace/templates/chat-message.hbs', {
         result,
         showEffects,
         vehicleInfo
@@ -322,4 +321,4 @@ export class TravelCalculator {
 }
 
 // Register hooks with explicit function reference
-Hooks.on('getSceneControlButtons', (buttons) => TravelCalculator.getSceneControlButtons(buttons));
+Hooks.on('getSceneControlButtons', (controls) => TravelCalculator.getSceneControlButtons(controls));
