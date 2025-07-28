@@ -85,12 +85,12 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static PARTS = {
     form: {
       template: 'modules/travel-pace/templates/mount-config.hbs',
-      id: 'travelpace_mountconfig_body',
+      id: 'travelpace-mountconfig-body',
       classes: ['travel-pace-mount-config']
     },
     footer: {
       template: 'templates/generic/form-footer.hbs',
-      id: 'travelpace_mountconfig_footer',
+      id: 'travelpace-mountconfig-footer',
       classes: ['travel-pace-footer']
     }
   };
@@ -163,7 +163,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #reloadConfirm({ world = false } = {}) {
     try {
       const reload = await DialogV2.confirm({
-        id: 'travelpace_reload_confirm',
+        id: 'travelpace-reload-confirm',
         modal: true,
         rejectClose: false,
         window: { title: 'SETTINGS.ReloadPromptTitle' },
@@ -262,7 +262,7 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
       // Create the form group container
       const fg = document.createElement('div');
       fg.className = 'form-group stacked mounts';
-      fg.id = 'travelpace_mounts_widget';
+      fg.id = 'travelpace-mounts-widget';
 
       // Create form fields container
       const ff = fg.appendChild(document.createElement('div'));
@@ -306,13 +306,15 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
       // Create the multi-select element
       const multiSelect = foundry.applications.fields.createMultiSelectInput({
         ...inputConfig,
-        name: 'travelpace_mounts',
+        name: 'mounts',
         options,
         sort: true,
         value: inputConfig.value || []
       });
 
       ff.appendChild(multiSelect);
+      console.log('Creating multi-select with name:', inputConfig.name);
+      console.log('Input config:', inputConfig);
       return fg;
     } catch (error) {
       console.error('TravelPace | Error creating mounts widget:', error);
@@ -364,12 +366,38 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    * @private
    */
   static async #formHandler(_event, _form, formData) {
+    console.log('=== Mount Config Form Handler Debug ===');
+    console.log('Event:', _event);
+    console.log('Form:', _form);
+    console.log('FormData:', formData);
+    console.log('FormData object:', formData.object);
+    console.log('FormData entries:', [...formData.entries()]);
+
+    // Try different ways to access the data
+    console.log('formData.object.mounts:', formData.object.mounts);
+    console.log('formData.get("mounts"):', formData.get('travelpace_mounts'));
+    console.log('formData.get("travelpace_mounts"):', formData.get('travelpace_mounts'));
+    console.log('formData.getAll("travelpace_mounts"):', formData.getAll('travelpace_mounts'));
+
+    // Check the form element directly
+    if (_form) {
+      const formDataDirect = new FormData(_form);
+      console.log('Direct FormData entries:', [...formDataDirect.entries()]);
+    }
+
     try {
       const enabledMounts = {};
-      const requiresWorldReload = true; // Settings changes require world reload
+      const requiresWorldReload = true;
 
       // Get the selected mounts from the multi-select
-      const selectedMounts = formData.object.mounts || [];
+      let selectedMounts = formData.object.mounts || [];
+
+      // Try alternative access methods if the first doesn't work
+      if (!selectedMounts || (Array.isArray(selectedMounts) && selectedMounts.length === 0)) {
+        selectedMounts = formData.getAll('travelpace_mounts') || [];
+      }
+
+      console.log('Selected mounts after extraction:', selectedMounts);
 
       // Convert to the format expected by the settings
       if (Array.isArray(selectedMounts)) {
@@ -381,7 +409,11 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
         enabledMounts[selectedMounts] = true;
       }
 
+      console.log('Final enabledMounts object:', enabledMounts);
+
       await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
+      console.log('Settings saved successfully');
+
       ui.notifications.info('TravelPace.Settings.MountConfig.Saved', { localize: true });
 
       MountConfigMenu.#reloadConfirm({ world: requiresWorldReload });
@@ -389,6 +421,8 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
       console.error('TravelPace | Error saving mount configuration:', error);
       ui.notifications.error('TravelPace.Errors.SaveFailed', { localize: true });
     }
+
+    console.log('=== End Mount Config Form Handler Debug ===');
   }
 }
 
