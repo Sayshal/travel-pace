@@ -55,13 +55,18 @@ export function calculateTime(distance, pace, speedModifier = 1) {
  */
 function calculateTimeWithVehicleSpeed(distance, pace, speedNotation) {
   try {
-    const speedMatch = speedNotation.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
+    const hourUnit = game.i18n.localize('TravelPace.Speed.Units.Hour');
+    const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+    const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+    const ftAbbrev = game.i18n.localize('DND5E.DistFtAbbr');
+    const speedRegex = new RegExp(`^(\\d+(\\.\\d+)?)\\s*(${miAbbrev}|${kmAbbrev})/${hourUnit}$`);
+    const speedMatch = speedNotation.match(speedRegex);
     if (!speedMatch) return breakdownMinutesToTimeUnits(0);
     const baseSpeed = parseFloat(speedMatch[1]);
     const unit = speedMatch[3];
     const paceMultiplier = CONST.multipliers[pace] || 1;
     const adjustedSpeed = baseSpeed * paceMultiplier;
-    const distanceInUnit = convertDistance(distance, 'ft', unit); // LOCALIZE
+    const distanceInUnit = convertDistance(distance, ftAbbrev, unit === miAbbrev ? miAbbrev : kmAbbrev);
     const totalHours = distanceInUnit / adjustedSpeed;
     const totalMinutes = totalHours * CONST.timeUnits.minutesPerHour;
     return breakdownMinutesToTimeUnits(totalMinutes);
@@ -124,7 +129,11 @@ export function calculateDistance(minutes, pace, speedModifier = 1) {
  */
 function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
   try {
-    const speedMatch = speedNotation.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
+    const hourUnit = game.i18n.localize('TravelPace.Speed.Units.Hour');
+    const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+    const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+    const speedRegex = new RegExp(`^(\\d+(\\.\\d+)?)\\s*(${miAbbrev}|${kmAbbrev})/${hourUnit}$`);
+    const speedMatch = speedNotation.match(speedRegex);
     if (!speedMatch) {
       console.warn(`TravelPace | Invalid speed notation: ${speedNotation}`);
       return { miles: 0, feet: 0, kilometers: 0, meters: 0 };
@@ -135,8 +144,7 @@ function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
     const adjustedSpeed = baseSpeed * paceMultiplier;
     const hours = minutes / CONST.timeUnits.minutesPerHour;
     const directDistance = adjustedSpeed * hours;
-    // LOCALIZE
-    if (unit === 'mi') {
+    if (unit === miAbbrev) {
       return {
         miles: directDistance,
         feet: directDistance * CONST.conversion.ftPerMile,
@@ -184,32 +192,37 @@ export function formatTime(timeData) {
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
     const parts = [];
-    // LOCALIZE 's'
+    const pluralSuffix = game.i18n.localize('TravelPace.Units.Plural.Suffix');
     if (years > 0) {
-      const yearLabel = years > 1 ? game.i18n.localize('DND5E.UNITS.TIME.Year.Label') + 's' : game.i18n.localize('DND5E.UNITS.TIME.Year.Label');
-      parts.push(`${years} ${yearLabel.toLowerCase()}`);
+      const yearLabel = game.i18n.localize('DND5E.UNITS.TIME.Year.Label');
+      const finalLabel = years > 1 ? yearLabel + pluralSuffix : yearLabel;
+      parts.push(`${years} ${finalLabel.toLowerCase()}`);
     }
     if (remainingMonths > 0) {
-      const monthLabel = remainingMonths > 1 ? game.i18n.localize('DND5E.UNITS.TIME.Month.Label') + 's' : game.i18n.localize('DND5E.UNITS.TIME.Month.Label');
-      parts.push(`${remainingMonths} ${monthLabel.toLowerCase()}`);
+      const monthLabel = game.i18n.localize('DND5E.UNITS.TIME.Month.Label');
+      const finalLabel = remainingMonths > 1 ? monthLabel + pluralSuffix : monthLabel;
+      parts.push(`${remainingMonths} ${finalLabel.toLowerCase()}`);
     }
     if (remainingWeeks > 0) {
-      const weekLabel = remainingWeeks > 1 ? game.i18n.localize('DND5E.UNITS.TIME.Week.Label') + 's' : game.i18n.localize('DND5E.UNITS.TIME.Week.Label');
-      parts.push(`${remainingWeeks} ${weekLabel.toLowerCase()}`);
+      const weekLabel = game.i18n.localize('DND5E.UNITS.TIME.Week.Label');
+      const finalLabel = remainingWeeks > 1 ? weekLabel + pluralSuffix : weekLabel;
+      parts.push(`${remainingWeeks} ${finalLabel.toLowerCase()}`);
     }
     if (days > 0) {
-      const dayLabel = days > 1 ? game.i18n.localize('DND5E.UNITS.TIME.Day.Label') + 's' : game.i18n.localize('DND5E.UNITS.TIME.Day.Label');
-      parts.push(`${days} ${dayLabel.toLowerCase()}`);
+      const dayLabel = game.i18n.localize('DND5E.UNITS.TIME.Day.Label');
+      const finalLabel = days > 1 ? dayLabel + pluralSuffix : dayLabel;
+      parts.push(`${days} ${finalLabel.toLowerCase()}`);
     }
     if (hours > 0) {
-      const hourLabel = hours > 1 ? game.i18n.localize('DND5E.UNITS.TIME.Hour.Label') + 's' : game.i18n.localize('DND5E.UNITS.TIME.Hour.Label');
-      parts.push(`${hours} ${hourLabel.toLowerCase()}`);
+      const hourLabel = game.i18n.localize('DND5E.UNITS.TIME.Hour.Label');
+      const finalLabel = hours > 1 ? hourLabel + pluralSuffix : hourLabel;
+      parts.push(`${hours} ${finalLabel.toLowerCase()}`);
     }
     if (minutes > 0) {
-      const minuteLabel = minutes > 1 ? game.i18n.localize('DND5E.UNITS.TIME.Minute.Label') + 's' : game.i18n.localize('DND5E.UNITS.TIME.Minute.Label');
-      parts.push(`${minutes} ${minuteLabel.toLowerCase()}`);
+      const minuteLabel = game.i18n.localize('DND5E.UNITS.TIME.Minute.Label');
+      const finalLabel = minutes > 1 ? minuteLabel + pluralSuffix : minuteLabel;
+      parts.push(`${minutes} ${finalLabel.toLowerCase()}`);
     }
-
     return parts.length > 0 ? parts.join(game.i18n.localize('TravelPace.Time.Format.Separator')) : game.i18n.localize('TravelPace.Time.NoTime');
   } catch (error) {
     console.error('TravelPace | Error in formatTime:', error);
@@ -233,13 +246,15 @@ export function getMountSpeedModifier(actorId) {
     const baseSpeed = 30;
     if (actor.type === 'vehicle') {
       const movement = actor.system.attributes?.movement || {};
-      if (movement.units === 'mi' || movement.units === 'km') {
+      const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+      const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+      if (movement.units === miAbbrev || movement.units === kmAbbrev) {
         const speeds = Object.entries(movement)
           .filter(([key, value]) => typeof value === 'number' && key !== 'units')
           .map(([key, value]) => value);
         if (speeds.length === 0) return 1;
         const speedValue = Math.max(...speeds);
-        const unit = movement.units === 'mi' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation'); // LOCALIZE
+        const unit = movement.units === miAbbrev ? miAbbrev : kmAbbrev;
         return game.i18n.format('TravelPace.Speed.Format.PerHour', { speed: speedValue, unit });
       }
     }

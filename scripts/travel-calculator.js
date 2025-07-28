@@ -94,7 +94,7 @@ export class TravelCalculator {
           mode,
           input: {
             distance,
-            unit: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation'),
+            unit: useMetric ? game.i18n.localize('DND5E.DistKmAbbr') : game.i18n.localize('DND5E.DistMiAbbr'),
             pace
           },
           output: { timeFormatted },
@@ -112,7 +112,7 @@ export class TravelCalculator {
           input: { time, pace },
           output: {
             distance,
-            unit: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation')
+            unit: useMetric ? game.i18n.localize('DND5E.DistKmAbbr') : game.i18n.localize('DND5E.DistMiAbbr')
           },
           paceEffect,
           speedModifier,
@@ -126,7 +126,7 @@ export class TravelCalculator {
         mode: 'distance',
         input: {
           distance: 0,
-          unit: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation'),
+          unit: useMetric ? game.i18n.localize('DND5E.DistKmAbbr') : game.i18n.localize('DND5E.DistMiAbbr'),
           pace: 'normal'
         },
         output: { timeFormatted: game.i18n.localize('TravelPace.Time.NoTime') },
@@ -188,34 +188,36 @@ export class TravelCalculator {
       let speedText = '';
       if (actor.type === 'vehicle') {
         const movement = actor.system.attributes?.movement || {};
-        if (movement.units === 'mi' || movement.units === 'km') {
+        const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+        const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+        if (movement.units === miAbbrev || movement.units === kmAbbrev) {
           const speeds = Object.entries(movement)
             .filter(([key, value]) => typeof value === 'number' && key !== 'units')
             .map(([key, value]) => value);
           if (speeds.length) {
             const maxSpeed = Math.max(...speeds);
             const unit =
-              useMetric && movement.units === 'mi' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation')
-              : !useMetric && movement.units === 'km' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation')
-              : movement.units === 'mi' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation')
-              : game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation');
+              useMetric && movement.units === miAbbrev ? kmAbbrev
+              : !useMetric && movement.units === kmAbbrev ? miAbbrev
+              : movement.units === miAbbrev ? miAbbrev
+              : kmAbbrev;
             const conversionFactor =
-              useMetric && movement.units === 'mi' ? CONST.conversion.miToKm
-              : !useMetric && movement.units === 'km' ? CONST.conversion.kmToMi
+              useMetric && movement.units === miAbbrev ? CONST.conversion.miToKm
+              : !useMetric && movement.units === kmAbbrev ? CONST.conversion.kmToMi
               : 1;
             const adjustedSpeed = (maxSpeed * paceMultiplier * conversionFactor).toFixed(1);
             speedText = game.i18n.format('TravelPace.Speed.Format.PerHour', { speed: adjustedSpeed, unit });
           }
         } else {
           const speed = movement.walk || 0;
-          const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Meter.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation');
+          const unit = useMetric ? game.i18n.localize('DND5E.DistMAbbr') : game.i18n.localize('DND5E.DistFtAbbr');
           const baseSpeed = useMetric ? Math.round(speed * CONST.conversion.mPerFt) : speed;
           const adjustedSpeed = Math.round(baseSpeed * paceMultiplier);
           speedText = game.i18n.format('TravelPace.Speed.Format.PerMinute', { speed: adjustedSpeed, unit });
         }
       } else {
         const speed = actor.system.attributes?.movement?.walk || 0;
-        const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Meter.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation');
+        const unit = useMetric ? game.i18n.localize('DND5E.DistMAbbr') : game.i18n.localize('DND5E.DistFtAbbr');
         const baseSpeed = useMetric ? Math.round(speed * CONST.conversion.mPerFt) : speed;
         const adjustedSpeed = Math.round(baseSpeed * paceMultiplier);
         speedText = game.i18n.format('TravelPace.Speed.Format.PerMinute', { speed: adjustedSpeed, unit });

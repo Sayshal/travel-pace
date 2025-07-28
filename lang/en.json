@@ -57,9 +57,12 @@
   "TravelPace.Speed.Default.Slow.Metric": "67 m/min",
   "TravelPace.Speed.Format.PerHour": "{speed} {unit}/hour",
   "TravelPace.Speed.Format.PerMinute": "{speed} {unit}/min",
+  "TravelPace.Speed.Units.Hour": "hour",
+  "TravelPace.Speed.Units.Minute": "min",
   "TravelPace.Time.Format.Separator": ", ",
   "TravelPace.Time.NoTime": "0 minutes",
   "TravelPace.Title": "Travel Pace Calculator",
+  "TravelPace.Units.Plural.Suffix": "s",
   "TravelPace.Warnings.InvalidDistance": "Distance provided was invalid, please see logs.",
   "TravelPace.Warnings.InvalidTime": "Time provided was invalid, please see logs."
 }

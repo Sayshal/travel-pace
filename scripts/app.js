@@ -54,7 +54,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       console.log('TravelPace | Enabled mounts setting:', enabledMounts);
       const mounts = await TravelPaceApp.#getAvailableMounts(enabledMounts, useMetric);
       console.log('TravelPace | Available mounts:', mounts);
-      const speedUnit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Meter.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation');
+      const speedUnit = useMetric ? game.i18n.localize('DND5E.DistMAbbr') : game.i18n.localize('DND5E.DistFtAbbr');
       const speeds = {
         fast: useMetric ? game.i18n.localize('TravelPace.Speed.Default.Fast.Metric') : game.i18n.localize('TravelPace.Speed.Default.Fast.Imperial'),
         normal: useMetric ? game.i18n.localize('TravelPace.Speed.Default.Normal.Metric') : game.i18n.localize('TravelPace.Speed.Default.Normal.Imperial'),
@@ -63,7 +63,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       return {
         useMetric,
         units: {
-          distance: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation'),
+          distance: useMetric ? game.i18n.localize('DND5E.DistKmAbbr') : game.i18n.localize('DND5E.DistMiAbbr'),
           speed: speedUnit
         },
         speeds,
@@ -85,8 +85,8 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       return {
         useMetric,
         units: {
-          distance: game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation'),
-          speed: game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation')
+          distance: game.i18n.localize('DND5E.DistMiAbbr'),
+          speed: game.i18n.localize('DND5E.DistFtAbbr')
         },
         speeds: {
           fast: game.i18n.localize('TravelPace.Speed.Default.Fast.Imperial'),
@@ -210,7 +210,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       if (mode === 'distance') {
         const distance = Number(container.querySelector('#travelpace-distance')?.value);
         const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-        const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation');
+        const unit = useMetric ? game.i18n.localize('DND5E.DistKmAbbr') : game.i18n.localize('DND5E.DistMiAbbr');
         data = { mode, distance, unit, pace, mountId };
       } else {
         const days = Number(container.querySelector('#travelpace-days')?.value);
@@ -286,7 +286,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const data = { mode: 'time', time: { days, hours, minutes: 0 }, pace, mountId };
     const result = TravelCalculator.calculateTravel(data);
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-    const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation');
+    const unit = useMetric ? game.i18n.localize('DND5E.DistKmAbbr') : game.i18n.localize('DND5E.DistMiAbbr');
     return `${result.output.distance.toFixed(1)} ${unit}`;
   }
 
@@ -331,22 +331,22 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       if (!actor) return '';
       if (actor.type === 'vehicle') {
         const movement = actor.system.attributes?.movement || {};
-        // LOCALIZE
-        if (movement.units === 'mi' || movement.units === 'km') {
+        const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+        const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+        if (movement.units === miAbbrev || movement.units === kmAbbrev) {
           const speeds = Object.entries(movement)
             .filter(([key, value]) => typeof value === 'number' && key !== 'units')
             .map(([key, value]) => value);
           if (speeds.length) {
             const maxSpeed = Math.max(...speeds);
-            // LOCALIZE
-            const unit = movement.units === 'mi' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation');
+            const unit = movement.units === miAbbrev ? miAbbrev : kmAbbrev;
             return game.i18n.format('TravelPace.Speed.Format.PerHour', { speed: maxSpeed, unit });
           }
         }
       }
       const walkSpeed = actor.system.attributes?.movement?.walk || 30;
       const baseSpeed = useMetric ? Math.round(walkSpeed * CONST.conversion.mPerFt) : walkSpeed;
-      const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Meter.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation');
+      const unit = useMetric ? game.i18n.localize('DND5E.DistMAbbr') : game.i18n.localize('DND5E.DistFtAbbr');
       return game.i18n.format('TravelPace.Speed.Format.PerMinute', { speed: baseSpeed, unit });
     } catch (error) {
       console.error('TravelPace | Error getting mount speed:', error);
@@ -422,8 +422,8 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @private
    */
   static #formatVehicleSpeed(mountSpeed, multiplier, useMetric) {
-    // LOCALIZE
-    const speedRegex = /^(\d+(\.\d+)?)\s*([^/]+)\/hour$/;
+    const hourUnit = game.i18n.localize('TravelPace.Speed.Units.Hour');
+    const speedRegex = new RegExp(`^(\\d+(\\.\\d+)?)\\s*([^/]+)/${hourUnit}$`);
     const match = mountSpeed.match(speedRegex);
     if (!match) return mountSpeed;
     const speed = parseFloat(match[1]);
@@ -441,8 +441,8 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @private
    */
   static #formatWalkingSpeed(mountSpeed, multiplier, useMetric) {
-    // LOCALIZE
-    const speedRegex = /^(\d+(\.\d+)?)\s*([^/]+)\/min$/;
+    const minUnit = game.i18n.localize('TravelPace.Speed.Units.Minute');
+    const speedRegex = new RegExp(`^(\\d+(\\.\\d+)?)\\s*([^/]+)/${minUnit}$`);
     const match = mountSpeed.match(speedRegex);
     if (!match) return mountSpeed;
     const speed = parseFloat(match[1]);
