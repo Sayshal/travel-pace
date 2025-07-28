@@ -9,51 +9,43 @@ const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applicat
 
 // Register module settings
 Hooks.once('init', () => {
-  try {
-    // Use metric system setting
-    game.settings.register(CONST.moduleId, CONST.settings.useMetric, {
-      name: 'TravelPace.Settings.UseMetric.Name',
-      hint: 'TravelPace.Settings.UseMetric.Hint',
-      scope: 'world',
-      config: true,
-      type: Boolean,
-      default: false,
-      requiresReload: true
-    });
+  game.settings.register(CONST.moduleId, CONST.settings.useMetric, {
+    name: 'TravelPace.Settings.UseMetric.Name',
+    hint: 'TravelPace.Settings.UseMetric.Hint',
+    scope: 'world',
+    config: true,
+    type: Boolean,
+    default: false,
+    requiresReload: true
+  });
 
-    // Show pace effects in chat setting
-    game.settings.register(CONST.moduleId, CONST.settings.showEffects, {
-      name: 'TravelPace.Settings.ShowEffects.Name',
-      hint: 'TravelPace.Settings.ShowEffects.Hint',
-      scope: 'world',
-      config: true,
-      type: Boolean,
-      default: true,
-      requiresReload: true
-    });
+  game.settings.register(CONST.moduleId, CONST.settings.showEffects, {
+    name: 'TravelPace.Settings.ShowEffects.Name',
+    hint: 'TravelPace.Settings.ShowEffects.Hint',
+    scope: 'world',
+    config: true,
+    type: Boolean,
+    default: true,
+    requiresReload: true
+  });
 
-    // Enabled mounts and vehicles setting (not visible in settings menu)
-    game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
-      name: 'TravelPace.Settings.EnabledMounts.Name',
-      hint: 'TravelPace.Settings.EnabledMounts.Hint',
-      scope: 'world',
-      config: false,
-      type: Object,
-      default: {}
-    });
+  game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
+    name: 'TravelPace.Settings.EnabledMounts.Name',
+    hint: 'TravelPace.Settings.EnabledMounts.Hint',
+    scope: 'world',
+    config: false,
+    type: Object,
+    default: {}
+  });
 
-    // Register the mount configuration menu
-    game.settings.registerMenu(CONST.moduleId, 'mountConfig', {
-      name: 'TravelPace.Settings.MountConfig.Name',
-      label: 'TravelPace.Settings.MountConfig.Label',
-      hint: 'TravelPace.Settings.MountConfig.Hint',
-      icon: 'fas fa-horse',
-      type: MountConfigMenu,
-      restricted: true
-    });
-  } catch (error) {
-    console.error('TravelPace | Error registering settings:', error);
-  }
+  game.settings.registerMenu(CONST.moduleId, 'mountConfig', {
+    name: 'TravelPace.Settings.MountConfig.Name',
+    label: 'TravelPace.Settings.MountConfig.Label',
+    hint: 'TravelPace.Settings.MountConfig.Hint',
+    icon: 'fas fa-horse',
+    type: MountConfigMenu,
+    restricted: true
+  });
 });
 
 /**
@@ -66,20 +58,9 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     id: 'travel-pace-mount-config',
     classes: ['travel-pace-app'],
     tag: 'form',
-    form: {
-      handler: MountConfigMenu.#formHandler,
-      closeOnSubmit: true,
-      submitOnChange: false
-    },
-    position: {
-      height: 'auto',
-      width: 480
-    },
-    window: {
-      title: 'TravelPace.Settings.MountConfig.Title',
-      icon: 'fas fa-horse',
-      resizable: false
-    }
+    form: { handler: MountConfigMenu.#formHandler, closeOnSubmit: true, submitOnChange: false },
+    position: { height: 'auto', width: 480 },
+    window: { title: 'TravelPace.Settings.MountConfig.Title', icon: 'fas fa-horse', resizable: false }
   };
 
   static PARTS = {
@@ -103,37 +84,18 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _prepareContext(_options) {
     try {
-      // Get the currently enabled mounts
       const enabledMounts = game.settings.get(CONST.moduleId, CONST.settings.enabledMounts);
-
-      // Get potential mounts and vehicles
       const actors = await MountConfigMenu.#getPotentialMounts();
-
-      // Store actors in the instance for use in the widget
       this.actors = actors;
-
-      // Create a virtual document with schema for the form fields
       const settingSchema = new foundry.data.fields.SchemaField({
-        mounts: new foundry.data.fields.SetField(
-          new foundry.data.fields.StringField({
-            required: false
-          })
-        )
+        mounts: new foundry.data.fields.SetField(new foundry.data.fields.StringField({ required: false }))
       });
-
-      // Create a virtual document with selected mounts
       const selectedMounts = Object.keys(enabledMounts).filter((id) => enabledMounts[id]);
-      const document = {
-        schema: settingSchema,
-        mounts: selectedMounts
-      };
-
-      // Bind the widget creator with the current instance
+      const document = { schema: settingSchema, mounts: selectedMounts };
       const app = this;
       const mountsWidget = (field, groupConfig, inputConfig) => {
         return MountConfigMenu.#createMountsWidget(field, groupConfig, inputConfig, app);
       };
-
       return {
         document,
         fields: settingSchema.fields,
@@ -170,13 +132,8 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
         position: { width: 400 },
         content: `<p>${game.i18n.localize('SETTINGS.ReloadPromptBody')}</p>`
       });
-
       if (!reload) return;
-
-      if (world && game.user.can('SETTINGS_MODIFY')) {
-        game.socket.emit('reload');
-      }
-
+      if (world && game.user.can('SETTINGS_MODIFY')) game.socket.emit('reload');
       foundry.utils.debouncedReload();
     } catch (error) {
       console.error('TravelPace | Error in reload confirmation:', error);
@@ -191,61 +148,39 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static async #getPotentialMounts() {
     const actors = [];
-
-    try {
-      // 1. Get NPCs from the Mounts folder in the world
-      const mountFolder = game.folders.find((f) => f.name === 'Mounts' && f.type === 'Actor');
-      if (mountFolder) {
-        const folderMounts = game.actors.filter((a) => a.folder?.id === mountFolder.id);
-        for (const actor of folderMounts) {
+    const mountFolder = game.folders.find((f) => f.name === 'Mounts' && f.type === 'Actor');
+    if (mountFolder) {
+      const folderMounts = game.actors.filter((a) => a.folder?.id === mountFolder.id);
+      for (const actor of folderMounts) {
+        actors.push({
+          id: actor.id,
+          name: actor.name,
+          type: actor.type,
+          speed: MountConfigMenu.#getActorSpeed(actor),
+          img: actor.img,
+          isWorld: true
+        });
+      }
+    }
+    for (const pack of game.packs) {
+      if (pack.documentName === 'Actor') {
+        const index = await pack.getIndex();
+        const vehicleIndices = index.filter((i) => i.type === 'vehicle');
+        for (const vehicleIndex of vehicleIndices) {
+          const vehicle = await pack.getDocument(vehicleIndex._id);
+          console.error('DEBUG', { index: vehicleIndex, vehicle: vehicle });
           actors.push({
-            id: actor.id,
-            name: actor.name,
-            type: actor.type,
-            speed: MountConfigMenu.#getActorSpeed(actor),
-            img: actor.img,
-            isWorld: true
+            id: vehicleIndex.uuid,
+            name: vehicleIndex.name,
+            type: vehicleIndex.type,
+            speed: MountConfigMenu.#getActorSpeed(vehicle),
+            img: vehicleIndex.img,
+            isCompendium: true,
+            packId: pack.collection
           });
         }
       }
-
-      // 2. Scan through all compendium packs for vehicles
-      for (const pack of game.packs) {
-        if (pack.documentName === 'Actor') {
-          try {
-            // Get the index for the pack
-            const index = await pack.getIndex();
-
-            // Filter for vehicles
-            const vehicleIndices = index.filter((i) => i.type === 'vehicle');
-
-            // Add each vehicle to the actors array
-            for (const vehicleIndex of vehicleIndices) {
-              try {
-                const vehicle = await pack.getDocument(vehicleIndex._id);
-                console.error('DEBUG', { index: vehicleIndex, vehicle: vehicle });
-                actors.push({
-                  id: vehicleIndex.uuid,
-                  name: vehicleIndex.name,
-                  type: vehicleIndex.type,
-                  speed: MountConfigMenu.#getActorSpeed(vehicle),
-                  img: vehicleIndex.img,
-                  isCompendium: true,
-                  packId: pack.collection
-                });
-              } catch (docError) {
-                console.warn(`TravelPace | Could not load vehicle from compendium: ${vehicleIndex._id}`, docError);
-              }
-            }
-          } catch (error) {
-            console.warn(`TravelPace | Could not load index for pack: ${pack.collection}`, error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('TravelPace | Error getting potential mounts:', error);
     }
-
     return actors;
   }
 
@@ -260,50 +195,26 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #createMountsWidget(field, groupConfig, inputConfig, app) {
     try {
-      // Create the form group container
       const fg = document.createElement('div');
       fg.className = 'form-group stacked mounts';
       fg.id = 'travelpace-mounts-widget';
-
-      // Create form fields container
       const ff = fg.appendChild(document.createElement('div'));
       ff.className = 'form-fields';
-
-      // Add hint text if provided
-      if (groupConfig.hint) {
-        fg.insertAdjacentHTML('beforeend', `<p class="hint">${groupConfig.hint}</p>`);
-      }
-
-      // Access the actors from the instance directly
+      if (groupConfig.hint) fg.insertAdjacentHTML('beforeend', `<p class="hint">${groupConfig.hint}</p>`);
       const actors = app.actors || [];
-
-      // If no actors found, add a message
       if (!actors || actors.length === 0) {
         ff.insertAdjacentHTML('beforeend', `<p class="notification warning">${game.i18n.localize('TravelPace.Settings.MountConfig.NoMounts')}</p>`);
         return fg;
       }
-
-      // Group actors by source and type
       const worldVehicles = game.i18n.localize('TravelPace.Settings.MountConfig.WorldVehicles');
       const worldNPCs = game.i18n.localize('TravelPace.Settings.MountConfig.WorldNPCs');
       const compendiumVehicles = game.i18n.localize('TravelPace.Settings.MountConfig.CompendiumVehicles');
-
-      // Create options for the multi-select
       const options = actors.map((actor) => {
         let group;
-        if (actor.isCompendium) {
-          group = compendiumVehicles;
-        } else {
-          group = actor.type === 'vehicle' ? worldVehicles : worldNPCs;
-        }
-
-        return {
-          group,
-          value: actor.id,
-          label: `${actor.name} (${actor.speed})`
-        };
+        if (actor.isCompendium) group = compendiumVehicles;
+        else group = actor.type === 'vehicle' ? worldVehicles : worldNPCs;
+        return { group, value: actor.id, label: `${actor.name} (${actor.speed})` };
       });
-
       const multiSelect = foundry.applications.fields.createMultiSelectInput({
         ...inputConfig,
         name: 'mounts',
@@ -311,12 +222,10 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
         sort: true,
         value: inputConfig.value || []
       });
-
       ff.appendChild(multiSelect);
       return fg;
     } catch (error) {
       console.error('TravelPace | Error creating mounts widget:', error);
-      // Create a minimal fallback widget
       const fg = document.createElement('div');
       fg.className = 'form-group';
       fg.insertAdjacentHTML('beforeend', '<p class="notification error">Error creating mount selection widget</p>');
@@ -333,20 +242,15 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static #getActorSpeed(actor) {
     try {
       if (actor.type === 'vehicle') {
-        // Handle vehicle speeds which might be in miles or kilometers per hour
         const movement = actor.system.attributes?.movement || {};
         if (movement.units === 'mi' || movement.units === 'km') {
-          // Take the highest speed
           const speeds = Object.entries(movement)
             .filter(([key, value]) => typeof value === 'number' && key !== 'units')
             .map(([key, value]) => value);
-
           if (speeds.length) return `${Math.max(...speeds)} ${movement.units}/hour`;
           return 'Unknown';
         }
       }
-
-      // For NPCs and other actor types
       const speed = actor.system.attributes?.movement?.walk || 0;
       return `${speed} ft`;
     } catch (error) {
@@ -407,9 +311,6 @@ async function createMountsFolder() {
   }
 }
 
-// Create Mounts folder when ready (if GM)
 Hooks.once('ready', () => {
-  if (game.user.isGM) {
-    createMountsFolder();
-  }
+  if (game.user.isGM) createMountsFolder();
 });
