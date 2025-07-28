@@ -1,64 +1,22 @@
 import { CONST } from './config.js';
 
 /**
- * Helper functions for the Travel Pace Calculator module
- * @module travel-pace/helpers
+ * Convert distance between different units
+ * @param {number} distance - Distance value
+ * @param {string} fromUnit - Source unit ('ft', 'm', 'km', 'mi')
+ * @param {string} toUnit - Target unit ('ft', 'm', 'km', 'mi')
+ * @returns {number} - Converted distance
  */
-
-/**
- * Convert between different distance units
- * @param {number} value - The value to convert
- * @param {string} from - The unit to convert from ('ft', 'm', 'mi', 'km')
- * @param {string} to - The unit to convert to ('ft', 'm', 'mi', 'km')
- * @param {boolean} useDndConversion - Whether to use D&D simplified conversions
- * @returns {number} - The converted value
- */
-export function convertDistance(value, from, to, useDndConversion = true) {
-  if (value === 0 || from === to) return value;
-
+export function convertDistance(distance, fromUnit, toUnit) {
   try {
-    // Select conversion factors based on whether to use D&D simplified values
-    const ftPerMile = useDndConversion ? CONST.conversion.dndFtPerMile : CONST.conversion.ftPerMile;
-    const ftPerKm = useDndConversion ? CONST.conversion.dndFtPerKm : CONST.conversion.ftPerKm;
-    const mPerFt = CONST.conversion.mPerFt;
-
-    // First convert to feet as the base unit
-    let inFeet;
-    switch (from) {
-      case 'ft':
-        inFeet = value;
-        break;
-      case 'm':
-        inFeet = value / mPerFt;
-        break;
-      case 'mi':
-        inFeet = value * ftPerMile;
-        break;
-      case 'km':
-        inFeet = value * ftPerKm;
-        break;
-      default:
-        console.warn(`TravelPace | Unknown unit for conversion: ${from}`);
-        return value;
-    }
-
-    // Then convert from feet to the target unit
-    switch (to) {
-      case 'ft':
-        return inFeet;
-      case 'm':
-        return inFeet * mPerFt;
-      case 'mi':
-        return inFeet / ftPerMile;
-      case 'km':
-        return inFeet / ftPerKm;
-      default:
-        console.warn(`TravelPace | Unknown target unit for conversion: ${to}`);
-        return inFeet;
-    }
+    if (fromUnit === toUnit) return distance;
+    const toFeet = { ft: 1, m: 1 / CONST.conversion.mPerFt, km: CONST.conversion.ftPerKm, mi: CONST.conversion.ftPerMile };
+    const fromFeet = { ft: 1, m: CONST.conversion.mPerFt, km: 1 / CONST.conversion.ftPerKm, mi: 1 / CONST.conversion.ftPerMile };
+    const feet = distance * toFeet[fromUnit];
+    return feet * fromFeet[toUnit];
   } catch (error) {
     console.error('TravelPace | Error in convertDistance:', error);
-    return value;
+    return distance;
   }
 }
 
@@ -66,32 +24,20 @@ export function convertDistance(value, from, to, useDndConversion = true) {
  * Calculate travel time based on distance and pace
  * @param {number} distance - Distance in feet
  * @param {string} pace - Travel pace ('fast', 'normal', 'slow')
- * @param {number|string} speedModifier - Modifier or direct speed (e.g. "8 mi/hour")
- * @param {boolean} useDndConversion - Whether to use D&D simplified conversions
- * @returns {Object} - Time breakdown in minutes, hours, and days
+ * @param {number|string} speedModifier - Speed modifier or direct speed
+ * @returns {Object} - Time breakdown
  */
-export function calculateTime(distance, pace, speedModifier = 1, useDndConversion = true) {
+export function calculateTime(distance, pace, speedModifier = 1) {
   try {
-    // Handle direct vehicle speed notation (e.g., "8 mi/hour")
-    if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) {
-      return calculateTimeWithVehicleSpeed(distance, pace, speedModifier);
-    }
-
-    // Standard calculation based on pace and modifier
+    if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateTimeWithVehicleSpeed(distance, pace, speedModifier);
     const milesPerDay = CONST.milesPerDay[pace];
     if (milesPerDay === undefined) {
       console.warn(`TravelPace | Invalid pace provided: ${pace}`);
       return breakdownMinutesToTimeUnits(0);
     }
-
-    // Select the appropriate conversion factor based on whether to use DnD conversions
-    const ftPerMile = useDndConversion ? CONST.conversion.dndFtPerMile : CONST.conversion.ftPerMile;
-    const feetPerDay = milesPerDay * ftPerMile;
-
-    // Calculate what percentage of a day this travel represents
+    const feetPerDay = milesPerDay * CONST.conversion.ftPerMile;
     const dayFraction = (distance / feetPerDay) * (1 / speedModifier);
     const totalMinutes = dayFraction * CONST.timeUnits.minutesPerDay;
-
     return breakdownMinutesToTimeUnits(totalMinutes);
   } catch (error) {
     console.error('TravelPace | Error in calculateTime:', error);
@@ -109,25 +55,20 @@ export function calculateTime(distance, pace, speedModifier = 1, useDndConversio
  */
 function calculateTimeWithVehicleSpeed(distance, pace, speedNotation) {
   try {
-    const speedMatch = speedNotation.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
-    if (!speedMatch) {
-      console.warn(`TravelPace | Invalid speed notation: ${speedNotation}`);
-      return breakdownMinutesToTimeUnits(0);
-    }
-
+    const hourUnit = game.i18n.localize('TravelPace.Speed.Units.Hour');
+    const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+    const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+    const ftAbbrev = game.i18n.localize('DND5E.DistFtAbbr');
+    const speedRegex = new RegExp(`^(\\d+(\\.\\d+)?)\\s*(${miAbbrev}|${kmAbbrev})/${hourUnit}$`);
+    const speedMatch = speedNotation.match(speedRegex);
+    if (!speedMatch) return breakdownMinutesToTimeUnits(0);
     const baseSpeed = parseFloat(speedMatch[1]);
     const unit = speedMatch[3];
     const paceMultiplier = CONST.multipliers[pace] || 1;
     const adjustedSpeed = baseSpeed * paceMultiplier;
-
-    // Convert distance from feet to the appropriate unit using STANDARD conversions
-    // Always use standard conversions for vehicles with direct speed
-    const distanceInUnit = convertDistance(distance, 'ft', unit, false);
-
-    // Calculate time in hours
+    const distanceInUnit = convertDistance(distance, ftAbbrev, unit === miAbbrev ? miAbbrev : kmAbbrev);
     const totalHours = distanceInUnit / adjustedSpeed;
     const totalMinutes = totalHours * CONST.timeUnits.minutesPerHour;
-
     return breakdownMinutesToTimeUnits(totalMinutes);
   } catch (error) {
     console.error('TravelPace | Error in calculateTimeWithVehicleSpeed:', error);
@@ -147,13 +88,7 @@ function breakdownMinutesToTimeUnits(totalMinutes) {
     const remainingMinutes = totalMinutes % CONST.timeUnits.minutesPerDay;
     const hours = Math.floor(remainingMinutes / CONST.timeUnits.minutesPerHour);
     const minutes = Math.floor(remainingMinutes % CONST.timeUnits.minutesPerHour);
-
-    return {
-      totalMinutes,
-      minutes,
-      hours,
-      days
-    };
+    return { totalMinutes, minutes, hours, days };
   } catch (error) {
     console.error('TravelPace | Error in breakdownMinutesToTimeUnits:', error);
     return { totalMinutes: 0, minutes: 0, hours: 0, days: 0 };
@@ -169,30 +104,15 @@ function breakdownMinutesToTimeUnits(totalMinutes) {
  */
 export function calculateDistance(minutes, pace, speedModifier = 1) {
   try {
-    // Handle direct vehicle speed notation
-    if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) {
-      return calculateDistanceWithVehicleSpeed(minutes, pace, speedModifier);
-    }
-
-    // Convert minutes to days
+    if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateDistanceWithVehicleSpeed(minutes, pace, speedModifier); // LOCALIZE
     const dayFraction = minutes / CONST.timeUnits.minutesPerDay;
-
-    // Calculate miles based on pace and time
     const milesPerDay = CONST.milesPerDay[pace];
     if (milesPerDay === undefined) {
       console.warn(`TravelPace | Invalid pace provided: ${pace}`);
       return { miles: 0, feet: 0, kilometers: 0, meters: 0 };
     }
-
     const miles = milesPerDay * dayFraction * speedModifier;
-
-    // Create result with all unit conversions
-    return {
-      miles,
-      feet: miles * CONST.conversion.ftPerMile,
-      kilometers: miles * CONST.conversion.miToKm,
-      meters: miles * CONST.conversion.ftPerMile * CONST.conversion.mPerFt
-    };
+    return { miles, feet: miles * CONST.conversion.ftPerMile, kilometers: miles * CONST.conversion.miToKm, meters: miles * CONST.conversion.ftPerMile * CONST.conversion.mPerFt };
   } catch (error) {
     console.error('TravelPace | Error in calculateDistance:', error);
     return { miles: 0, feet: 0, kilometers: 0, meters: 0 };
@@ -209,25 +129,22 @@ export function calculateDistance(minutes, pace, speedModifier = 1) {
  */
 function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
   try {
-    const speedMatch = speedNotation.match(/^(\d+(\.\d+)?)\s*(mi|km)\/hour$/);
+    const hourUnit = game.i18n.localize('TravelPace.Speed.Units.Hour');
+    const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+    const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+    const speedRegex = new RegExp(`^(\\d+(\\.\\d+)?)\\s*(${miAbbrev}|${kmAbbrev})/${hourUnit}$`);
+    const speedMatch = speedNotation.match(speedRegex);
     if (!speedMatch) {
       console.warn(`TravelPace | Invalid speed notation: ${speedNotation}`);
       return { miles: 0, feet: 0, kilometers: 0, meters: 0 };
     }
-
     const baseSpeed = parseFloat(speedMatch[1]);
     const unit = speedMatch[3];
     const paceMultiplier = CONST.multipliers[pace] || 1;
     const adjustedSpeed = baseSpeed * paceMultiplier;
-
-    // Convert minutes to hours
     const hours = minutes / CONST.timeUnits.minutesPerHour;
-
-    // Calculate direct distance in the unit specified
     const directDistance = adjustedSpeed * hours;
-
-    // Create a complete return object with all units
-    if (unit === 'mi') {
+    if (unit === miAbbrev) {
       return {
         miles: directDistance,
         feet: directDistance * CONST.conversion.ftPerMile,
@@ -254,51 +171,62 @@ function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
  * @returns {string} - Formatted time string
  */
 export function formatTime(timeData) {
-  if (!timeData) return '0 minutes';
-
+  if (!timeData) return game.i18n.localize('TravelPace.Time.NoTime');
   try {
-    // Extract time components
     let { minutes, hours, days } = timeData;
-
-    // Round minutes and handle overflow
     if (minutes >= 59.5) {
       minutes = 0;
       hours += 1;
     } else {
       minutes = Math.round(minutes);
     }
-
-    // Handle hour overflow
     if (hours >= 8) {
       const additionalDays = Math.floor(hours / 8);
       days += additionalDays;
       hours %= 8;
     }
-
-    // Handle larger time units
     const weeks = Math.floor(days / 7);
     days %= 7;
-
     const months = Math.floor(weeks / 4);
     const remainingWeeks = weeks % 4;
-
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
-
-    // Build the output string
     const parts = [];
-
-    if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
-    if (remainingMonths > 0) parts.push(`${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`);
-    if (remainingWeeks > 0) parts.push(`${remainingWeeks} week${remainingWeeks > 1 ? 's' : ''}`);
-    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
-    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-
-    return parts.length > 0 ? parts.join(', ') : '0 minutes';
+    const pluralSuffix = game.i18n.localize('TravelPace.Units.Plural.Suffix');
+    if (years > 0) {
+      const yearLabel = game.i18n.localize('DND5E.UNITS.TIME.Year.Label');
+      const finalLabel = years > 1 ? yearLabel + pluralSuffix : yearLabel;
+      parts.push(`${years} ${finalLabel.toLowerCase()}`);
+    }
+    if (remainingMonths > 0) {
+      const monthLabel = game.i18n.localize('DND5E.UNITS.TIME.Month.Label');
+      const finalLabel = remainingMonths > 1 ? monthLabel + pluralSuffix : monthLabel;
+      parts.push(`${remainingMonths} ${finalLabel.toLowerCase()}`);
+    }
+    if (remainingWeeks > 0) {
+      const weekLabel = game.i18n.localize('DND5E.UNITS.TIME.Week.Label');
+      const finalLabel = remainingWeeks > 1 ? weekLabel + pluralSuffix : weekLabel;
+      parts.push(`${remainingWeeks} ${finalLabel.toLowerCase()}`);
+    }
+    if (days > 0) {
+      const dayLabel = game.i18n.localize('DND5E.UNITS.TIME.Day.Label');
+      const finalLabel = days > 1 ? dayLabel + pluralSuffix : dayLabel;
+      parts.push(`${days} ${finalLabel.toLowerCase()}`);
+    }
+    if (hours > 0) {
+      const hourLabel = game.i18n.localize('DND5E.UNITS.TIME.Hour.Label');
+      const finalLabel = hours > 1 ? hourLabel + pluralSuffix : hourLabel;
+      parts.push(`${hours} ${finalLabel.toLowerCase()}`);
+    }
+    if (minutes > 0) {
+      const minuteLabel = game.i18n.localize('DND5E.UNITS.TIME.Minute.Label');
+      const finalLabel = minutes > 1 ? minuteLabel + pluralSuffix : minuteLabel;
+      parts.push(`${minutes} ${finalLabel.toLowerCase()}`);
+    }
+    return parts.length > 0 ? parts.join(game.i18n.localize('TravelPace.Time.Format.Separator')) : game.i18n.localize('TravelPace.Time.NoTime');
   } catch (error) {
     console.error('TravelPace | Error in formatTime:', error);
-    return '0 minutes';
+    return game.i18n.localize('TravelPace.Time.NoTime');
   }
 }
 
@@ -309,40 +237,27 @@ export function formatTime(timeData) {
  */
 export function getMountSpeedModifier(actorId) {
   if (!actorId) return 1;
-
   try {
-    // Try to get actor from world
     const actor = game.actors.get(actorId);
     if (!actor) {
-      // If not found, it might be a compendium actor
-      if (actorId.includes('.')) {
-        // Return 1 as default, and let the async method handle it later
-        return 1;
-      }
+      if (actorId.includes('.')) return 1;
       return 1;
     }
-
-    // Default walking speed is 30ft per round
     const baseSpeed = 30;
-
     if (actor.type === 'vehicle') {
-      // Handle vehicle speed
       const movement = actor.system.attributes?.movement || {};
-      if (movement.units === 'mi' || movement.units === 'km') {
-        // Get the highest speed
+      const miAbbrev = game.i18n.localize('DND5E.DistMiAbbr');
+      const kmAbbrev = game.i18n.localize('DND5E.DistKmAbbr');
+      if (movement.units === miAbbrev || movement.units === kmAbbrev) {
         const speeds = Object.entries(movement)
           .filter(([key, value]) => typeof value === 'number' && key !== 'units')
           .map(([key, value]) => value);
-
         if (speeds.length === 0) return 1;
-
-        // Return as a direct speed string
         const speedValue = Math.max(...speeds);
-        return `${speedValue} ${movement.units}/hour`;
+        const unit = movement.units === miAbbrev ? miAbbrev : kmAbbrev;
+        return game.i18n.format('TravelPace.Speed.Format.PerHour', { speed: speedValue, unit });
       }
     }
-
-    // For NPCs, use their walk speed as a multiplier
     const walkSpeed = actor.system.attributes?.movement?.walk || baseSpeed;
     return walkSpeed / baseSpeed;
   } catch (error) {
@@ -370,10 +285,11 @@ export function getPaceEffects(pace) {
  * Register Handlebars helpers for the module
  */
 Hooks.once('init', () => {
+  //TODO: Move this all to data prep
   try {
-    Handlebars.registerHelper('travelpace_concat', (a, b) => a + b);
-    Handlebars.registerHelper('travelpace_capitalize', (str) => str.charAt(0).toUpperCase() + str.slice(1));
-    Handlebars.registerHelper('travelpace_multiply', (a, b) => a * b);
+    Handlebars.registerHelper('travelpace-concat', (a, b) => a + b);
+    Handlebars.registerHelper('travelpace-capitalize', (str) => str.charAt(0).toUpperCase() + str.slice(1));
+    Handlebars.registerHelper('travelpace-multiply', (a, b) => a * b);
   } catch (error) {
     console.error('TravelPace | Error registering Handlebars helpers:', error);
   }

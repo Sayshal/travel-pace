@@ -6,23 +6,23 @@
 /* ------------------------------------------------------------------ */
 :root {
   /* Spacing and sizing */
-  --travel-pace-bg-highlight: var(--color-bg-highlight, #0000000d);
-  --travel-pace-border-color: var(--color-border-light-2, #c9c7b8);
-  --travel-pace-border-radius: 5px;
-  --travel-pace-error-bg: #ff00001a;
+  --travel-pace-bg-highlight: var(--color-bg-highlight, rgb(0 0 0 / 5.1%));
+  --travel-pace-border-color: var(--color-border-light-2, rgb(201 199 184));
+  --travel-pace-border-radius: 0.313rem;
+  --travel-pace-error-bg: rgb(255 0 0 / 10.2%);
 
   /* UI elements */
-  --travel-pace-error-border: #ff00004d;
-  --travel-pace-input-height: 25px;
-  --travel-pace-spacing-lg: 20px;
+  --travel-pace-error-border: rgb(255 0 0 / 30.2%);
+  --travel-pace-input-height: 1.563rem;
+  --travel-pace-spacing-lg: 1.25rem;
 
   /* Colors - Use Foundry variables where possible for theme compatibility */
-  --travel-pace-spacing-md: 15px;
-  --travel-pace-spacing-sm: 10px;
-  --travel-pace-spacing-xs: 5px;
+  --travel-pace-spacing-md: 0.938rem;
+  --travel-pace-spacing-sm: 0.625rem;
+  --travel-pace-spacing-xs: 0.313rem;
   --travel-pace-transition: all 0.2s ease;
-  --travel-pace-warning-bg: #ffa5001a;
-  --travel-pace-warning-border: #ffa5004d;
+  --travel-pace-warning-bg: rgb(255 165 0 / 10.2%);
+  --travel-pace-warning-border: rgb(255 165 0 / 30.2%);
 }
 
 /* ------------------------------------------------------------------ */
@@ -31,7 +31,7 @@
 
 /* ------------------------------------------------------------------ */
 .travel-calculator-window {
-  min-width: 300px;
+  min-width: 18.75rem;
 }
 
 /* Main calculator container */
@@ -53,7 +53,7 @@
   max-height: 100%;
   margin: 1rem 0;
   padding: 2rem;
-  border: 1px solid var(--user-color);
+  border: 0.063rem solid var(--user-color);
   border-radius: var(--travel-pace-border-radius);
   overflow: auto;
   overflow-x: hidden;
@@ -124,7 +124,7 @@
 .application .travel-calculator .form-group input:focus,
 .application .travel-calculator .form-group select:focus {
   outline: none;
-  box-shadow: 0 0 5px var(--color-shadow-primary);
+  box-shadow: 0 0 0.313rem var(--color-shadow-primary);
 }
 
 /* ------------------------------------------------------------------ */
@@ -160,9 +160,9 @@
 /* Preview Section                                                    */
 /* ------------------------------------------------------------------ */
 .travel-calculator .calculation-preview-container {
-  margin: 10px 0 0;
+  margin: 0.625rem 0 0;
   padding: 0.625rem;
-  border: 1px solid var(--travel-pace-border-color);
+  border: 0.063rem solid var(--travel-pace-border-color);
   border-radius: var(--travel-pace-border-radius);
   text-align: center;
   background-color: var(--travel-pace-bg-highlight);
@@ -173,20 +173,20 @@
   opacity: 0.8;
   margin-top: 0;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--travel-pace-border-color);
+  border-bottom: 0.063rem solid var(--travel-pace-border-color);
   font-size: 1rem;
   text-align: center;
 }
 
 .travel-calculator .calculation-preview {
-  min-height: 24px;
+  min-height: 1.5rem;
   padding: 0.3rem;
-  color: var(--color-text-dark-primary, #111);
   font-style: italic;
   font-weight: 50;
 }
 
 .travel-calculator .calculation-preview p {
+  /* stylelint-disable-next-line declaration-property-unit-allowed-list */
   margin-top: -2%;
 }
 
@@ -206,19 +206,19 @@
   padding: 0.5rem 1rem;
   border: none;
   border-radius: var(--travel-pace-border-radius);
-  color: #fff;
+  color: rgb(255 255 255);
   cursor: pointer;
-  background-color: var(--color-button-primary, #4b4a44);
+  background-color: var(--color-button-primary, rgb(75 74 68));
   transition: var(--travel-pace-transition);
 }
 
 .travel-calculator .submit-button:hover {
-  background-color: var(--color-button-primary-hover, #605e54);
-  box-shadow: 0 0 5px var(--color-shadow-primary);
+  background-color: var(--color-button-primary-hover, rgb(96 94 84));
+  box-shadow: 0 0 0.313rem var(--color-shadow-primary);
 }
 
 .travel-calculator .submit-button:active {
-  transform: translateY(1px);
+  transform: translateY(0.063rem);
 }
 
 /* ------------------------------------------------------------------ */
@@ -232,13 +232,13 @@
 .travel-pace-chat h2 {
   margin-top: 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #0000001a;
+  border-bottom: 0.063rem solid rgb(0 0 0 / 10.2%);
   font-size: 1.2rem;
 }
 
 .travel-pace-chat .travel-pace-mount {
   margin-bottom: var(--travel-pace-spacing-sm);
-  color: var(--color-text-dark-secondary, #444);
+  color: var(--color-text-dark-secondary, rgb(68 68 68));
   font-style: italic;
 }
 
@@ -251,7 +251,7 @@
 
 .travel-pace-chat .travel-pace-pace {
   margin-top: 0;
-  color: var(--color-text-dark-primary, #111);
+  color: var(--color-text-dark-primary, rgb(17 17 17));
   font-weight: bold;
 }
 
@@ -262,8 +262,8 @@
 
 .travel-pace-chat .travel-pace-effects {
   padding-top: 0.625rem;
-  border-top: 1px solid #0000001a;
-  color: var(--color-text-dark-secondary, #444);
+  border-top: 0.063rem solid rgb(0 0 0 / 10.2%);
+  color: var(--color-text-dark-secondary, rgb(68 68 68));
   font-style: italic;
 }
 
@@ -281,37 +281,37 @@
 }
 
 .travel-pace-mount-config .notification.error {
-  border: 1px solid var(--travel-pace-error-border);
+  border: 0.063rem solid var(--travel-pace-error-border);
   background-color: var(--travel-pace-error-bg);
 }
 
 .travel-pace-mount-config .notification.warning {
-  border: 1px solid var(--travel-pace-warning-border);
+  border: 0.063rem solid var(--travel-pace-warning-border);
   background-color: var(--travel-pace-warning-bg);
 }
 
-.travel-pace-mount-config #travelpace_mounts_widget {
+.travel-pace-mount-config #travelpace-mounts-widget {
   margin-top: var(--travel-pace-spacing-md);
 }
 
 /* Multi-select styling */
 .travel-pace-mount-config .multi-select {
   width: 100%;
-  min-height: 200px;
+  min-height: 12.5rem;
   border-radius: var(--travel-pace-border-radius);
 }
 
 .travel-pace-footer {
   margin-top: var(--travel-pace-spacing-md);
   padding-top: var(--travel-pace-spacing-sm);
-  border-top: 1px solid var(--travel-pace-border-color);
+  border-top: 0.063rem solid var(--travel-pace-border-color);
   text-align: center;
 }
 
 /* ------------------------------------------------------------------ */
 /* Responsive Adjustments                                            */
 /* ------------------------------------------------------------------ */
-@media (width <= 400px) {
+@media (width <= 25rem) {
   .application .travel-calculator .form-group {
     flex-direction: column;
     align-items: flex-start;
@@ -321,7 +321,7 @@
   .application .travel-calculator .form-group select {
     width: 100%;
     max-width: 100%;
-    margin-top: 5px;
+    margin-top: 0.313rem;
   }
 
   .travel-calculator .mode-selector {
@@ -336,14 +336,14 @@
 
 /* Dark theme adjustments */
 .dark-theme .travel-calculator .calculation-preview {
-  color: var(--color-text-light-highlight, #f0f0f0);
+  color: var(--color-text-light-highlight, rgb(240 240 240));
 }
 
 .dark-theme .travel-pace-chat .travel-pace-pace {
-  color: var(--color-text-light-primary, #f0f0f0);
+  color: var(--color-text-light-primary, rgb(240 240 240));
 }
 
 .dark-theme .travel-pace-chat .travel-pace-mount,
 .dark-theme .travel-pace-chat .travel-pace-effects {
-  color: var(--color-text-light-secondary, #c0c0c0);
+  color: var(--color-text-light-secondary, rgb(192 192 192));
 }
