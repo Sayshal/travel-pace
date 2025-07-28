@@ -1,85 +1,68 @@
 {
-  "TravelPace": {
-    "Button": "Travel Pace",
-    "Buttons": {
-      "Calculate": "Send to Chat",
-      "Save": "Save Configuration"
-    },
-    "ChatMessage": {
-      "Distance": "Distance",
-      "OfNormalSpeed": "of normal speed",
-      "Pace": "pace",
-      "Time": "Travel Time",
-      "Title": "Travel Pace Calculation",
-      "UsingMount": "Traveling on"
-    },
-    "Effects": {
-      "Fast": "Fast pace imposes disadvantage on &Reference[Perception] or &Reference[Survival], and &Reference[Stealth] checks.",
-      "Normal": "Normal pace imposes disadvantage on &Reference[Stealth] checks.",
-      "Slow": "Slow pace grants advantage on &Reference[Perception] or &Reference[Survival] checks."
-    },
-    "Errors": {
-      "CalculationFailed": "Failed to calculate travel results. Please check your inputs.",
-      "MessageCreationFailed": "Failed to create chat message with travel results.",
-      "OpeningCalculator": "There was an error opening the Travel Pace calculator.",
-      "SaveFailed": "Failed to save mount configuration settings."
-    },
-    "Labels": {
-      "CalculationMode": "Calculation Mode",
-      "Days": "Days",
-      "Distance": "Distance",
-      "Hours": "Hours",
-      "NoMount": "On foot",
-      "Pace": "Travel Pace",
-      "TransportationMethod": "Transportation Method"
-    },
-    "Modes": {
-      "Distance": "Distance → Time",
-      "Time": "Time → Distance"
-    },
-    "Paces": {
-      "Fast": "Fast",
-      "Normal": "Normal",
-      "Slow": "Slow"
-    },
-    "Preview": {
-      "Empty": "Enter values to see preview",
-      "Error": "Invalid input",
-      "Title": "Calculation Preview"
-    },
-    "Settings": {
-      "EnabledMounts": {
-        "Hint": "Configure which actors can be used as mounts or vehicles in the calculator.",
-        "Name": "Enabled Mounts & Vehicles"
-      },
-      "MountConfig": {
-        "AddMountsHint": "To add mounts: create a folder called 'Mounts' and add actors that are type 'npc' or 'vehicle'. This folder is created automatically if it was deleted.",
-        "CompendiumVehicles": "Vehicles (Compendiums)",
-        "Hint": "Select which actors should appear in the mount/vehicle dropdown.",
-        "Instructions": "Select which actors should be available as mounts or vehicles in the travel pace calculator.",
-        "Label": "Configure",
-        "Name": "Configure Mounts & Vehicles",
-        "NoActors": "No suitable actors found. Create NPC or vehicle type actors to use this feature.",
-        "NoMounts": "No mounts or vehicles found in your world.",
-        "Saved": "Mount configuration saved",
-        "SelectMounts": "Available Mounts and Vehicles",
-        "Title": "Mount & Vehicle Configuration",
-        "WorldNPCs": "Mounts (World)",
-        "WorldVehicles": "Vehicles (World)"
-      },
-      "ShowEffects": {
-        "Hint": "Display the game effects of each travel pace in chat messages.",
-        "Name": "Show Pace Effects in Chat"
-      },
-      "UseMetric": {
-        "Hint": "Use kilometers and meters instead of miles and feet.",
-        "Name": "Use Metric System"
-      }
-    },
-    "Title": "Travel Pace Calculator",
-    "Warnings": {
-      "InvalidDistance": "Distance provided was invalid, please see logs.",
-      "InvalidTime": "Time provided was invalid, please see logs."
-    }
-  }
+  "TravelPace.Button": "Travel Pace",
+  "TravelPace.Buttons.Calculate": "Send to Chat",
+  "TravelPace.Buttons.Save": "Save Configuration",
+  "TravelPace.ChatMessage.Distance": "Distance",
+  "TravelPace.ChatMessage.OfNormalSpeed": "of normal speed",
+  "TravelPace.ChatMessage.Pace": "pace",
+  "TravelPace.ChatMessage.Time": "Travel Time",
+  "TravelPace.ChatMessage.Title": "Travel Pace Calculation",
+  "TravelPace.ChatMessage.UsingMount": "Traveling on",
+  "TravelPace.Effects.Fast": "Fast pace imposes disadvantage on &Reference[Perception] or &Reference[Survival], and &Reference[Stealth] checks.",
+  "TravelPace.Effects.Normal": "Normal pace imposes disadvantage on &Reference[Stealth] checks.",
+  "TravelPace.Effects.Slow": "Slow pace grants advantage on &Reference[Perception] or &Reference[Survival] checks.",
+  "TravelPace.Errors.CalculationFailed": "Failed to calculate travel results. Please check your inputs.",
+  "TravelPace.Errors.MessageCreationFailed": "Failed to create chat message with travel results.",
+  "TravelPace.Errors.OpeningCalculator": "There was an error opening the Travel Pace calculator.",
+  "TravelPace.Errors.SaveFailed": "Failed to save mount configuration settings.",
+  "TravelPace.Labels.CalculationMode": "Calculation Mode",
+  "TravelPace.Labels.Days": "Days",
+  "TravelPace.Labels.Distance": "Distance",
+  "TravelPace.Labels.Hours": "Hours",
+  "TravelPace.Labels.NoMount": "On foot",
+  "TravelPace.Labels.Pace": "Travel Pace",
+  "TravelPace.Labels.TransportationMethod": "Transportation Method",
+  "TravelPace.Modes.Distance": "Distance → Time",
+  "TravelPace.Modes.Time": "Time → Distance",
+  "TravelPace.Paces.Fast": "Fast",
+  "TravelPace.Paces.Normal": "Normal",
+  "TravelPace.Paces.Slow": "Slow",
+  "TravelPace.Preview.Empty": "Enter values to see preview",
+  "TravelPace.Preview.Error": "Invalid input",
+  "TravelPace.Preview.Title": "Calculation Preview",
+  "TravelPace.Settings.EnabledMounts.Hint": "Configure which actors can be used as mounts or vehicles in the calculator.",
+  "TravelPace.Settings.EnabledMounts.Name": "Enabled Mounts & Vehicles",
+  "TravelPace.Settings.MountConfig.AddMountsHint": "To add mounts: create a folder called 'Mounts' and add actors that are type 'npc' or 'vehicle'. This folder is created automatically if it was deleted.",
+  "TravelPace.Settings.MountConfig.CompendiumVehicles": "Vehicles (Compendiums)",
+  "TravelPace.Settings.MountConfig.Hint": "Select which actors should appear in the mount/vehicle dropdown.",
+  "TravelPace.Settings.MountConfig.Instructions": "Select which actors should be available as mounts or vehicles in the travel pace calculator.",
+  "TravelPace.Settings.MountConfig.Label": "Configure",
+  "TravelPace.Settings.MountConfig.Name": "Configure Mounts & Vehicles",
+  "TravelPace.Settings.MountConfig.NoActors": "No suitable actors found. Create NPC or vehicle type actors to use this feature.",
+  "TravelPace.Settings.MountConfig.NoMounts": "No mounts or vehicles found in your world.",
+  "TravelPace.Settings.MountConfig.Saved": "Mount configuration saved",
+  "TravelPace.Settings.MountConfig.SelectMounts": "Available Mounts and Vehicles",
+  "TravelPace.Settings.MountConfig.Title": "Mount & Vehicle Configuration",
+  "TravelPace.Settings.MountConfig.WorldNPCs": "Mounts (World)",
+  "TravelPace.Settings.MountConfig.WorldVehicles": "Vehicles (World)",
+  "TravelPace.Settings.ShowEffects.Hint": "Display the game effects of each travel pace in chat messages.",
+  "TravelPace.Settings.ShowEffects.Name": "Show Pace Effects in Chat",
+  "TravelPace.Settings.UseMetric.Hint": "Use kilometers and meters instead of miles and feet.",
+  "TravelPace.Settings.UseMetric.Name": "Use Metric System",
+  "TravelPace.Speed.Default.Fast.Imperial": "400 ft/min",
+  "TravelPace.Speed.Default.Fast.Metric": "133 m/min",
+  "TravelPace.Speed.Default.Normal.Imperial": "300 ft/min",
+  "TravelPace.Speed.Default.Normal.Metric": "100 m/min",
+  "TravelPace.Speed.Default.Slow.Imperial": "200 ft/min",
+  "TravelPace.Speed.Default.Slow.Metric": "67 m/min",
+  "TravelPace.Speed.Format.PerHour": "{speed} {unit}/hour",
+  "TravelPace.Speed.Format.PerMinute": "{speed} {unit}/min",
+  "TravelPace.Speed.Units.Hour": "hour",
+  "TravelPace.Speed.Units.Minute": "min",
+  "TravelPace.Time.Format.Separator": ", ",
+  "TravelPace.Time.NoTime": "0 minutes",
+  "TravelPace.Title": "Travel Pace Calculator",
+  "TravelPace.Units.Plural.Suffix": "s",
+  "TravelPace.Warnings.InvalidDistance": "Distance provided was invalid, please see logs.",
+  "TravelPace.Warnings.InvalidTime": "Time provided was invalid, please see logs."
 }
