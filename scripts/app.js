@@ -67,10 +67,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       // Get settings
       const enabledMounts = game.settings.get(CONST.moduleId, CONST.settings.enabledMounts) || {};
       const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-
+      console.log('TravelPace | Enabled mounts setting:', enabledMounts);
       // Get mounted actors with their speeds
       const mounts = await TravelPaceApp.#getAvailableMounts(enabledMounts, useMetric);
-
+      console.log('TravelPace | Available mounts:', mounts);
       // Get default speeds in appropriate units
       const speedUnit = useMetric ? 'm' : 'ft';
       const speeds = {
@@ -368,7 +368,6 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static async #getAvailableMounts(enabledMounts, useMetric) {
     const mounts = [];
-
     for (const id in enabledMounts) {
       if (!enabledMounts[id]) continue;
 
@@ -383,17 +382,22 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         if (actor) {
+          const speed = await TravelPaceApp.#getMountSpeed(actor, useMetric);
           mounts.push({
             id: id,
             name: actor.name,
-            speed: await TravelPaceApp.#getMountSpeed(actor, useMetric)
+            speed: speed || 'Unknown'
           });
+          console.log(`TravelPace | Added mount: ${actor.name} with speed: ${speed}`);
+        } else {
+          console.warn(`TravelPace | Could not load mount with ID: ${id}`);
         }
       } catch (error) {
         console.error(`TravelPace | Error loading mount ${id}:`, error);
       }
     }
 
+    console.log(`TravelPace | Total mounts loaded: ${mounts.length}`);
     return mounts;
   }
 
@@ -606,7 +610,6 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
         } else {
           actor = game.actors.get(mountIdOrActor);
         }
-
         if (!actor) return null;
       }
 
@@ -623,8 +626,8 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       // For NPCs and other actor types (walking speed)
       return TravelPaceApp.#getWalkingSpeed(actor, useMetric);
     } catch (error) {
-      console.error('TravelPace | Error getting mount speed:', error);
-      return null;
+      console.error(`TravelPace | Error getting mount speed for ${mountIdOrActor}:`, error);
+      return 'Unknown';
     }
   }
 

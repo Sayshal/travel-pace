@@ -223,12 +223,13 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
             for (const vehicleIndex of vehicleIndices) {
               try {
                 const vehicle = await pack.getDocument(vehicleIndex._id);
+                console.error('DEBUG', { index: vehicleIndex, vehicle: vehicle });
                 actors.push({
-                  id: `${pack.collection}.${vehicleIndex._id}`, // Use compendium UUID format
-                  name: vehicle.name,
-                  type: 'vehicle',
+                  id: vehicleIndex.uuid,
+                  name: vehicleIndex.name,
+                  type: vehicleIndex.type,
                   speed: MountConfigMenu.#getActorSpeed(vehicle),
-                  img: vehicle.img,
+                  img: vehicleIndex.img,
                   isCompendium: true,
                   packId: pack.collection
                 });
@@ -303,7 +304,6 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
         };
       });
 
-      // Create the multi-select element
       const multiSelect = foundry.applications.fields.createMultiSelectInput({
         ...inputConfig,
         name: 'mounts',
@@ -364,21 +364,24 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    * @private
    */
   static async #formHandler(_event, _form, formData) {
-    const enabledMounts = {};
-    const requiresWorldReload = true;
-    let selectedMounts = formData.object.mounts || [];
-    if (!selectedMounts || (Array.isArray(selectedMounts) && selectedMounts.length === 0)) selectedMounts = formData.getAll('travelpace_mounts') || [];
-    if (Array.isArray(selectedMounts)) {
-      selectedMounts.forEach((id) => {
-        enabledMounts[id] = true;
-      });
-    } else if (selectedMounts) {
-      enabledMounts[selectedMounts] = true;
+    try {
+      const enabledMounts = {};
+      let selectedMounts = formData.object.mounts || [];
+      if (Array.isArray(selectedMounts)) {
+        selectedMounts.forEach((id) => {
+          enabledMounts[id] = true;
+        });
+      } else if (selectedMounts) {
+        enabledMounts[selectedMounts] = true;
+      }
+      await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
+      ui.notifications.info(game.i18n.localize('TravelPace.Settings.MountConfig.Saved'));
+      const requiresWorldReload = true;
+      await MountConfigMenu.#reloadConfirm({ world: requiresWorldReload });
+    } catch (error) {
+      console.error('TravelPace | Error saving mount configuration:', error);
+      ui.notifications.error(game.i18n.localize('TravelPace.Errors.SaveFailed'));
     }
-    await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
-    ui.notifications.info('TravelPace.Settings.MountConfig.Saved', { localize: true });
-    MountConfigMenu.#reloadConfirm({ world: requiresWorldReload });
-    ui.notifications.error('TravelPace.Errors.SaveFailed', { localize: true });
   }
 }
 

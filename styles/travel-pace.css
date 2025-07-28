@@ -290,7 +290,7 @@
   background-color: var(--travel-pace-warning-bg);
 }
 
-.travel-pace-mount-config #travelpace_mounts_widget {
+.travel-pace-mount-config #travelpace-mounts-widget {
   margin-top: var(--travel-pace-spacing-md);
 }
 
