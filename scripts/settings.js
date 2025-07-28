@@ -313,8 +313,6 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
       });
 
       ff.appendChild(multiSelect);
-      console.log('Creating multi-select with name:', inputConfig.name);
-      console.log('Input config:', inputConfig);
       return fg;
     } catch (error) {
       console.error('TravelPace | Error creating mounts widget:', error);
@@ -366,63 +364,21 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    * @private
    */
   static async #formHandler(_event, _form, formData) {
-    console.log('=== Mount Config Form Handler Debug ===');
-    console.log('Event:', _event);
-    console.log('Form:', _form);
-    console.log('FormData:', formData);
-    console.log('FormData object:', formData.object);
-    console.log('FormData entries:', [...formData.entries()]);
-
-    // Try different ways to access the data
-    console.log('formData.object.mounts:', formData.object.mounts);
-    console.log('formData.get("mounts"):', formData.get('travelpace_mounts'));
-    console.log('formData.get("travelpace_mounts"):', formData.get('travelpace_mounts'));
-    console.log('formData.getAll("travelpace_mounts"):', formData.getAll('travelpace_mounts'));
-
-    // Check the form element directly
-    if (_form) {
-      const formDataDirect = new FormData(_form);
-      console.log('Direct FormData entries:', [...formDataDirect.entries()]);
+    const enabledMounts = {};
+    const requiresWorldReload = true;
+    let selectedMounts = formData.object.mounts || [];
+    if (!selectedMounts || (Array.isArray(selectedMounts) && selectedMounts.length === 0)) selectedMounts = formData.getAll('travelpace_mounts') || [];
+    if (Array.isArray(selectedMounts)) {
+      selectedMounts.forEach((id) => {
+        enabledMounts[id] = true;
+      });
+    } else if (selectedMounts) {
+      enabledMounts[selectedMounts] = true;
     }
-
-    try {
-      const enabledMounts = {};
-      const requiresWorldReload = true;
-
-      // Get the selected mounts from the multi-select
-      let selectedMounts = formData.object.mounts || [];
-
-      // Try alternative access methods if the first doesn't work
-      if (!selectedMounts || (Array.isArray(selectedMounts) && selectedMounts.length === 0)) {
-        selectedMounts = formData.getAll('travelpace_mounts') || [];
-      }
-
-      console.log('Selected mounts after extraction:', selectedMounts);
-
-      // Convert to the format expected by the settings
-      if (Array.isArray(selectedMounts)) {
-        selectedMounts.forEach((id) => {
-          enabledMounts[id] = true;
-        });
-      } else if (selectedMounts) {
-        // Handle single selection case
-        enabledMounts[selectedMounts] = true;
-      }
-
-      console.log('Final enabledMounts object:', enabledMounts);
-
-      await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
-      console.log('Settings saved successfully');
-
-      ui.notifications.info('TravelPace.Settings.MountConfig.Saved', { localize: true });
-
-      MountConfigMenu.#reloadConfirm({ world: requiresWorldReload });
-    } catch (error) {
-      console.error('TravelPace | Error saving mount configuration:', error);
-      ui.notifications.error('TravelPace.Errors.SaveFailed', { localize: true });
-    }
-
-    console.log('=== End Mount Config Form Handler Debug ===');
+    await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
+    ui.notifications.info('TravelPace.Settings.MountConfig.Saved', { localize: true });
+    MountConfigMenu.#reloadConfirm({ world: requiresWorldReload });
+    ui.notifications.error('TravelPace.Errors.SaveFailed', { localize: true });
   }
 }
 
