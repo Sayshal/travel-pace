@@ -36,10 +36,11 @@
 
 	{{!-- Pace Selection --}}
 	<div class="form-group">
-		<label for="travelpace-pace">{{localize "TravelPace.Labels.Pace"}} ({{this.paces.[0].speed}})</label>
+		<label for="travelpace-pace" id="travelpace-pace-label">{{localize "TravelPace.Labels.Pace"}}
+			({{paces.[0].speed}})</label>
 		<select id="travelpace-pace">
 			{{#each paces}}
-				<option value="{{this.id}}">{{localize this.label}}</option>
+				<option value="{{this.id}}" {{#if (eq this.id "normal")}}selected{{/if}}>{{localize this.label}}</option>
 			{{/each}}
 		</select>
 	</div>

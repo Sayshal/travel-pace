@@ -1,68 +1,13 @@
 import { CONST } from './config.js';
 
-const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
- * Register module settings and configuration
- * @module travel-pace/settings
- */
-
-// Register module settings
-Hooks.once('init', () => {
-  game.settings.register(CONST.moduleId, CONST.settings.useMetric, {
-    name: 'TravelPace.Settings.UseMetric.Name',
-    hint: 'TravelPace.Settings.UseMetric.Hint',
-    scope: 'world',
-    config: true,
-    type: Boolean,
-    default: false,
-    requiresReload: true
-  });
-
-  game.settings.register(CONST.moduleId, CONST.settings.showEffects, {
-    name: 'TravelPace.Settings.ShowEffects.Name',
-    hint: 'TravelPace.Settings.ShowEffects.Hint',
-    scope: 'world',
-    config: true,
-    type: Boolean,
-    default: true,
-    requiresReload: true
-  });
-
-  game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
-    name: 'TravelPace.Settings.EnabledMounts.Name',
-    hint: 'TravelPace.Settings.EnabledMounts.Hint',
-    scope: 'world',
-    config: false,
-    type: Object,
-    default: {}
-  });
-
-  game.settings.registerMenu(CONST.moduleId, 'mountConfig', {
-    name: 'TravelPace.Settings.MountConfig.Name',
-    label: 'TravelPace.Settings.MountConfig.Label',
-    hint: 'TravelPace.Settings.MountConfig.Hint',
-    icon: 'fas fa-horse',
-    type: MountConfigMenu,
-    restricted: true
-  });
-});
-
-/**
- * Mount configuration menu application
+ * Configuration menu for mounts and vehicles
  * @class
  * @extends {HandlebarsApplicationMixin(ApplicationV2)}
  */
-class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
-  static DEFAULT_OPTIONS = {
-    id: 'travel-pace-mount-config',
-    classes: ['travel-pace-app'],
-    tag: 'form',
-    form: { handler: MountConfigMenu.#formHandler, closeOnSubmit: true, submitOnChange: false },
-    position: { height: 'auto', width: 480 },
-    window: { title: 'TravelPace.Settings.MountConfig.Title', icon: 'fas fa-horse', resizable: false }
-  };
-
+export class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static PARTS = {
     form: {
       template: 'modules/travel-pace/templates/mount-config.hbs',
@@ -116,201 +61,188 @@ class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Shows a confirmation dialog for reloading the world/application
-   * @param {object} options - Configuration options
-   * @param {boolean} options.world - Whether to reload the entire world
-   * @returns {Promise<void>}
-   * @private
+   * Shows a notification and closes the application
+   * @param {PointerEvent} event - Form submission event
+   * @param {HTMLElement} form - The form element
+   * @param {FormDataExtended} formData - Processed form data
+   * @protected
    */
-  static async #reloadConfirm({ world = false } = {}) {
+  async _processSubmit(event, form, formData) {
     try {
-      const reload = await DialogV2.confirm({
-        id: 'travelpace-reload-confirm',
-        modal: true,
-        rejectClose: false,
-        window: { title: 'SETTINGS.ReloadPromptTitle' },
-        position: { width: 400 },
-        content: `<p>${game.i18n.localize('SETTINGS.ReloadPromptBody')}</p>`
+      const selectedMounts = {};
+      const mountIds = formData.object.mounts || [];
+      this.actors.forEach((actor) => {
+        selectedMounts[actor.id] = mountIds.includes(actor.id);
       });
-      if (!reload) return;
-      if (world && game.user.can('SETTINGS_MODIFY')) game.socket.emit('reload');
-      foundry.utils.debouncedReload();
+      await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, selectedMounts);
+      ui.notifications.info(game.i18n.localize('TravelPace.Settings.MountConfig.Saved'));
+      this.close();
     } catch (error) {
-      console.error('TravelPace | Error in reload confirmation:', error);
-      ui.notifications.error('Error occurred during reload process');
+      console.error('TravelPace | Error saving mount config:', error);
+      ui.notifications.error(game.i18n.localize('TravelPace.Errors.SaveFailed'));
     }
   }
 
   /**
-   * Get all potential mounts and vehicles
-   * @returns {Promise<Array>} Array of actor data objects
+   * Get potential mounts and vehicles from the world and compendiums
+   * @returns {Promise<Array>} Array of potential mount actors
    * @private
+   * @static
    */
   static async #getPotentialMounts() {
     const actors = [];
-    const mountFolder = game.folders.find((f) => f.name === 'Mounts' && f.type === 'Actor');
-    if (mountFolder) {
-      const folderMounts = game.actors.filter((a) => a.folder?.id === mountFolder.id);
-      for (const actor of folderMounts) {
-        actors.push({
-          id: actor.id,
-          name: actor.name,
-          type: actor.type,
-          speed: MountConfigMenu.#getActorSpeed(actor),
-          img: actor.img,
-          isWorld: true
-        });
-      }
-    }
-    for (const pack of game.packs) {
-      if (pack.documentName === 'Actor') {
-        const index = await pack.getIndex();
-        const vehicleIndices = index.filter((i) => i.type === 'vehicle');
-        for (const vehicleIndex of vehicleIndices) {
-          const vehicle = await pack.getDocument(vehicleIndex._id);
-          console.error('DEBUG', { index: vehicleIndex, vehicle: vehicle });
+    try {
+      for (const actor of game.actors) {
+        if (actor.type === 'npc' || actor.type === 'vehicle') {
           actors.push({
-            id: vehicleIndex.uuid,
-            name: vehicleIndex.name,
-            type: vehicleIndex.type,
-            speed: MountConfigMenu.#getActorSpeed(vehicle),
-            img: vehicleIndex.img,
-            isCompendium: true,
-            packId: pack.collection
+            id: actor.id,
+            name: actor.name,
+            type: actor.type,
+            img: actor.img,
+            isWorld: true
           });
         }
       }
+      for (const pack of game.packs) {
+        if (pack.metadata.type === 'Actor') {
+          try {
+            const content = await pack.getDocuments();
+            for (const actor of content) {
+              if (actor.type === 'vehicle') {
+                actors.push({
+                  id: actor.uuid,
+                  name: actor.name,
+                  type: actor.type,
+                  img: actor.img,
+                  isWorld: false,
+                  pack: pack.title
+                });
+              }
+            }
+          } catch (err) {
+            console.warn(`TravelPace | Could not load compendium ${pack.title}:`, err);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('TravelPace | Error getting potential mounts:', error);
     }
     return actors;
   }
 
   /**
-   * Create a custom widget for the mounts selection
-   * @param {DataField} field - The field being rendered
-   * @param {object} groupConfig - Configuration for the form group
-   * @param {object} inputConfig - Configuration for the input
+   * Create the mounts selection widget
+   * @param {object} field - The field configuration
+   * @param {object} groupConfig - Group configuration
+   * @param {object} inputConfig - Input configuration
    * @param {MountConfigMenu} app - The application instance
-   * @returns {HTMLElement} The custom form group element
+   * @returns {HTMLElement} The widget element
    * @private
+   * @static
    */
   static #createMountsWidget(field, groupConfig, inputConfig, app) {
-    try {
-      const fg = document.createElement('div');
-      fg.className = 'form-group stacked mounts';
-      fg.id = 'travelpace-mounts-widget';
-      const ff = fg.appendChild(document.createElement('div'));
-      ff.className = 'form-fields';
-      if (groupConfig.hint) fg.insertAdjacentHTML('beforeend', `<p class="hint">${groupConfig.hint}</p>`);
-      const actors = app.actors || [];
-      if (!actors || actors.length === 0) {
-        ff.insertAdjacentHTML('beforeend', `<p class="notification warning">${game.i18n.localize('TravelPace.Settings.MountConfig.NoMounts')}</p>`);
-        return fg;
-      }
-      const worldVehicles = game.i18n.localize('TravelPace.Settings.MountConfig.WorldVehicles');
-      const worldNPCs = game.i18n.localize('TravelPace.Settings.MountConfig.WorldNPCs');
-      const compendiumVehicles = game.i18n.localize('TravelPace.Settings.MountConfig.CompendiumVehicles');
-      const options = actors.map((actor) => {
-        let group;
-        if (actor.isCompendium) group = compendiumVehicles;
-        else group = actor.type === 'vehicle' ? worldVehicles : worldNPCs;
-        return { group, value: actor.id, label: `${actor.name} (${actor.speed})` };
+    const div = document.createElement('div');
+    div.classList.add('mounts-widget');
+    if (!app.actors || app.actors.length === 0) {
+      div.innerHTML = `<p>${game.i18n.localize('TravelPace.Settings.MountConfig.NoActors')}</p>`;
+      return div;
+    }
+    const worldNPCs = app.actors.filter((a) => a.isWorld && a.type === 'npc');
+    const worldVehicles = app.actors.filter((a) => a.isWorld && a.type === 'vehicle');
+    const compendiumVehicles = app.actors.filter((a) => !a.isWorld);
+    if (worldNPCs.length > 0) {
+      const section = document.createElement('div');
+      section.classList.add('mount-section');
+      section.innerHTML = `<h4>${game.i18n.localize('TravelPace.Settings.MountConfig.WorldNPCs')}</h4>`;
+      worldNPCs.forEach((actor) => {
+        const label = document.createElement('label');
+        label.classList.add('checkbox');
+        label.innerHTML = `
+          <input type="checkbox" name="mounts" value="${actor.id}">
+          <img src="${actor.img}" alt="${actor.name}" width="24" height="24">
+          ${actor.name}
+        `;
+        section.appendChild(label);
       });
-      const multiSelect = foundry.applications.fields.createMultiSelectInput({
-        ...inputConfig,
-        name: 'mounts',
-        options,
-        sort: true,
-        value: inputConfig.value || []
+      div.appendChild(section);
+    }
+    if (worldVehicles.length > 0) {
+      const section = document.createElement('div');
+      section.classList.add('mount-section');
+      section.innerHTML = `<h4>${game.i18n.localize('TravelPace.Settings.MountConfig.WorldVehicles')}</h4>`;
+      worldVehicles.forEach((actor) => {
+        const label = document.createElement('label');
+        label.classList.add('checkbox');
+        label.innerHTML = `
+          <input type="checkbox" name="mounts" value="${actor.id}">
+          <img src="${actor.img}" alt="${actor.name}" width="24" height="24">
+          ${actor.name}
+        `;
+        section.appendChild(label);
       });
-      ff.appendChild(multiSelect);
-      return fg;
-    } catch (error) {
-      console.error('TravelPace | Error creating mounts widget:', error);
-      const fg = document.createElement('div');
-      fg.className = 'form-group';
-      fg.insertAdjacentHTML('beforeend', '<p class="notification error">Error creating mount selection widget</p>');
-      return fg;
+      div.appendChild(section);
     }
-  }
-
-  /**
-   * Get the speed value for an actor, formatting it appropriately
-   * @param {Actor} actor - The actor to get speed for
-   * @returns {string} Formatted speed value
-   * @private
-   */
-  static #getActorSpeed(actor) {
-    try {
-      if (actor.type === 'vehicle') {
-        const movement = actor.system.attributes?.movement || {};
-        if (movement.units === 'mi' || movement.units === 'km') {
-          const speeds = Object.entries(movement)
-            .filter(([key, value]) => typeof value === 'number' && key !== 'units')
-            .map(([key, value]) => value);
-          if (speeds.length) return `${Math.max(...speeds)} ${movement.units}/hour`;
-          return 'Unknown';
-        }
-      }
-      const speed = actor.system.attributes?.movement?.walk || 0;
-      return `${speed} ft`;
-    } catch (error) {
-      console.error('TravelPace | Error getting actor speed:', error);
-      return 'Unknown';
+    if (compendiumVehicles.length > 0) {
+      const section = document.createElement('div');
+      section.classList.add('mount-section');
+      section.innerHTML = `<h4>${game.i18n.localize('TravelPace.Settings.MountConfig.CompendiumVehicles')}</h4>`;
+      compendiumVehicles.forEach((actor) => {
+        const label = document.createElement('label');
+        label.classList.add('checkbox');
+        label.innerHTML = `
+          <input type="checkbox" name="mounts" value="${actor.id}">
+          <img src="${actor.img}" alt="${actor.name}" width="24" height="24">
+          ${actor.name} (${actor.pack})
+        `;
+        section.appendChild(label);
+      });
+      div.appendChild(section);
     }
-  }
-
-  /**
-   * Process form submission for the mount configuration
-   * @param {Event} _event - The form submission event
-   * @param {HTMLFormElement} _form - The form element
-   * @param {FormDataExtended} formData - The processed form data
-   * @returns {Promise<void>}
-   * @private
-   */
-  static async #formHandler(_event, _form, formData) {
-    try {
-      const enabledMounts = {};
-      let selectedMounts = formData.object.mounts || [];
-      if (Array.isArray(selectedMounts)) {
-        selectedMounts.forEach((id) => {
-          enabledMounts[id] = true;
-        });
-      } else if (selectedMounts) {
-        enabledMounts[selectedMounts] = true;
-      }
-      await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, enabledMounts);
-      ui.notifications.info(game.i18n.localize('TravelPace.Settings.MountConfig.Saved'));
-      const requiresWorldReload = true;
-      await MountConfigMenu.#reloadConfirm({ world: requiresWorldReload });
-    } catch (error) {
-      console.error('TravelPace | Error saving mount configuration:', error);
-      ui.notifications.error(game.i18n.localize('TravelPace.Errors.SaveFailed'));
-    }
+    return div;
   }
 }
 
 /**
- * Create the Mounts folder if it doesn't exist
- * @returns {Promise<void>}
+ * Register module settings
  */
-async function createMountsFolder() {
+Hooks.once('init', () => {
   try {
-    if (!game.folders.find((f) => f.name === 'Mounts' && f.type === 'Actor')) {
-      await Folder.create({
-        name: 'Mounts',
-        type: 'Actor',
-        color: '#a97f33',
-        sort: 30000,
-        sorting: 'a',
-        descriptions: 'Mounts folder created by the Travel Pace Calculator module.'
-      });
-      console.log('TravelPace | Created Mounts folder');
-    }
-  } catch (error) {
-    console.error('TravelPace | Error creating Mounts folder:', error);
-  }
-}
+    game.settings.register(CONST.moduleId, CONST.settings.useMetric, {
+      name: game.i18n.localize('TravelPace.Settings.UseMetric.Name'),
+      hint: game.i18n.localize('TravelPace.Settings.UseMetric.Hint'),
+      scope: 'world',
+      config: true,
+      type: Boolean,
+      default: false
+    });
 
-Hooks.once('ready', () => {
-  if (game.user.isGM) createMountsFolder();
+    game.settings.register(CONST.moduleId, CONST.settings.showEffects, {
+      name: game.i18n.localize('TravelPace.Settings.ShowEffects.Name'),
+      hint: game.i18n.localize('TravelPace.Settings.ShowEffects.Hint'),
+      scope: 'world',
+      config: true,
+      type: Boolean,
+      default: true
+    });
+
+    game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
+      name: game.i18n.localize('TravelPace.Settings.EnabledMounts.Name'),
+      hint: game.i18n.localize('TravelPace.Settings.EnabledMounts.Hint'),
+      scope: 'world',
+      config: false,
+      type: Object,
+      default: {}
+    });
+
+    game.settings.registerMenu(CONST.moduleId, 'mountConfigMenu', {
+      name: game.i18n.localize('TravelPace.Settings.MountConfig.Name'),
+      label: game.i18n.localize('TravelPace.Settings.MountConfig.Label'),
+      hint: game.i18n.localize('TravelPace.Settings.MountConfig.Hint'),
+      icon: 'fas fa-horse',
+      type: MountConfigMenu,
+      restricted: true
+    });
+  } catch (error) {
+    console.error('TravelPace | Error registering settings:', error);
+  }
 });

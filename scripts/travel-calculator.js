@@ -1,13 +1,13 @@
 import { TravelPaceApp } from './app.js';
 import { CONST } from './config.js';
-import { calculateDistance, calculateTime, convertDistance, formatTime, getMountSpeedModifier, getPaceEffects } from './helpers.js';
+import { calculateDistance, calculateTime, formatTime, getMountSpeedModifier, getPaceEffects } from './helpers.js';
 
 /**
- * Main calculator class for handling travel pace calculations and UI interaction
+ * Main travel calculator module
  * @class
  */
 export class TravelCalculator {
-  static requestor;
+  static requestor = undefined;
 
   /**
    * Add the travel pace button to the token controls
@@ -34,128 +34,104 @@ export class TravelCalculator {
   }
 
   /**
-   * Open the travel pace calculator or bring it to front if already open
+   * Open the travel pace calculator
    * @static
    */
   static openCalculator() {
     try {
-      if (!TravelCalculator.requestor?.rendered) {
+      if (TravelCalculator.requestor && !TravelCalculator.requestor.rendered) TravelCalculator.requestor = undefined;
+      if (!TravelCalculator.requestor) {
         TravelCalculator.requestor = new TravelPaceApp();
         TravelCalculator.requestor.render(true);
       } else {
-        TravelCalculator.requestor.bringToFront();
+        TravelCalculator.requestor.bringToTop();
       }
     } catch (error) {
       console.error('TravelPace | Error opening calculator:', error);
-      ui.notifications.error('TravelPace.Errors.OpeningCalculator', { localize: true });
+      ui.notifications.error(game.i18n.localize('TravelPace.Errors.OpeningCalculator'));
     }
   }
 
   /**
-   * Calculate travel time or distance based on input data
-   * @param {Object} data - Calculator input data
+   * Submit a travel calculation and create a chat message
+   * @param {Object} data - Calculation data
+   * @returns {Promise<Object|null>} - Calculation result or null if failed
+   * @static
+   */
+  static async submitCalculation(data) {
+    try {
+      const result = TravelCalculator.calculateTravel(data);
+      if (result) {
+        await TravelCalculator.createChatMessage(result);
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error('TravelPace | Error submitting calculation:', error);
+      ui.notifications.error(game.i18n.localize('TravelPace.Errors.CalculationFailed'));
+      return null;
+    }
+  }
+
+  /**
+   * Calculate travel time or distance
+   * @param {Object} data - Input data
    * @returns {Object} - Calculation results
    * @static
    */
   static calculateTravel(data) {
     try {
-      const { mode, distance, time, pace, mountId } = data;
+      const { mode, pace } = data;
+      const speedModifier = getMountSpeedModifier(data.mountId);
+      const paceEffect = getPaceEffects(pace);
       const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-      const speedModifier = getMountSpeedModifier(mountId);
-      const isVehicleWithDirectSpeed = typeof speedModifier === 'string' && speedModifier.includes('/hour');
       if (mode === 'distance') {
-        const result = TravelCalculator.#calculateDistanceToTime(distance, pace, speedModifier, useMetric, isVehicleWithDirectSpeed);
-        result.mountId = mountId;
-        return result;
-      } else if (mode === 'time') {
-        const result = TravelCalculator.#calculateTimeToDistance(time, pace, speedModifier, useMetric);
-        result.mountId = mountId;
-        return result;
+        const { distance } = data;
+        const distanceInFeet = useMetric ? distance * CONST.conversion.ftPerKm : distance * CONST.conversion.ftPerMile;
+        const timeData = calculateTime(distanceInFeet, pace, speedModifier);
+        const timeFormatted = formatTime(timeData);
+        return {
+          mode,
+          input: {
+            distance,
+            unit: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation'),
+            pace
+          },
+          output: { timeFormatted },
+          paceEffect,
+          speedModifier,
+          mountId: data.mountId
+        };
+      } else {
+        const { time } = data;
+        const totalMinutes = time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + (time.minutes || 0);
+        const distanceData = calculateDistance(totalMinutes, pace, speedModifier);
+        const distance = useMetric ? distanceData.kilometers : distanceData.miles;
+        return {
+          mode,
+          input: { time, pace },
+          output: {
+            distance,
+            unit: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation')
+          },
+          paceEffect,
+          speedModifier,
+          mountId: data.mountId
+        };
       }
-      console.warn(`TravelPace | Invalid calculation mode: ${mode}`);
-      return { mode: 'unknown', input: {}, output: {}, paceEffect: '', mountId };
     } catch (error) {
       console.error('TravelPace | Error in calculateTravel:', error);
+      const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
       return {
-        mode: 'error',
-        input: {},
-        output: {
-          timeFormatted: game.i18n.localize('TravelPace.Errors.CalculationFailed'),
+        mode: 'distance',
+        input: {
           distance: 0,
-          unit: ''
+          unit: useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation'),
+          pace: 'normal'
         },
+        output: { timeFormatted: game.i18n.localize('TravelPace.Time.NoTime') },
         paceEffect: '',
-        mountId: null
-      };
-    }
-  }
-
-  /**
-   * Calculate time based on distance
-   * @param {number} distance - Distance value
-   * @param {string} pace - Travel pace
-   * @param {number|string} speedModifier - Speed modifier or direct speed
-   * @param {boolean} useMetric - Whether to use metric units
-   * @param {boolean} isVehicleWithDirectSpeed - Whether this is a vehicle with direct speed
-   * @returns {Object} - Calculation result
-   * @private
-   */
-  static #calculateDistanceToTime(distance, pace, speedModifier, useMetric, isVehicleWithDirectSpeed) {
-    try {
-      const fromUnit = useMetric ? 'km' : 'mi';
-      const useDndConversion = !isVehicleWithDirectSpeed;
-      const distanceInFeet = convertDistance(distance, fromUnit, 'ft', useDndConversion);
-      const timeData = calculateTime(distanceInFeet, pace, speedModifier, useDndConversion);
-      return {
-        mode: 'distance',
-        input: { distance, unit: useMetric ? 'km' : 'mi', pace },
-        output: { time: timeData, timeFormatted: formatTime(timeData) },
-        paceEffect: getPaceEffects(pace),
-        speedModifier
-      };
-    } catch (error) {
-      console.error('TravelPace | Error calculating distance to time:', error);
-      return {
-        mode: 'distance',
-        input: { distance, pace },
-        output: { time: {}, timeFormatted: 'Error' },
-        paceEffect: '',
-        speedModifier
-      };
-    }
-  }
-
-  /**
-   * Calculate distance based on time
-   * @param {Object} time - Time data (days, hours, minutes)
-   * @param {string} pace - Travel pace
-   * @param {number|string} speedModifier - Speed modifier or direct speed
-   * @param {boolean} useMetric - Whether to use metric units
-   * @returns {Object} - Calculation result
-   * @private
-   */
-  static #calculateTimeToDistance(time, pace, speedModifier, useMetric) {
-    try {
-      const { days = 0, hours = 0, minutes = 0, totalMinutes } = time;
-      const calculatedMinutes = totalMinutes || days * CONST.timeUnits.hoursPerDay * CONST.timeUnits.minutesPerHour + hours * CONST.timeUnits.minutesPerHour + minutes;
-      const distanceData = calculateDistance(calculatedMinutes, pace, speedModifier);
-      const distanceValue = useMetric ? distanceData.kilometers : distanceData.miles;
-      const unit = useMetric ? 'km' : 'mi';
-      return {
-        mode: 'time',
-        input: { time: { days, hours, minutes }, totalMinutes: calculatedMinutes, pace },
-        output: { distance: distanceValue, unit },
-        paceEffect: getPaceEffects(pace),
-        speedModifier
-      };
-    } catch (error) {
-      console.error('TravelPace | Error calculating time to distance:', error);
-      return {
-        mode: 'time',
-        input: { time, pace },
-        output: { distance: 0, unit: useMetric ? 'km' : 'mi' },
-        paceEffect: '',
-        speedModifier
+        speedModifier: 1
       };
     }
   }
@@ -193,7 +169,7 @@ export class TravelCalculator {
       return ChatMessage.create({ speaker, content, flavor: '' });
     } catch (error) {
       console.error('TravelPace | Error creating chat message:', error);
-      ui.notifications.error('TravelPace.Errors.MessageCreationFailed', { localize: true });
+      ui.notifications.error(game.i18n.localize('TravelPace.Errors.MessageCreationFailed'));
       return null;
     }
   }
@@ -219,34 +195,35 @@ export class TravelCalculator {
           if (speeds.length) {
             const maxSpeed = Math.max(...speeds);
             const unit =
-              useMetric && movement.units === 'mi' ? 'km'
-              : !useMetric && movement.units === 'km' ? 'mi'
-              : movement.units;
+              useMetric && movement.units === 'mi' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation')
+              : !useMetric && movement.units === 'km' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation')
+              : movement.units === 'mi' ? game.i18n.localize('DND5E.UNITS.DISTANCE.Mile.Abbreviation')
+              : game.i18n.localize('DND5E.UNITS.DISTANCE.Kilometer.Abbreviation');
             const conversionFactor =
               useMetric && movement.units === 'mi' ? CONST.conversion.miToKm
               : !useMetric && movement.units === 'km' ? CONST.conversion.kmToMi
               : 1;
             const adjustedSpeed = (maxSpeed * paceMultiplier * conversionFactor).toFixed(1);
-            speedText = `${adjustedSpeed} ${unit}/hour`;
+            speedText = game.i18n.format('TravelPace.Speed.Format.PerHour', { speed: adjustedSpeed, unit });
           }
         } else {
           const speed = movement.walk || 0;
-          const unit = useMetric ? 'm' : 'ft';
+          const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Meter.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation');
           const baseSpeed = useMetric ? Math.round(speed * CONST.conversion.mPerFt) : speed;
           const adjustedSpeed = Math.round(baseSpeed * paceMultiplier);
-          speedText = `${adjustedSpeed} ${unit}/min`;
+          speedText = game.i18n.format('TravelPace.Speed.Format.PerMinute', { speed: adjustedSpeed, unit });
         }
       } else {
         const speed = actor.system.attributes?.movement?.walk || 0;
-        const unit = useMetric ? 'm' : 'ft';
+        const unit = useMetric ? game.i18n.localize('DND5E.UNITS.DISTANCE.Meter.Abbreviation') : game.i18n.localize('DND5E.UNITS.DISTANCE.Foot.Abbreviation');
         const baseSpeed = useMetric ? Math.round(speed * CONST.conversion.mPerFt) : speed;
         const adjustedSpeed = Math.round(baseSpeed * paceMultiplier);
-        speedText = `${adjustedSpeed} ${unit}/min`;
+        speedText = game.i18n.format('TravelPace.Speed.Format.PerMinute', { speed: adjustedSpeed, unit });
       }
-      return speedText || (useMetric ? '100 m/min' : '300 ft/min');
+      return speedText || (useMetric ? game.i18n.localize('TravelPace.Speed.Default.Normal.Metric') : game.i18n.localize('TravelPace.Speed.Default.Normal.Imperial'));
     } catch (error) {
       console.error('TravelPace | Error getting formatted vehicle speed:', error);
-      return useMetric ? '100 m/min' : '300 ft/min';
+      return useMetric ? game.i18n.localize('TravelPace.Speed.Default.Normal.Metric') : game.i18n.localize('TravelPace.Speed.Default.Normal.Imperial');
     }
   }
 }
