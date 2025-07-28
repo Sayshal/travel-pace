@@ -146,47 +146,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @protected
    */
   _onClose(options) {
-    try {
-      if (super._onClose) {
-        super._onClose(options);
-      }
-
-      // Explicitly remove event listeners for this application
-      if (this.element) {
-        const element = this.element;
-        // Remove all event listeners by replacing the element with its clone
-        element.replaceWith(element.cloneNode(true));
-      }
-
-      // Clean up the static requestor reference
-      if (TravelCalculator.requestor === this) {
-        TravelCalculator.requestor = undefined;
-      }
-
-      // Remove from global apps registry
-      const index = game.users.apps.indexOf(this);
-      if (index > -1) game.users.apps.splice(index, 1);
-
-      // Only proceed if the canvas is ready and UI is initialized
-      if (!canvas?.ready || !ui?.controls) return;
-
-      // Get the current control set
-      const controls = ui.controls;
-
-      // Only proceed if we're currently on the token control set
-      if (controls.activeControl === 'token') {
-        // Initialize the controls with the select tool
-        controls.initialize({
-          control: 'token',
-          tool: 'select'
-        });
-
-        // This will handle updating the UI state and refreshing as needed
-        controls.render();
-      }
-    } catch (error) {
-      console.error('TravelPace | Error in onClose:', error);
-    }
+    super._onClose(options);
+    if (TravelCalculator.requestor === this) TravelCalculator.requestor = undefined;
+    if (!canvas?.ready || !ui?.controls) return;
+    if (ui.controls.control?.name === 'tokens' && ui.controls.tool?.name === 'travel-pace') ui.controls.activate({ control: 'tokens', tool: 'select' });
   }
 
   // ----------------------

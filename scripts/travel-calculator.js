@@ -23,7 +23,9 @@ export class TravelCalculator {
           title: game.i18n.localize('TravelPace.Button'),
           icon: 'fas fa-route',
           visible: true,
-          onChange: () => TravelCalculator.openCalculator(),
+          onChange: (event, active) => {
+            if (active) TravelCalculator.openCalculator();
+          },
           button: false
         };
       }
