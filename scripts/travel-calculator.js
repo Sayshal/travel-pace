@@ -196,15 +196,8 @@ export class TravelCalculator {
             .map(([key, value]) => value);
           if (speeds.length) {
             const maxSpeed = Math.max(...speeds);
-            const unit =
-              useMetric && movement.units === miAbbrev ? kmAbbrev
-              : !useMetric && movement.units === kmAbbrev ? miAbbrev
-              : movement.units === miAbbrev ? miAbbrev
-              : kmAbbrev;
-            const conversionFactor =
-              useMetric && movement.units === miAbbrev ? CONST.conversion.miToKm
-              : !useMetric && movement.units === kmAbbrev ? CONST.conversion.kmToMi
-              : 1;
+            const unit = useMetric && movement.units === miAbbrev ? kmAbbrev : !useMetric && movement.units === kmAbbrev ? miAbbrev : movement.units === miAbbrev ? miAbbrev : kmAbbrev;
+            const conversionFactor = useMetric && movement.units === miAbbrev ? CONST.conversion.miToKm : !useMetric && movement.units === kmAbbrev ? CONST.conversion.kmToMi : 1;
             const adjustedSpeed = (maxSpeed * paceMultiplier * conversionFactor).toFixed(1);
             speedText = game.i18n.format('TravelPace.Speed.Format.PerHour', { speed: adjustedSpeed, unit });
           }

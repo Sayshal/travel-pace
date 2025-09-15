@@ -1,37 +1,47 @@
 {
-  "id": "travel-pace",
-  "title": "Travel Pace Calculator",
-  "description": "Calculate travel times and distances based on D&D 5E travel pace rules.",
-  "version": "",
-  "bugs": "https://github.com/Sayshal/travel-pace/issues",
-  "changelog": "https://github.com/Sayshal/travel-pace/releases",
-  "license": "https://github.com/Sayshal/travel-pace?tab=License-1-ov-file",
-  "readme": "https://github.com/Sayshal/travel-pace?tab=readme-ov-file",
   "authors": [
     {
-      "name": "Tyler",
       "discord": "Tyler",
+      "name": "Tyler",
       "url": "https://github.com/Sayshal"
     },
     {
-      "name": "Innocenti",
       "discord": "Innocenti#1455",
-      "email": "renato.innocenti@gmail.com"
+      "email": "renato.innocenti@gmail.com",
+      "name": "Innocenti"
     }
   ],
+  "bugs": "https://github.com/Sayshal/travel-pace/issues",
+  "changelog": "https://github.com/Sayshal/travel-pace/releases",
   "compatibility": {
     "maximum": "13.x",
     "minimum": "13",
     "verified": "13.346"
   },
+  "description": "Calculate travel times and distances based on D&D 5E travel pace rules.",
   "download": "",
-  "esmodules": ["scripts/settings.js", "scripts/travel-calculator.js", "scripts/app.js", "scripts/helpers.js"],
+  "esmodules": [
+    "scripts/settings.js",
+    "scripts/travel-calculator.js",
+    "scripts/app.js",
+    "scripts/helpers.js"
+  ],
   "flags": {
     "hotReload": {
-      "extensions": ["css", "html", "hbs", "json"],
-      "paths": ["styles", "lang", "templates"]
+      "extensions": [
+        "css",
+        "html",
+        "hbs",
+        "json"
+      ],
+      "paths": [
+        "styles",
+        "lang",
+        "templates"
+      ]
     }
   },
+  "id": "travel-pace",
   "languages": [
     {
       "lang": "en",
@@ -39,7 +49,9 @@
       "path": "lang/en.json"
     }
   ],
-  "manifest": "https://github.com/Sayshal/travel-pace/releases/latest/module.json",
+  "license": "https://github.com/Sayshal/travel-pace?tab=License-1-ov-file",
+  "manifest": "https://github.com/Sayshal/travel-pace/releases/latest/download/module.json",
+  "readme": "https://github.com/Sayshal/travel-pace?tab=readme-ov-file",
   "relationships": {
     "systems": [
       {
@@ -54,6 +66,10 @@
     ]
   },
   "socket": true,
-  "styles": ["styles/travel-pace.css"],
-  "url": "https://github.com/Sayshal/travel-pace"
+  "styles": [
+    "styles/travel-pace.css"
+  ],
+  "title": "Travel Pace Calculator",
+  "url": "https://github.com/Sayshal/travel-pace",
+  "version": ""
 }
