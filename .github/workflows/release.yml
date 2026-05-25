@@ -190,7 +190,7 @@ jobs:
           compat_value = compat_min if compat_min == upper else f'{compat_min} - {upper}'
 
           payload = json.dumps({
-              'content': '<@&1384920094597185556> <@&1384920544251482286>',
+              'content': '<@&1384920094597185556> <@&1474661656737878196>',
               'embeds': [{
                   'title': title,
                   'url': release_page,
