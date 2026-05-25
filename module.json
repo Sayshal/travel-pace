@@ -4,27 +4,18 @@
       "discord": "Tyler",
       "name": "Tyler",
       "url": "https://github.com/Sayshal"
-    },
-    {
-      "discord": "Innocenti#1455",
-      "email": "renato.innocenti@gmail.com",
-      "name": "Innocenti"
     }
   ],
   "bugs": "https://github.com/Sayshal/travel-pace/issues",
   "changelog": "https://github.com/Sayshal/travel-pace/releases",
   "compatibility": {
-    "maximum": "13.x",
-    "minimum": "13",
-    "verified": "13.346"
+    "minimum": "14",
+    "verified": "14.363"
   },
   "description": "Calculate travel times and distances based on D&D 5E travel pace rules.",
   "download": "",
   "esmodules": [
-    "scripts/settings.js",
-    "scripts/travel-calculator.js",
-    "scripts/app.js",
-    "scripts/helpers.js"
+    "travel-pace.mjs"
   ],
   "flags": {
     "hotReload": {
@@ -56,9 +47,8 @@
     "systems": [
       {
         "compatibility": {
-          "maximum": "5.x",
-          "minimum": "5",
-          "verified": "5.0.4"
+          "minimum": "5.3.0",
+          "verified": "5.3.3"
         },
         "id": "dnd5e",
         "type": "system"

@@ -7,60 +7,46 @@
 ![Foundry Version](https://img.shields.io/endpoint?url=https%3A%2F%2Ffoundryshields.com%2Fversion%3Fstyle%3Dfor-the-badge%26url%3Dhttps%3A%2F%2Fgithub.com%2FSayshal%2Ftravel-pace%2Freleases%2Flatest%2Fdownload%2Fmodule.json)
 ![D&D5E Version](https://img.shields.io/endpoint?url=https%3A%2F%2Ffoundryshields.com%2Fsystem%3FnameType%3Dfoundry%26showVersion%3D1%26style%3Dfor-the-badge%26url%3Dhttps%3A%2F%2Fgithub.com%2FSayshal%2Ftravel-pace%2Freleases%2Flatest%2Fdownload%2Fmodule.json)
 
-## Supporting The Module
+## Supporting the module
 
+[![Patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/3deathsaves)
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/sayshal)
 [![Discord](https://dcbadge.limes.pink/api/server/PzzUwU9gdz)](https://discord.gg/PzzUwU9gdz)
 
-## Introduction
+## What it does
 
-**Travel Pace** is a straightforward module for Foundry VTT that helps calculate travel times for D&D 5E parties. Using the official rules from the SRD (pg.84), this module makes
-it easy to determine how long your party's journey will take based on their speed and terrain conditions.
+A calculator dialog for D&D 5E travel pace. Convert a distance into how long the journey takes, or convert a time budget into how far the party can go. Results post to chat with optional rules text for the pace's mechanical effects.
 
 ## Features
 
-- **Simple Calculation**: Input distance and get travel time based on party speed
-- **Terrain Consideration**: Automatically accounts for difficult terrain
-- **Party Speed**: Uses the lowest speed in the party for accurate calculations
-- **Rule Compliance**: Follows official D&D 5E travel pace rules
-- **Easy Interface**: Simple, intuitive controls for quick calculations
-- **Configurable Settings**: Support for metric conversion and forced march rules
-- **Chat Integration**: Detailed travel information sent to chat
+- Two calculation modes: Distance → Time and Time → Distance
+- The three SRD travel paces (Fast / Normal / Slow) with their standard multipliers
+- Mount and vehicle support: pick from a configurable list of world or compendium actors. Walking actors use their movement speed; vehicles use their speed in mi/hour or km/hour from their actor data.
+- Imperial or metric units, set per-world
+- Pace effects (Stealth / Perception disadvantage, etc.) included on the chat card by default
 
 ## Installation
 
-Install directly through Foundry's module manager or manually using this manifest URL:
+Install through Foundry's module manager, or paste the manifest URL:
 `https://github.com/Sayshal/travel-pace/releases/latest/download/module.json`
 
 ## Usage
 
-### Basic Operation
+1. Open the calculator from the Travel Pace tool in the token scene-control palette.
+2. Pick Distance → Time or Time → Distance.
+3. Enter your distance (or days + hours).
+4. Pick the pace. The label updates to show the resulting speed.
+5. Optional: pick a configured mount or vehicle. The pace label adjusts to that actor's movement.
+6. Send to Chat.
 
-1. Select the tokens of your traveling party members
-2. Click the Travel Pace button in the basic control bar
-3. Input your travel distance for both normal and difficult terrain
-4. Select terrain type (road/trail or difficult terrain)
-5. Choose your speed ratio (Normal, 1/2, 1/4, or 1/6)
-6. Get your calculated travel time instantly
+To configure which actors appear in the mount dropdown, open Module Settings → Travel Pace → Configure Mounts & Vehicles. Pick from world NPCs, world vehicles, and vehicle actors in any installed compendium.
 
-### Settings Configuration
+## Settings
 
-- **Forced March on Chat**: Toggle display of forced march rules in chat
-- **Convert to Metric System**: Support for metric measurement systems
-
-### Speed Ratio Options
-
-- Normal (SRD) → 3 mi/h
-- 1/2 Normal → 1.5 mi/h
-- 1/4 Normal → 0.75 mi/h
-- 1/6 Normal → 0.5 mi/h (Icewind Dale: Rime of the Frostmaiden rules)
-
-## Tips
-
-- Always use the lowest movement speed in your group for calculations
-- Consider any terrain without a road or trail as difficult terrain
-- Remember players can only travel 8 hours per day without forced march
-- Calculations follow the official rules from pg.84 of the SRD
+- **Use Metric System**: switch all distance displays to kilometers / meters.
+- **Show Pace Effects in Chat**: include the SRD rules text for the selected pace on the chat card.
+- **Configure Mounts & Vehicles**: opens the mount picker.
 
 ## Support
 
-If you encounter any issues or have feature requests, please file them on the [issue tracker](https://github.com/Sayshal/travel-pace/issues).
+If you hit a bug or want a feature, file it on the [issue tracker](https://github.com/Sayshal/travel-pace/issues).
