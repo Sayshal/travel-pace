@@ -12,7 +12,7 @@
     "minimum": "14",
     "verified": "14.363"
   },
-  "description": "Calculate travel times and distances based on D&D 5E travel pace rules.",
+  "description": "Answers \"how long to get there?\" and \"how far before nightfall?\" from one calculator: enter a distance to get the travel time, or a time budget to get the distance, at Fast, Normal, or Slow pace. It pulls speed from a mount or vehicle's own stats, works in imperial or metric, and posts to chat with the pace's Stealth and Perception penalties.",
   "download": "",
   "esmodules": [
     "travel-pace.mjs"
