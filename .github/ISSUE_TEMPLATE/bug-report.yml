@@ -1,7 +1,7 @@
 name: Bug Report
 description: File a bug report
 title: '[BUG] '
-labels: ['bug']
+labels: ['type:bug']
 assignees:
   - Sayshal
 body:
@@ -17,23 +17,12 @@ body:
       placeholder: Tell us what you see!
     validations:
       required: true
-  - type: textarea
-    id: reproduction
-    attributes:
-      label: Steps to Reproduce
-      description: How can we reproduce the bug?
-      placeholder: |
-        1. Open ...
-        2. Click ...
-        3. See error
-    validations:
-      required: true
   - type: input
     id: module-version
     attributes:
       label: Module Version
       description: What version of the package?
-      placeholder: '5.0.1'
+      placeholder: '1.0.0'
     validations:
       required: true
   - type: input
@@ -41,17 +30,17 @@ body:
     attributes:
       label: Foundry Version
       description: What version of foundry?
-      placeholder: '14.363'
+      placeholder: '13.347'
     validations:
       required: true
   - type: input
     id: system-version
     attributes:
-      label: D&D Version
-      description: What version of the system?
-      placeholder: '5.0.4'
+      label: Game System
+      description: What game system and version? (e.g., dnd5e 5.2.4, pf2e 6.1.0)
+      placeholder: 'dnd5e 5.2.4'
     validations:
-      required: true
+      required: false
   - type: textarea
     id: logs
     attributes:
