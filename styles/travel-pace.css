@@ -1,30 +1,23 @@
 :root {
-  --travel-pace-bg-highlight: rgb(255 255 255 / 5%);
-  --travel-pace-border-color: rgb(255 255 255 / 15%);
   --travel-pace-border-radius: 0.313rem;
-  --travel-pace-button-bg: rgb(75 74 68);
-  --travel-pace-button-bg-hover: rgb(96 94 84);
-  --travel-pace-divider: rgb(255 255 255 / 10%);
-  --travel-pace-error-bg: rgb(244 67 54 / 15%);
-  --travel-pace-error-border: rgb(244 67 54 / 50%);
   --travel-pace-shadow: 0 0 0.313rem rgb(0 0 0 / 50%);
   --travel-pace-spacing-sm: 0.625rem;
   --travel-pace-spacing-xs: 0.313rem;
-  --travel-pace-text-on-color: rgb(255 255 255);
-  --travel-pace-text-primary: rgb(241 241 241);
-  --travel-pace-text-secondary: rgb(186 186 186);
   --travel-pace-transition: all 0.2s ease;
 }
 
-.theme-light {
-  --travel-pace-bg-highlight: rgb(0 0 0 / 5%);
-  --travel-pace-border-color: rgb(0 0 0 / 15%);
-  --travel-pace-divider: rgb(0 0 0 / 10%);
-  --travel-pace-error-bg: rgb(211 47 47 / 12%);
-  --travel-pace-error-border: rgb(211 47 47 / 50%);
-  --travel-pace-shadow: 0 0 0.313rem rgb(0 0 0 / 20%);
-  --travel-pace-text-primary: rgb(17 17 17);
-  --travel-pace-text-secondary: rgb(68 68 68);
+.travel-calculator-window,
+.travel-pace-app {
+  --travel-pace-bg-highlight: var(--atlas-bg-hover, rgb(255 255 255 / 5%));
+  --travel-pace-border-color: var(--atlas-border, rgb(255 255 255 / 15%));
+  --travel-pace-button-bg: var(--atlas-button-bg, rgb(75 74 68));
+  --travel-pace-button-bg-hover: var(--atlas-button-hover, rgb(96 94 84));
+  --travel-pace-divider: var(--atlas-divider, rgb(255 255 255 / 10%));
+  --travel-pace-error-bg: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 15%, transparent);
+  --travel-pace-error-border: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 50%, transparent);
+  --travel-pace-text-on-color: var(--atlas-button-text, rgb(255 255 255));
+  --travel-pace-text-primary: var(--atlas-text, rgb(241 241 241));
+  --travel-pace-text-secondary: var(--atlas-text-secondary, rgb(186 186 186));
 }
 
 .travel-calculator-window {
@@ -155,6 +148,11 @@
 }
 
 .travel-pace-chat {
+  --travel-pace-text-primary: var(--atlas-surface-text);
+  --travel-pace-text-secondary: var(--atlas-surface-text-dim);
+  --travel-pace-bg-highlight: var(--atlas-surface-bg);
+  --travel-pace-divider: var(--atlas-surface-divider);
+
   padding: var(--travel-pace-spacing-sm);
   color: var(--travel-pace-text-primary);
   font-family: var(--font-primary);

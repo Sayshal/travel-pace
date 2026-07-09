@@ -27,23 +27,21 @@
       ],
       "paths": [
         "styles",
-        "lang",
         "templates"
       ]
     }
   },
   "id": "travel-pace",
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
-    }
-  ],
   "license": "https://github.com/Sayshal/travel-pace?tab=License-1-ov-file",
   "manifest": "https://github.com/Sayshal/travel-pace/releases/latest/download/module.json",
   "readme": "https://github.com/Sayshal/travel-pace?tab=readme-ov-file",
   "relationships": {
+    "requires": [
+      {
+        "id": "3ds-atlas",
+        "type": "module"
+      }
+    ],
     "systems": [
       {
         "compatibility": {
