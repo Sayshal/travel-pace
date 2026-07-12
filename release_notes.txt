@@ -1,6 +1,13 @@
-- Bug reports on GitHub now use a guided form so they're easier to file
-- Cleaned up the visual styling and added proper Light Theme support
-- Fixed: the Configure Mounts & Vehicles dialog now saves your selection (it was silently failing to save before)
-- Fixed: the Configure Mounts & Vehicles dialog opening near-instantly instead of stalling while it scanned compendiums
-- Mount list inside that dialog now scrolls when you have many actors, and clicking the button while it's already open just refocuses the existing window instead of stacking duplicates
-- Verified (and restricted) for Foundry v14.363 and DnD5e 5.3.3
+## Breaking Changes
+
+- Travel Pace now requires the 3DS:ATLAS module, which provides shared theming, logging, localization, and update notices.
+
+## Changes
+
+- Bumped the bug-report template's version placeholder to Foundry 14.364.
+- Bumped verified Foundry compatibility to 14.364.
+- Dropped the redundant Game System field from the bug-report template.
+- Removed the bundled localization files; translations now come from the required 3DS:ATLAS module.
+- Rewrote the module's store description to explain both directions of the calculator: distance in for travel time, or a time budget in for reachable distance, at Fast, Normal, or Slow pace.
+- Standardized the GitHub issue templates on canonical type labels and added a Discord contact link to the issue chooser.
+- The calculator, mount configuration, and chat message now follow your active ATLAS theme instead of the module's own fixed colors.
