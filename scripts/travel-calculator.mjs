@@ -42,6 +42,7 @@ export class TravelCalculator {
    */
   static async submitCalculation(data) {
     const result = TravelCalculator.calculateTravel(data);
+    ATLAS.log(3, `Calculated ${result.mode}`, result);
     await TravelCalculator.createChatMessage(result);
     return result;
   }
@@ -82,6 +83,7 @@ export class TravelCalculator {
     if (result.mountId) {
       const actor = result.mountId.includes('.') ? await fromUuid(result.mountId) : game.actors.get(result.mountId);
       if (actor) vehicleInfo = { speed: TravelCalculator.#getFormattedVehicleSpeed(actor, result.input.pace, useMetric), embed: `@UUID[${actor.uuid}]` };
+      else ATLAS.log(2, 'Mount actor not found:', result.mountId);
     }
     const paceLabel = _loc(`TravelPace.Paces.${result.input.pace.charAt(0).toUpperCase()}${result.input.pace.slice(1)}`);
     const speedPercent = typeof result.speedModifier === 'number' ? Math.round(result.speedModifier * 100) : null;

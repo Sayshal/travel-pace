@@ -62,7 +62,7 @@ export class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     const ids = Array.isArray(mountIds) ? mountIds : [mountIds];
     const selectedMounts = Object.fromEntries(this.actors.map((actor) => [actor.id, ids.includes(actor.id)]));
     await game.settings.set(CONST.moduleId, CONST.settings.enabledMounts, selectedMounts);
-    ui.notifications.info(_loc('TravelPace.Settings.MountConfig.Saved'));
+    ui.notifications.info('TravelPace.Settings.MountConfig.Saved');
   }
 
   /**
