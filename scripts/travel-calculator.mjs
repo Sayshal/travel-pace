@@ -43,7 +43,8 @@ export class TravelCalculator {
   static async submitCalculation(data) {
     const result = TravelCalculator.calculateTravel(data);
     ATLAS.log(3, `Calculated ${result.mode}`, result);
-    await TravelCalculator.createChatMessage(result);
+    const message = await TravelCalculator.createChatMessage(result);
+    Hooks.callAll('travelPace.calculated', result, message);
     return result;
   }
 
@@ -61,14 +62,15 @@ export class TravelCalculator {
     if (mode === 'distance') {
       const { distance } = data;
       const distanceInFeet = useMetric ? distance * CONST.conversion.ftPerKm : distance * CONST.conversion.ftPerMile;
-      const timeFormatted = formatTime(calculateTime(distanceInFeet, pace, speedModifier));
-      return { mode, input: { distance, unit, pace }, output: { timeFormatted }, paceEffect, speedModifier, mountId: data.mountId };
+      const time = calculateTime(distanceInFeet, pace, speedModifier);
+      const totalMinutes = time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + time.minutes;
+      return { mode, input: { distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes }, paceEffect, speedModifier, mountId: data.mountId };
     }
     const { time } = data;
     const totalMinutes = time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + (time.minutes || 0);
     const distanceData = calculateDistance(totalMinutes, pace, speedModifier);
     const distance = useMetric ? distanceData.kilometers : distanceData.miles;
-    return { mode, input: { time, pace }, output: { distance, unit }, paceEffect, speedModifier, mountId: data.mountId };
+    return { mode, input: { time, pace }, output: { distance, unit, totalMinutes }, paceEffect, speedModifier, mountId: data.mountId };
   }
 
   /**
@@ -88,7 +90,57 @@ export class TravelCalculator {
     const paceLabel = _loc(`TravelPace.Paces.${result.input.pace.charAt(0).toUpperCase()}${result.input.pace.slice(1)}`);
     const speedPercent = typeof result.speedModifier === 'number' ? Math.round(result.speedModifier * 100) : null;
     const content = await foundry.applications.handlebars.renderTemplate('modules/travel-pace/templates/chat-message.hbs', { result, paceLabel, speedPercent, showEffects, vehicleInfo });
-    return ChatMessage.create({ speaker: ChatMessage.getSpeaker(), content });
+    return ChatMessage.create({ speaker: ChatMessage.getSpeaker(), content, flags: { [CONST.moduleId]: { result } } });
+  }
+
+  /**
+   * Strip or wire up the GM-only advance-time button on a rendered travel-pace card.
+   * @param {ChatMessage} message The rendered chat message
+   * @param {HTMLElement} html The rendered message element
+   */
+  static onRenderChatMessage(message, html) {
+    const button = html.querySelector('.travel-pace-advance');
+    if (!button) return;
+    if (!game.user.isGM) button.remove();
+    else button.addEventListener('click', () => TravelCalculator.advanceWorldTime(message));
+  }
+
+  /**
+   * Advance world time by the duration stamped on a travel-pace chat message.
+   * @param {ChatMessage} message The message carrying the result flag
+   * @returns {Promise<void>}
+   */
+  static async advanceWorldTime(message) {
+    const result = message.getFlag(CONST.moduleId, 'result');
+    const seconds = TravelCalculator.durationToSeconds(result?.output?.totalMinutes);
+    if (seconds <= 0) return void ui.notifications.warn('TravelPace.Advance.NoDuration', { localize: true });
+    const { secondsPerMinute, minutesPerHour, hoursPerDay } = game.time.calendar.days;
+    const secondsPerHour = secondsPerMinute * minutesPerHour;
+    const secondsPerDay = secondsPerHour * hoursPerDay;
+    if (seconds > secondsPerDay) {
+      const days = Math.floor(seconds / secondsPerDay);
+      const hours = Math.round((seconds % secondsPerDay) / secondsPerHour);
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
+        window: { title: 'TravelPace.Advance.Confirm.Title' },
+        content: `<p>${_loc('TravelPace.Advance.Confirm.Content', { days, hours })}</p>`
+      });
+      if (!confirmed) return;
+    }
+    await game.time.advance(seconds);
+  }
+
+  /**
+   * Convert a travel duration to world-time seconds using the configured day-advance mode.
+   * @param {number} totalMinutes Travel minutes from a calculation result
+   * @returns {number} Seconds to advance world time by
+   */
+  static durationToSeconds(totalMinutes) {
+    if (!(totalMinutes > 0)) return 0;
+    const { secondsPerMinute, minutesPerHour, hoursPerDay } = game.time.calendar.days;
+    if (game.settings.get(CONST.moduleId, CONST.settings.advanceMode) === 'travel') return Math.round(totalMinutes * secondsPerMinute);
+    const travelDays = Math.floor(totalMinutes / CONST.timeUnits.minutesPerDay);
+    const remainingMinutes = totalMinutes % CONST.timeUnits.minutesPerDay;
+    return Math.round(travelDays * hoursPerDay * minutesPerHour * secondsPerMinute + remainingMinutes * secondsPerMinute);
   }
 
   /**

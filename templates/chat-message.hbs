@@ -42,4 +42,11 @@
       <p>{{result.paceEffect}}</p>
     </div>
   {{/if}}
+
+  {{#if result.output.totalMinutes}}
+    <button type="button" class="travel-pace-advance" id="travelpace-chat_advance">
+      <i class="fas fa-forward"></i>
+      {{localize "TravelPace.Advance.Button"}}
+    </button>
+  {{/if}}
 </div>

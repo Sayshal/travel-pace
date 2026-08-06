@@ -195,6 +195,15 @@
     padding-top: var(--travel-pace-spacing-sm);
     border-top: 1px solid var(--travel-pace-divider);
   }
+
+  .travel-pace-advance {
+    gap: var(--travel-pace-spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: var(--travel-pace-spacing-sm);
+  }
 }
 
 .travel-pace-mount-config {

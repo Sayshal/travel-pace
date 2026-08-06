@@ -8,6 +8,15 @@ Hooks.once('init', () => {
     theme: { scope: '.travel-calculator-window, .travel-pace-app' }
   });
   registerSettings();
+  const api = {
+    calculateTravel: (data) => TravelCalculator.calculateTravel(data),
+    submitCalculation: (data) => TravelCalculator.submitCalculation(data),
+    createChatMessage: (result) => TravelCalculator.createChatMessage(result),
+    openCalculator: () => TravelCalculator.openCalculator()
+  };
+  game.modules.get('travel-pace').api = api;
+  globalThis.TRAVELPACE = api;
   ATLAS.log(3, 'Initializing module');
 });
 Hooks.on('getSceneControlButtons', (controls) => TravelCalculator.getSceneControlButtons(controls));
+Hooks.on('renderChatMessageHTML', (message, html) => TravelCalculator.onRenderChatMessage(message, html));

@@ -7,6 +7,6 @@ export const CONST = {
   milesPerDay: { fast: 30, normal: 24, slow: 18 },
   conversion: { ftPerMile: 5280, ftPerKm: 3280.84, mPerFt: 0.3048, miToKm: 1.60934, kmToMi: 0.621371 },
   timeUnits: { hoursPerDay: 8, minutesPerHour: 60, minutesPerDay: 480 },
-  settings: { useMetric: 'useMetric', showEffects: 'showEffects', enabledMounts: 'enabledMounts' },
+  settings: { useMetric: 'useMetric', showEffects: 'showEffects', enabledMounts: 'enabledMounts', advanceMode: 'advanceMode' },
   moduleId: 'travel-pace'
 };

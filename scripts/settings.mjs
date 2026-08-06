@@ -165,6 +165,15 @@ export function registerSettings() {
     type: Boolean,
     default: true
   });
+  game.settings.register(CONST.moduleId, CONST.settings.advanceMode, {
+    name: 'TravelPace.Settings.AdvanceMode.Name',
+    hint: 'TravelPace.Settings.AdvanceMode.Hint',
+    scope: 'world',
+    config: true,
+    type: String,
+    choices: { calendar: 'TravelPace.Settings.AdvanceMode.Calendar', travel: 'TravelPace.Settings.AdvanceMode.Travel' },
+    default: 'calendar'
+  });
   game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
     name: 'TravelPace.Settings.EnabledMounts.Name',
     hint: 'TravelPace.Settings.EnabledMounts.Hint',
