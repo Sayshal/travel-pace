@@ -14,6 +14,14 @@
     {{/unless}}
   {{/if}}
 
+  {{#if modifierLines.length}}
+    <div class="travel-pace-modifiers" id="travelpace-chat_modifiers">
+      {{#each modifierLines}}
+        <p>{{this}}</p>
+      {{/each}}
+    </div>
+  {{/if}}
+
   <div class="travel-pace-details" id="travelpace-chat_details">
     <p class="travel-pace-pace" id="travelpace-chat_pace">{{paceLabel}} {{localize "TravelPace.ChatMessage.Pace"}}</p>
 

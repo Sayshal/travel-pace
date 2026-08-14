@@ -37,6 +37,9 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     };
   }
 
+  /** @type {number|null} Hook id for the Calendaria weather listener */
+  #weatherHookId = null;
+
   /** @inheritdoc */
   _onRender(_context, _options) {
     this.element.addEventListener('input', this.#onInputChange.bind(this));
@@ -44,11 +47,14 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#setMode('distance');
     this.#updatePreview();
     this.#updatePaceLabel();
+    this.#weatherHookId ??= Hooks.on('calendaria.weatherChange', () => this.#updatePreview());
   }
 
   /** @inheritdoc */
   _onClose(options) {
     super._onClose(options);
+    if (this.#weatherHookId) Hooks.off('calendaria.weatherChange', this.#weatherHookId);
+    this.#weatherHookId = null;
     if (TravelCalculator.requestor === this) TravelCalculator.requestor = undefined;
   }
 
@@ -116,7 +122,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #getDistancePreview(pace, mountId) {
     const distance = Number(this.element.querySelector('#travelpace-distance')?.value);
     if (!distance || distance <= 0) return '';
-    return TravelCalculator.calculateTravel({ mode: 'distance', distance, pace, mountId }).output.timeFormatted;
+    return TravelCalculator.calculateTravel({ mode: 'distance', distance, pace, mountId })?.output.timeFormatted ?? '';
   }
 
   /**
@@ -130,6 +136,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const hours = Number(this.element.querySelector('#travelpace-hours')?.value || 0);
     if (days <= 0 && hours <= 0) return '';
     const result = TravelCalculator.calculateTravel({ mode: 'time', time: { days, hours, minutes: 0 }, pace, mountId });
+    if (!result) return '';
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
     const unit = useMetric ? _loc('DND5E.DistKmAbbr') : _loc('DND5E.DistMiAbbr');
     return `${result.output.distance.toFixed(1)} ${unit}`;

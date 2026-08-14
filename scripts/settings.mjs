@@ -1,4 +1,5 @@
 import { CONST } from './config.mjs';
+import { getSeverityLevels, isCalendariaActive } from './helpers.mjs';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -6,7 +7,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 export class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static PARTS = {
     form: { template: 'modules/travel-pace/templates/mount-config.hbs', id: 'travelpace-mountconfig-body', classes: ['travel-pace-mount-config'] },
-    footer: { template: 'templates/generic/form-footer.hbs', id: 'travelpace-mountconfig-footer', classes: ['travel-pace-footer'] }
+    footer: { template: 'templates/generic/form-footer.hbs', id: 'travelpace-mountconfig-footer' }
   };
 
   static DEFAULT_OPTIONS = {
@@ -147,6 +148,76 @@ export class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 }
 
+/** Configuration menu for weather-preset and weather-severity pace multipliers. */
+export class WeatherConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
+  static PARTS = {
+    form: { template: 'modules/travel-pace/templates/weather-config.hbs', id: 'travelpace-weatherconfig-body', classes: ['travel-pace-weather-config'] },
+    footer: { template: 'templates/generic/form-footer.hbs', id: 'travelpace-weatherconfig-footer' }
+  };
+
+  static DEFAULT_OPTIONS = {
+    id: 'travel-pace-weather-config',
+    tag: 'form',
+    classes: ['travel-pace-app'],
+    position: { width: 480, height: 'auto' },
+    window: { icon: 'fa-solid fa-cloud-sun-rain', title: 'TravelPace.Settings.WeatherConfig.Title', resizable: true },
+    form: { handler: WeatherConfigMenu.#onSubmit, closeOnSubmit: true }
+  };
+
+  /**
+   * Return the already-rendered instance (if any) instead of creating a duplicate.
+   * @param {object} [options] Application options
+   */
+  constructor(options = {}) {
+    super(options);
+    const existing = foundry.applications.instances.get(this.id);
+    if (existing && existing !== this) {
+      existing.bringToFront();
+      return existing;
+    }
+  }
+
+  /** @inheritdoc */
+  async _prepareContext(_options) {
+    const presetMultipliers = game.settings.get(CONST.moduleId, CONST.settings.weatherMultipliers);
+    const severityMultipliers = game.settings.get(CONST.moduleId, CONST.settings.severityMultipliers);
+    const presets = isCalendariaActive() ? await CALENDARIA.api.getWeatherPresets() : [];
+    return {
+      presets: presets.map((preset) => ({
+        id: preset.id,
+        label: _loc(preset.label || preset.id),
+        icon: preset.icon.includes(' ') ? preset.icon : `fas ${preset.icon}`,
+        color: preset.color || 'inherit',
+        multiplier: presetMultipliers[preset.id] ?? 1
+      })),
+      severities: getSeverityLevels().map((level) => ({ ...level, multiplier: severityMultipliers[level.id] ?? CONST.severityDefaults[level.id] ?? 1 })),
+      buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'TravelPace.Buttons.Save' }]
+    };
+  }
+
+  /**
+   * Persist the multiplier tables, dropping any row left at 1.
+   * @this {WeatherConfigMenu}
+   * @param {SubmitEvent} _event Form submit event
+   * @param {HTMLFormElement} form Submitted form element
+   * @returns {Promise<void>}
+   */
+  static async #onSubmit(_event, form) {
+    const presetMultipliers = {};
+    const severityMultipliers = {};
+    for (const input of form.querySelectorAll('input[type="number"][name]')) {
+      const multiplier = Number(input.value);
+      if (!(multiplier > 0)) continue;
+      const [group, id] = input.name.split('.');
+      if (group === 'severity') severityMultipliers[id] = multiplier;
+      else if (group === 'preset' && multiplier !== 1) presetMultipliers[id] = multiplier;
+    }
+    await game.settings.set(CONST.moduleId, CONST.settings.weatherMultipliers, presetMultipliers);
+    await game.settings.set(CONST.moduleId, CONST.settings.severityMultipliers, severityMultipliers);
+    ui.notifications.info('TravelPace.Settings.WeatherConfig.Saved', { localize: true });
+  }
+}
+
 /** Register all module settings and the mount-config menu. Call once during the init hook. */
 export function registerSettings() {
   game.settings.register(CONST.moduleId, CONST.settings.useMetric, {
@@ -174,6 +245,30 @@ export function registerSettings() {
     choices: { calendar: 'TravelPace.Settings.AdvanceMode.Calendar', travel: 'TravelPace.Settings.AdvanceMode.Travel' },
     default: 'calendar'
   });
+  game.settings.register(CONST.moduleId, CONST.settings.useWeather, {
+    name: 'TravelPace.Settings.UseWeather.Name',
+    hint: 'TravelPace.Settings.UseWeather.Hint',
+    scope: 'world',
+    config: true,
+    type: Boolean,
+    default: false
+  });
+  game.settings.register(CONST.moduleId, CONST.settings.weatherMultipliers, {
+    name: 'TravelPace.Settings.WeatherMultipliers.Name',
+    hint: 'TravelPace.Settings.WeatherMultipliers.Hint',
+    scope: 'world',
+    config: false,
+    type: Object,
+    default: {}
+  });
+  game.settings.register(CONST.moduleId, CONST.settings.severityMultipliers, {
+    name: 'TravelPace.Settings.SeverityMultipliers.Name',
+    hint: 'TravelPace.Settings.SeverityMultipliers.Hint',
+    scope: 'world',
+    config: false,
+    type: Object,
+    default: {}
+  });
   game.settings.register(CONST.moduleId, CONST.settings.enabledMounts, {
     name: 'TravelPace.Settings.EnabledMounts.Name',
     hint: 'TravelPace.Settings.EnabledMounts.Hint',
@@ -188,6 +283,14 @@ export function registerSettings() {
     hint: 'TravelPace.Settings.MountConfig.Hint',
     icon: 'fas fa-horse',
     type: MountConfigMenu,
+    restricted: true
+  });
+  game.settings.registerMenu(CONST.moduleId, 'weatherConfigMenu', {
+    name: 'TravelPace.Settings.WeatherConfig.Name',
+    label: 'TravelPace.Settings.WeatherConfig.Label',
+    hint: 'TravelPace.Settings.WeatherConfig.Hint',
+    icon: 'fas fa-cloud-sun-rain',
+    type: WeatherConfigMenu,
     restricted: true
   });
 }

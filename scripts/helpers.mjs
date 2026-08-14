@@ -19,14 +19,15 @@ function convertDistance(distance, fromUnit, toUnit) {
  * @param {number} distance Distance in feet
  * @param {string} pace Travel pace ('fast', 'normal', 'slow')
  * @param {number|string} speedModifier Pace modifier or formatted vehicle speed string
+ * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {{minutes: number, hours: number, days: number}} Time breakdown
  */
-export function calculateTime(distance, pace, speedModifier = 1) {
-  if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateTimeWithVehicleSpeed(distance, pace, speedModifier);
+export function calculateTime(distance, pace, speedModifier = 1, extraMultiplier = 1) {
+  if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateTimeWithVehicleSpeed(distance, pace, speedModifier, extraMultiplier);
   const milesPerDay = CONST.milesPerDay[pace];
   if (milesPerDay === undefined) return breakdownMinutesToTimeUnits(0);
   const feetPerDay = milesPerDay * CONST.conversion.ftPerMile;
-  const dayFraction = distance / feetPerDay / speedModifier;
+  const dayFraction = distance / feetPerDay / (speedModifier * extraMultiplier);
   return breakdownMinutesToTimeUnits(dayFraction * CONST.timeUnits.minutesPerDay);
 }
 
@@ -35,9 +36,10 @@ export function calculateTime(distance, pace, speedModifier = 1) {
  * @param {number} distance Distance in feet
  * @param {string} pace Travel pace id
  * @param {string} speedNotation Formatted vehicle speed string
+ * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {{minutes: number, hours: number, days: number}} Time breakdown
  */
-function calculateTimeWithVehicleSpeed(distance, pace, speedNotation) {
+function calculateTimeWithVehicleSpeed(distance, pace, speedNotation, extraMultiplier = 1) {
   const hourUnit = _loc('TravelPace.Speed.Units.Hour');
   const miAbbrev = _loc('DND5E.DistMiAbbr');
   const kmAbbrev = _loc('DND5E.DistKmAbbr');
@@ -47,7 +49,7 @@ function calculateTimeWithVehicleSpeed(distance, pace, speedNotation) {
   const baseSpeed = parseFloat(speedMatch[1]);
   const unit = speedMatch[3];
   const paceMultiplier = CONST.multipliers[pace] || 1;
-  const adjustedSpeed = baseSpeed * paceMultiplier;
+  const adjustedSpeed = baseSpeed * paceMultiplier * extraMultiplier;
   const distanceInUnit = convertDistance(distance, ftAbbrev, unit === miAbbrev ? miAbbrev : kmAbbrev);
   const totalMinutes = (distanceInUnit / adjustedSpeed) * CONST.timeUnits.minutesPerHour;
   return breakdownMinutesToTimeUnits(totalMinutes);
@@ -71,14 +73,15 @@ function breakdownMinutesToTimeUnits(totalMinutes) {
  * @param {number} minutes Time in minutes
  * @param {string} pace Travel pace ('fast', 'normal', 'slow')
  * @param {number|string} speedModifier Pace modifier or formatted vehicle speed string
+ * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {{miles: number, kilometers: number}} Distance in miles and kilometers
  */
-export function calculateDistance(minutes, pace, speedModifier = 1) {
-  if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateDistanceWithVehicleSpeed(minutes, pace, speedModifier);
+export function calculateDistance(minutes, pace, speedModifier = 1, extraMultiplier = 1) {
+  if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateDistanceWithVehicleSpeed(minutes, pace, speedModifier, extraMultiplier);
   const dayFraction = minutes / CONST.timeUnits.minutesPerDay;
   const milesPerDay = CONST.milesPerDay[pace];
   if (milesPerDay === undefined) return { miles: 0, kilometers: 0 };
-  const miles = milesPerDay * dayFraction * speedModifier;
+  const miles = milesPerDay * dayFraction * speedModifier * extraMultiplier;
   return { miles, kilometers: miles * CONST.conversion.miToKm };
 }
 
@@ -87,9 +90,10 @@ export function calculateDistance(minutes, pace, speedModifier = 1) {
  * @param {number} minutes Time in minutes
  * @param {string} pace Travel pace id
  * @param {string} speedNotation Formatted vehicle speed string
+ * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {{miles: number, kilometers: number}} Distance in miles and kilometers
  */
-function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
+function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation, extraMultiplier = 1) {
   const hourUnit = _loc('TravelPace.Speed.Units.Hour');
   const miAbbrev = _loc('DND5E.DistMiAbbr');
   const kmAbbrev = _loc('DND5E.DistKmAbbr');
@@ -97,7 +101,7 @@ function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation) {
   if (!speedMatch) return { miles: 0, kilometers: 0 };
   const baseSpeed = parseFloat(speedMatch[1]);
   const paceMultiplier = CONST.multipliers[pace] || 1;
-  const dirDistance = baseSpeed * paceMultiplier * (minutes / CONST.timeUnits.minutesPerHour);
+  const dirDistance = baseSpeed * paceMultiplier * extraMultiplier * (minutes / CONST.timeUnits.minutesPerHour);
   if (speedMatch[3] === miAbbrev) return { miles: dirDistance, kilometers: dirDistance * CONST.conversion.miToKm };
   return { miles: dirDistance * CONST.conversion.kmToMi, kilometers: dirDistance };
 }
@@ -139,6 +143,23 @@ export function formatTime(timeData) {
   push(hours, 'DND5E.UNITS.TIME.Hour.Label');
   push(minutes, 'DND5E.UNITS.TIME.Minute.Label');
   return parts.length ? parts.join(_loc('TravelPace.Time.Format.Separator')) : _loc('TravelPace.Time.NoTime');
+}
+
+/**
+ * Whether Calendaria is installed and active, guarding access to its global namespace.
+ * @returns {boolean} True when the CALENDARIA global is safe to read
+ */
+export function isCalendariaActive() {
+  return !!game.modules.get('calendaria')?.active;
+}
+
+/**
+ * Get Calendaria's named weather severity bands, ascending.
+ * @returns {Array<{id: string, label: string}>} Band descriptors, empty without Calendaria
+ */
+export function getSeverityLevels() {
+  if (!isCalendariaActive()) return [];
+  return CALENDARIA.api.getWeatherSeverityLevels().map((level) => ({ id: level.id, label: _loc(level.label) }));
 }
 
 /**

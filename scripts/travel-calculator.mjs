@@ -1,6 +1,6 @@
 import { TravelPaceApp } from './app.mjs';
 import { CONST } from './config.mjs';
-import { calculateDistance, calculateTime, formatTime, getMountSpeedModifier, getPaceEffects } from './helpers.mjs';
+import { calculateDistance, calculateTime, formatTime, getMountSpeedModifier, getPaceEffects, isCalendariaActive } from './helpers.mjs';
 
 /** Coordinator for the Travel Pace calculator: scene-controls integration, calculation entry, chat output. */
 export class TravelCalculator {
@@ -17,10 +17,8 @@ export class TravelCalculator {
       title: _loc('TravelPace.Button'),
       icon: 'fas fa-route',
       visible: true,
-      button: false,
-      onChange: (_event, active) => {
-        if (active) TravelCalculator.openCalculator();
-      }
+      button: true,
+      onChange: () => TravelCalculator.openCalculator()
     };
   }
 
@@ -38,10 +36,11 @@ export class TravelCalculator {
   /**
    * Calculate travel data and emit a chat message.
    * @param {object} data Calculator input payload
-   * @returns {Promise<object>} The calculation result
+   * @returns {Promise<object|null>} The calculation result, or null when a listener cancelled it
    */
   static async submitCalculation(data) {
     const result = TravelCalculator.calculateTravel(data);
+    if (!result) return null;
     ATLAS.log(3, `Calculated ${result.mode}`, result);
     const message = await TravelCalculator.createChatMessage(result);
     Hooks.callAll('travelPace.calculated', result, message);
@@ -51,7 +50,7 @@ export class TravelCalculator {
   /**
    * Calculate either travel time or travel distance from the calculator payload.
    * @param {object} data Calculator input payload (mode, pace, distance|time, mountId)
-   * @returns {object} The structured calculation result
+   * @returns {object|null} The structured calculation result, or null when a preCalculate listener cancelled it
    */
   static calculateTravel(data) {
     const { mode, pace } = data;
@@ -59,18 +58,48 @@ export class TravelCalculator {
     const paceEffect = getPaceEffects(pace);
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
     const unit = useMetric ? _loc('DND5E.DistKmAbbr') : _loc('DND5E.DistMiAbbr');
+    const modifiers = TravelCalculator.#getWeatherModifiers();
+    if (Hooks.call('travelPace.preCalculate', { data, modifiers }) === false) return null;
+    const extraMultiplier = modifiers.reduce((product, modifier) => product * (Number(modifier.multiplier) > 0 ? Number(modifier.multiplier) : 1), 1);
     if (mode === 'distance') {
       const { distance } = data;
       const distanceInFeet = useMetric ? distance * CONST.conversion.ftPerKm : distance * CONST.conversion.ftPerMile;
-      const time = calculateTime(distanceInFeet, pace, speedModifier);
+      const time = calculateTime(distanceInFeet, pace, speedModifier, extraMultiplier);
       const totalMinutes = time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + time.minutes;
-      return { mode, input: { distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes }, paceEffect, speedModifier, mountId: data.mountId };
+      return { mode, input: { distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes }, paceEffect, speedModifier, modifiers, extraMultiplier, mountId: data.mountId };
     }
     const { time } = data;
     const totalMinutes = time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + (time.minutes || 0);
-    const distanceData = calculateDistance(totalMinutes, pace, speedModifier);
+    const distanceData = calculateDistance(totalMinutes, pace, speedModifier, extraMultiplier);
     const distance = useMetric ? distanceData.kilometers : distanceData.miles;
-    return { mode, input: { time, pace }, output: { distance, unit, totalMinutes }, paceEffect, speedModifier, mountId: data.mountId };
+    return { mode, input: { time, pace }, output: { distance, unit, totalMinutes }, paceEffect, speedModifier, modifiers, extraMultiplier, mountId: data.mountId };
+  }
+
+  /**
+   * Build the built-in weather modifiers from the current Calendaria weather and the configured tables.
+   * @returns {Array<{id: string, label: string, multiplier: number}>} Labeled multipliers, empty when weather integration is off or unavailable
+   */
+  static #getWeatherModifiers() {
+    if (!game.settings.get(CONST.moduleId, CONST.settings.useWeather) || !isCalendariaActive()) return [];
+    const weather = CALENDARIA.api.getCurrentWeather();
+    if (!weather) return [];
+    const level = CALENDARIA.api.getWeatherSeverityLevel(weather.severity);
+    const presetMultiplier = Number(game.settings.get(CONST.moduleId, CONST.settings.weatherMultipliers)[weather.id]) || 1;
+    const severityMultiplier = Number(game.settings.get(CONST.moduleId, CONST.settings.severityMultipliers)[level?.id] ?? CONST.severityDefaults[level?.id]) || 1;
+    const modifiers = [];
+    if (presetMultiplier !== 1) modifiers.push({ id: `weather.${weather.id}`, label: weather.label || weather.id, multiplier: presetMultiplier });
+    if (severityMultiplier !== 1) modifiers.push({ id: 'weather.severity', label: _loc('TravelPace.ChatMessage.SeverityLabel', { label: _loc(level.label) }), multiplier: severityMultiplier });
+    return modifiers;
+  }
+
+  /**
+   * Phrase a labeled multiplier as a sentence naming its direction and size.
+   * @param {{label: string, multiplier: number}} modifier A labeled multiplier from the result
+   * @returns {string} Localized sentence describing the modifier
+   */
+  static #describeModifier({ label, multiplier }) {
+    const key = multiplier < 1 ? 'TravelPace.ChatMessage.ModifierSlower' : 'TravelPace.ChatMessage.ModifierFaster';
+    return _loc(key, { label: _loc(label), percent: Math.round(Math.abs(1 - multiplier) * 100) });
   }
 
   /**
@@ -89,7 +118,15 @@ export class TravelCalculator {
     }
     const paceLabel = _loc(`TravelPace.Paces.${result.input.pace.charAt(0).toUpperCase()}${result.input.pace.slice(1)}`);
     const speedPercent = typeof result.speedModifier === 'number' ? Math.round(result.speedModifier * 100) : null;
-    const content = await foundry.applications.handlebars.renderTemplate('modules/travel-pace/templates/chat-message.hbs', { result, paceLabel, speedPercent, showEffects, vehicleInfo });
+    const modifierLines = (result.modifiers ?? []).map((modifier) => TravelCalculator.#describeModifier(modifier));
+    const content = await foundry.applications.handlebars.renderTemplate('modules/travel-pace/templates/chat-message.hbs', {
+      result,
+      paceLabel,
+      speedPercent,
+      showEffects,
+      vehicleInfo,
+      modifierLines
+    });
     return ChatMessage.create({ speaker: ChatMessage.getSpeaker(), content, flags: { [CONST.moduleId]: { result } } });
   }
 

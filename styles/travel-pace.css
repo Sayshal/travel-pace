@@ -165,6 +165,7 @@
   }
 
   .travel-pace-mount,
+  .travel-pace-modifiers,
   .travel-pace-effects {
     color: var(--travel-pace-text-secondary);
     font-style: italic;
@@ -172,6 +173,14 @@
 
   .travel-pace-mount {
     margin-bottom: var(--travel-pace-spacing-sm);
+  }
+
+  .travel-pace-modifiers {
+    margin-bottom: var(--travel-pace-spacing-sm);
+
+    p {
+      margin: 0.25rem 0;
+    }
   }
 
   .travel-pace-details {
@@ -242,9 +251,17 @@
   }
 }
 
-.travel-pace-footer {
-  margin-top: var(--travel-pace-spacing-sm);
+.travel-pace-weather-config {
+  .travel-pace-weather-presets {
+    max-height: 20rem;
+    overflow-y: auto;
+  }
+}
+
+.travel-pace-app .form-footer {
   padding-top: var(--travel-pace-spacing-sm);
-  border-top: 1px solid var(--travel-pace-border-color);
-  text-align: center;
+
+  button {
+    width: 100%;
+  }
 }
