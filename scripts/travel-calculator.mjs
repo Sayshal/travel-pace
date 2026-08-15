@@ -22,6 +22,14 @@ export class TravelCalculator {
     };
   }
 
+  /**
+   * The distance unit abbreviation the world is configured for.
+   * @returns {string} The localized unit abbreviation
+   */
+  static get unit() {
+    return _loc(game.settings.get(CONST.moduleId, CONST.settings.useMetric) ? 'DND5E.DistKmAbbr' : 'DND5E.DistMiAbbr');
+  }
+
   /** Open (or re-focus) the calculator window. */
   static openCalculator() {
     if (TravelCalculator.requestor && !TravelCalculator.requestor.rendered) TravelCalculator.requestor = undefined;
@@ -57,7 +65,7 @@ export class TravelCalculator {
     const speedModifier = getMountSpeedModifier(data.mountId);
     const paceEffect = getPaceEffects(pace);
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-    const unit = useMetric ? _loc('DND5E.DistKmAbbr') : _loc('DND5E.DistMiAbbr');
+    const unit = TravelCalculator.unit;
     const modifiers = TravelCalculator.#getWeatherModifiers();
     if (Hooks.call('travelPace.preCalculate', { data, modifiers }) === false) return null;
     const extraMultiplier = modifiers.reduce((product, modifier) => product * (Number(modifier.multiplier) > 0 ? Number(modifier.multiplier) : 1), 1);

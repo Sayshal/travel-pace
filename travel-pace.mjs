@@ -9,9 +9,14 @@ Hooks.once('init', () => {
   });
   registerSettings();
   const api = {
+    /** @returns {string} The distance unit abbreviation the world is configured for */
+    get unit() {
+      return TravelCalculator.unit;
+    },
     calculateTravel: (data) => TravelCalculator.calculateTravel(data),
     submitCalculation: (data) => TravelCalculator.submitCalculation(data),
     createChatMessage: (result) => TravelCalculator.createChatMessage(result),
+    durationToSeconds: (totalMinutes) => TravelCalculator.durationToSeconds(totalMinutes),
     openCalculator: () => TravelCalculator.openCalculator()
   };
   game.modules.get('travel-pace').api = api;
