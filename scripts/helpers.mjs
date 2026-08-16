@@ -1,6 +1,16 @@
 import { CONST } from './config.mjs';
 
 /**
+ * Whether a movement unit states an overland distance rather than a per-round one.
+ * @param {string} [unit] A `CONFIG.DND5E.movementUnits` key, as stored on `movement.units`
+ * @returns {boolean} True when the unit is an overland one
+ */
+function isOverlandUnit(unit) {
+  const config = CONFIG.DND5E?.movementUnits?.[unit];
+  return !!config && config.travelResolution !== 'round';
+}
+
+/**
  * Convert distance between different units.
  * @param {number} distance Distance value
  * @param {string} fromUnit Source unit ('ft', 'm', 'km', 'mi')
@@ -18,41 +28,23 @@ function convertDistance(distance, fromUnit, toUnit) {
  * Calculate travel time based on distance and pace.
  * @param {number} distance Distance in feet
  * @param {string} pace Travel pace ('fast', 'normal', 'slow')
- * @param {number|string} speedModifier Pace modifier or formatted vehicle speed string
+ * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
  * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
- * @returns {{minutes: number, hours: number, days: number}} Time breakdown
+ * @returns {{minutes: number, hours: number, days: number}|null} Time breakdown, or null when the mount cannot travel
  */
-export function calculateTime(distance, pace, speedModifier = 1, extraMultiplier = 1) {
-  if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateTimeWithVehicleSpeed(distance, pace, speedModifier, extraMultiplier);
+export function calculateTime(distance, pace, speed = { ratio: 1 }, extraMultiplier = 1) {
+  const paceMultiplier = CONST.multipliers[pace] || 1;
+  if (speed.perHour !== undefined) {
+    const speedPerHour = speed.perHour * paceMultiplier * extraMultiplier;
+    if (!(speedPerHour > 0)) return null;
+    const distanceInUnit = convertDistance(distance, 'ft', speed.unit);
+    return breakdownMinutesToTimeUnits((distanceInUnit / speedPerHour) * CONST.timeUnits.minutesPerHour);
+  }
   const milesPerDay = CONST.milesPerDay[pace];
   if (milesPerDay === undefined) return breakdownMinutesToTimeUnits(0);
-  const feetPerDay = milesPerDay * CONST.conversion.ftPerMile;
-  const dayFraction = distance / feetPerDay / (speedModifier * extraMultiplier);
+  const dayFraction = distance / (milesPerDay * CONST.conversion.ftPerMile) / (speed.ratio * extraMultiplier);
+  if (!Number.isFinite(dayFraction)) return null;
   return breakdownMinutesToTimeUnits(dayFraction * CONST.timeUnits.minutesPerDay);
-}
-
-/**
- * Time variant for vehicle-speed notation ("X mi/hour" or "X km/hour").
- * @param {number} distance Distance in feet
- * @param {string} pace Travel pace id
- * @param {string} speedNotation Formatted vehicle speed string
- * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
- * @returns {{minutes: number, hours: number, days: number}} Time breakdown
- */
-function calculateTimeWithVehicleSpeed(distance, pace, speedNotation, extraMultiplier = 1) {
-  const hourUnit = _loc('TravelPace.Speed.Units.Hour');
-  const miAbbrev = _loc('DND5E.DistMiAbbr');
-  const kmAbbrev = _loc('DND5E.DistKmAbbr');
-  const ftAbbrev = _loc('DND5E.DistFtAbbr');
-  const speedMatch = speedNotation.match(new RegExp(`^(\\d+(\\.\\d+)?)\\s*(${miAbbrev}|${kmAbbrev})/${hourUnit}$`));
-  if (!speedMatch) return breakdownMinutesToTimeUnits(0);
-  const baseSpeed = parseFloat(speedMatch[1]);
-  const unit = speedMatch[3];
-  const paceMultiplier = CONST.multipliers[pace] || 1;
-  const adjustedSpeed = baseSpeed * paceMultiplier * extraMultiplier;
-  const distanceInUnit = convertDistance(distance, ftAbbrev, unit === miAbbrev ? miAbbrev : kmAbbrev);
-  const totalMinutes = (distanceInUnit / adjustedSpeed) * CONST.timeUnits.minutesPerHour;
-  return breakdownMinutesToTimeUnits(totalMinutes);
 }
 
 /**
@@ -72,38 +64,21 @@ function breakdownMinutesToTimeUnits(totalMinutes) {
  * Calculate travel distance based on time and pace.
  * @param {number} minutes Time in minutes
  * @param {string} pace Travel pace ('fast', 'normal', 'slow')
- * @param {number|string} speedModifier Pace modifier or formatted vehicle speed string
+ * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
  * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {{miles: number, kilometers: number}} Distance in miles and kilometers
  */
-export function calculateDistance(minutes, pace, speedModifier = 1, extraMultiplier = 1) {
-  if (typeof speedModifier === 'string' && speedModifier.includes('/hour')) return calculateDistanceWithVehicleSpeed(minutes, pace, speedModifier, extraMultiplier);
-  const dayFraction = minutes / CONST.timeUnits.minutesPerDay;
+export function calculateDistance(minutes, pace, speed = { ratio: 1 }, extraMultiplier = 1) {
+  const paceMultiplier = CONST.multipliers[pace] || 1;
+  if (speed.perHour !== undefined) {
+    const travelled = speed.perHour * paceMultiplier * extraMultiplier * (minutes / CONST.timeUnits.minutesPerHour);
+    if (speed.unit === 'mi') return { miles: travelled, kilometers: travelled * CONST.conversion.miToKm };
+    return { miles: travelled * CONST.conversion.kmToMi, kilometers: travelled };
+  }
   const milesPerDay = CONST.milesPerDay[pace];
   if (milesPerDay === undefined) return { miles: 0, kilometers: 0 };
-  const miles = milesPerDay * dayFraction * speedModifier * extraMultiplier;
+  const miles = milesPerDay * (minutes / CONST.timeUnits.minutesPerDay) * speed.ratio * extraMultiplier;
   return { miles, kilometers: miles * CONST.conversion.miToKm };
-}
-
-/**
- * Distance variant for vehicle-speed notation ("X mi/hour" or "X km/hour").
- * @param {number} minutes Time in minutes
- * @param {string} pace Travel pace id
- * @param {string} speedNotation Formatted vehicle speed string
- * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
- * @returns {{miles: number, kilometers: number}} Distance in miles and kilometers
- */
-function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation, extraMultiplier = 1) {
-  const hourUnit = _loc('TravelPace.Speed.Units.Hour');
-  const miAbbrev = _loc('DND5E.DistMiAbbr');
-  const kmAbbrev = _loc('DND5E.DistKmAbbr');
-  const speedMatch = speedNotation.match(new RegExp(`^(\\d+(\\.\\d+)?)\\s*(${miAbbrev}|${kmAbbrev})/${hourUnit}$`));
-  if (!speedMatch) return { miles: 0, kilometers: 0 };
-  const baseSpeed = parseFloat(speedMatch[1]);
-  const paceMultiplier = CONST.multipliers[pace] || 1;
-  const dirDistance = baseSpeed * paceMultiplier * extraMultiplier * (minutes / CONST.timeUnits.minutesPerHour);
-  if (speedMatch[3] === miAbbrev) return { miles: dirDistance, kilometers: dirDistance * CONST.conversion.miToKm };
-  return { miles: dirDistance * CONST.conversion.kmToMi, kilometers: dirDistance };
 }
 
 /**
@@ -112,7 +87,7 @@ function calculateDistanceWithVehicleSpeed(minutes, pace, speedNotation, extraMu
  * @returns {string} Localized formatted time string
  */
 export function formatTime(timeData) {
-  if (!timeData) return _loc('TravelPace.Time.NoTime');
+  if (!timeData) return _loc('TravelPace.Time.Immobile');
   let { minutes, hours, days } = timeData;
   if (minutes >= 59.5) {
     minutes = 0;
@@ -163,30 +138,57 @@ export function getSeverityLevels() {
 }
 
 /**
- * Get the movement speed for a mount or vehicle.
- * @param {string} actorId The id (or UUID) of the actor
- * @returns {number|string} A pace modifier ratio or a formatted vehicle speed string ("X mi/hour")
+ * @typedef {{perHour: number, unit: string}|{ratio: number}} MountSpeed
+ * A vehicle's own speed per hour in its stated unit, or a walking mount's speed as a ratio of the
+ * 30 ft baseline the travel table assumes.
  */
-export function getMountSpeedModifier(actorId) {
-  if (!actorId) return 1;
-  const actor = game.actors.get(actorId);
-  if (!actor) return 1;
-  const baseSpeed = 30;
-  if (actor.type === 'vehicle') {
-    const movement = actor.system.attributes?.movement || {};
-    const miAbbrev = _loc('DND5E.DistMiAbbr');
-    const kmAbbrev = _loc('DND5E.DistKmAbbr');
-    if (movement.units === miAbbrev || movement.units === kmAbbrev) {
-      const speeds = Object.entries(movement)
-        .filter(([key, value]) => typeof value === 'number' && key !== 'units')
-        .map(([, value]) => value);
-      if (!speeds.length) return 1;
-      const unit = movement.units === miAbbrev ? miAbbrev : kmAbbrev;
-      return _loc('TravelPace.Speed.Format.PerHour', { speed: Math.max(...speeds), unit });
-    }
+
+/**
+ * Read a mount's travel speed off its movement data.
+ * @param {foundry.documents.Actor|null} mount The resolved mount or vehicle actor
+ * @returns {MountSpeed} The mount's speed, or an unmodified ratio when there is no mount
+ */
+export function getMountSpeed(mount) {
+  if (!mount) return { ratio: 1 };
+  const movement = mount.system?.attributes?.movement ?? {};
+  if (mount.type === 'vehicle' && isOverlandUnit(movement.units)) {
+    const speeds = Object.entries(movement)
+      .filter(([key, value]) => typeof value === 'number' && key !== 'units')
+      .map(([, value]) => value);
+    if (speeds.length) return { perHour: Math.max(...speeds), unit: movement.units };
   }
-  const walkSpeed = actor.system.attributes?.movement?.walk || baseSpeed;
-  return walkSpeed / baseSpeed;
+  return { ratio: (movement.walk || 0) / CONST.walkBaselineFeet };
+}
+
+/**
+ * Format a mount's speed for display, adjusted by the selected pace.
+ * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
+ * @param {string} pace Travel pace id
+ * @param {boolean} useMetric Whether the world is configured for metric units
+ * @returns {string} Localized speed text
+ */
+export function formatMountSpeed(speed, pace, useMetric) {
+  const paceMultiplier = CONST.multipliers[pace] || 1;
+  if (speed.perHour !== undefined) {
+    const targetUnit = useMetric ? 'km' : 'mi';
+    const converted = convertDistance(speed.perHour, speed.unit, targetUnit);
+    const abbreviation = _loc(useMetric ? 'DND5E.DistKmAbbr' : 'DND5E.DistMiAbbr');
+    return _loc('TravelPace.Speed.Format.PerHour', { speed: (converted * paceMultiplier).toFixed(1), unit: abbreviation });
+  }
+  const feetPerMinute = speed.ratio * CONST.walkBaselineFeet * paceMultiplier;
+  const abbreviation = _loc(useMetric ? 'DND5E.DistMAbbr' : 'DND5E.DistFtAbbr');
+  const displayed = useMetric ? Math.round(feetPerMinute * CONST.conversion.mPerFt) : Math.round(feetPerMinute);
+  return _loc('TravelPace.Speed.Format.PerMinute', { speed: displayed, unit: abbreviation });
+}
+
+/**
+ * Resolve a mount from the key the settings store.
+ * @param {string} [key] The stored mount key
+ * @returns {Promise<foundry.documents.Actor|null>} The resolved actor
+ */
+export async function resolveMount(key) {
+  if (!key) return null;
+  return (await fromUuid(key.includes('.') ? key : `Actor.${key}`)) ?? null;
 }
 
 /**

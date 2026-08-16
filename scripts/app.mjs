@@ -1,4 +1,5 @@
 import { CONST } from './config.mjs';
+import { formatMountSpeed, getMountSpeed, resolveMount } from './helpers.mjs';
 import { TravelCalculator } from './travel-calculator.mjs';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -15,11 +16,13 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     window: { icon: 'fa-solid fa-route', title: 'TravelPace.Title', resizable: false, minimizable: true }
   };
 
+  /** @type {Map<string, foundry.documents.Actor>} Resolved mounts, keyed by the value their option carries. */
+  #mounts = new Map();
+
   /** @inheritdoc */
   async _prepareContext() {
-    const enabledMounts = game.settings.get(CONST.moduleId, CONST.settings.enabledMounts) || {};
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-    const mounts = await TravelPaceApp.#getAvailableMounts(enabledMounts);
+    const mounts = await this.#loadMounts();
     const speeds = TravelPaceApp.#getDefaultSpeeds(useMetric);
     return {
       units: { distance: useMetric ? _loc('DND5E.DistKmAbbr') : _loc('DND5E.DistMiAbbr') },
@@ -89,15 +92,15 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const container = this.element;
     const mode = container.querySelector('input[name="travelpace-mode"]:checked')?.value;
     const pace = container.querySelector('#travelpace-pace')?.value;
-    const mountId = container.querySelector('#travelpace-mount')?.value;
+    const mount = this.#selectedMount();
     let data;
     if (mode === 'distance') {
       const distance = Number(container.querySelector('#travelpace-distance')?.value);
-      data = { mode, distance, pace, mountId };
+      data = { mode, distance, pace, mount };
     } else {
       const days = Number(container.querySelector('#travelpace-days')?.value);
       const hours = Number(container.querySelector('#travelpace-hours')?.value);
-      data = { mode, time: { days, hours, minutes: 0 }, pace, mountId };
+      data = { mode, time: { days, hours, minutes: 0 }, pace, mount };
     }
     await TravelCalculator.submitCalculation(data);
   }
@@ -108,34 +111,34 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!previewEl) return;
     const mode = this.element.querySelector('input[name="travelpace-mode"]:checked')?.value;
     const pace = this.element.querySelector('#travelpace-pace')?.value;
-    const mountId = this.element.querySelector('#travelpace-mount')?.value;
-    const preview = mode === 'distance' ? this.#getDistancePreview(pace, mountId) : this.#getTimePreview(pace, mountId);
+    const mount = this.#selectedMount();
+    const preview = mode === 'distance' ? this.#getDistancePreview(pace, mount) : this.#getTimePreview(pace, mount);
     previewEl.textContent = preview || _loc('TravelPace.Preview.Empty');
   }
 
   /**
    * Preview text for distance → time mode.
    * @param {string} pace Selected travel pace id
-   * @param {string} mountId Selected mount id (or empty)
+   * @param {foundry.documents.Actor|null} mount Selected mount
    * @returns {string} Formatted travel-time string, or empty if no input
    */
-  #getDistancePreview(pace, mountId) {
+  #getDistancePreview(pace, mount) {
     const distance = Number(this.element.querySelector('#travelpace-distance')?.value);
     if (!distance || distance <= 0) return '';
-    return TravelCalculator.calculateTravel({ mode: 'distance', distance, pace, mountId })?.output.timeFormatted ?? '';
+    return TravelCalculator.calculateTravel({ mode: 'distance', distance, pace, mount })?.output.timeFormatted ?? '';
   }
 
   /**
    * Preview text for time → distance mode.
    * @param {string} pace Selected travel pace id
-   * @param {string} mountId Selected mount id (or empty)
+   * @param {foundry.documents.Actor|null} mount Selected mount
    * @returns {string} Formatted distance string, or empty if no input
    */
-  #getTimePreview(pace, mountId) {
+  #getTimePreview(pace, mount) {
     const days = Number(this.element.querySelector('#travelpace-days')?.value || 0);
     const hours = Number(this.element.querySelector('#travelpace-hours')?.value || 0);
     if (days <= 0 && hours <= 0) return '';
-    const result = TravelCalculator.calculateTravel({ mode: 'time', time: { days, hours, minutes: 0 }, pace, mountId });
+    const result = TravelCalculator.calculateTravel({ mode: 'time', time: { days, hours, minutes: 0 }, pace, mount });
     if (!result) return '';
     const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
     const unit = useMetric ? _loc('DND5E.DistKmAbbr') : _loc('DND5E.DistMiAbbr');
@@ -157,89 +160,42 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Build the list of available mount options for the calculator dropdown.
-   * @param {object<string, boolean>} enabledMounts Enabled-mount toggle map keyed by id/uuid
-   * @returns {Promise<Array<{id: string, name: string}>>} Resolved mount option list
+   * Resolve the enabled mounts and cache them.
+   * @returns {Promise<Array<{id: string, name: string}>>} Mount options for the dropdown
    */
-  static async #getAvailableMounts(enabledMounts) {
-    const mounts = [];
-    for (const id in enabledMounts) {
-      if (!enabledMounts[id]) continue;
-      const actor = id.includes('.') ? await fromUuid(id) : game.actors.get(id);
+  async #loadMounts() {
+    const enabledMounts = game.settings.get(CONST.moduleId, CONST.settings.enabledMounts) || {};
+    this.#mounts.clear();
+    const options = [];
+    for (const [key, enabled] of Object.entries(enabledMounts)) {
+      if (!enabled) continue;
+      const actor = await resolveMount(key);
       if (!actor) continue;
-      mounts.push({ id: actor.id, name: actor.name });
+      this.#mounts.set(key, actor);
+      options.push({ id: key, name: actor.name });
     }
-    return mounts;
+    return options;
   }
 
   /**
-   * Format an actor's movement speed for display.
-   * @param {foundry.documents.Actor} actor The mount or vehicle actor
-   * @param {boolean} useMetric Whether to render distances in metric units
-   * @returns {string} Localized speed string ("X ft/min" or "X mi/hour")
+   * The mount currently chosen in the dropdown.
+   * @returns {foundry.documents.Actor|null} The resolved mount, or null when none is selected
    */
-  static #getMountSpeed(actor, useMetric) {
-    if (actor.type === 'vehicle') {
-      const movement = actor.system.attributes?.movement || {};
-      const miAbbrev = _loc('DND5E.DistMiAbbr');
-      const kmAbbrev = _loc('DND5E.DistKmAbbr');
-      if (movement.units === miAbbrev || movement.units === kmAbbrev) {
-        const speeds = Object.entries(movement)
-          .filter(([key, value]) => typeof value === 'number' && key !== 'units')
-          .map(([, value]) => value);
-        if (speeds.length) {
-          const unit = movement.units === miAbbrev ? miAbbrev : kmAbbrev;
-          return _loc('TravelPace.Speed.Format.PerHour', { speed: Math.max(...speeds), unit });
-        }
-      }
-    }
-    const walkSpeed = actor.system.attributes?.movement?.walk || 30;
-    const baseSpeed = useMetric ? Math.round(walkSpeed * CONST.conversion.mPerFt) : walkSpeed;
-    const unit = useMetric ? _loc('DND5E.DistMAbbr') : _loc('DND5E.DistFtAbbr');
-    return _loc('TravelPace.Speed.Format.PerMinute', { speed: baseSpeed, unit });
+  #selectedMount() {
+    const key = this.element.querySelector('#travelpace-mount')?.value;
+    return (key && this.#mounts.get(key)) || null;
   }
 
   /** Update the pace label with the speed implied by the selected pace and mount. */
-  async #updatePaceLabel() {
+  #updatePaceLabel() {
     const paceLabel = this.element.querySelector('label[for="travelpace-pace"]');
     const paceSelect = this.element.querySelector('#travelpace-pace');
     if (!paceLabel || !paceSelect) return;
-    const pace = paceSelect.value;
-    const mountId = this.element.querySelector('#travelpace-mount')?.value;
-    const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-    const baseLabel = _loc('TravelPace.Labels.Pace');
-    if (mountId) {
-      const actor = mountId.includes('.') ? await fromUuid(mountId) : game.actors.get(mountId);
-      if (actor) {
-        const mountSpeed = TravelPaceApp.#getMountSpeed(actor, useMetric);
-        const adjusted = TravelPaceApp.#applyPaceMultiplier(mountSpeed, CONST.multipliers[pace]);
-        paceLabel.textContent = `${baseLabel} (${adjusted})`;
-        return;
-      }
-    }
-    const speeds = TravelPaceApp.#getDefaultSpeeds(useMetric);
-    paceLabel.textContent = `${baseLabel} (${speeds[pace]})`;
-  }
 
-  /**
-   * Apply a pace multiplier to a formatted speed string, preserving its hour/minute unit.
-   * @param {string} speedString Formatted speed (e.g. "30 mi/hour" or "300 ft/min")
-   * @param {number} multiplier Pace multiplier (e.g. 1.33 for fast)
-   * @returns {string} The formatted speed string with the multiplier applied
-   */
-  static #applyPaceMultiplier(speedString, multiplier) {
-    const hourUnit = _loc('TravelPace.Speed.Units.Hour');
-    const minUnit = _loc('TravelPace.Speed.Units.Minute');
-    const hourMatch = speedString.match(new RegExp(`^(\\d+(\\.\\d+)?)\\s*([^/]+)/${hourUnit}$`));
-    if (hourMatch) {
-      const adjusted = (parseFloat(hourMatch[1]) * multiplier).toFixed(1);
-      return _loc('TravelPace.Speed.Format.PerHour', { speed: adjusted, unit: hourMatch[3] });
-    }
-    const minMatch = speedString.match(new RegExp(`^(\\d+(\\.\\d+)?)\\s*([^/]+)/${minUnit}$`));
-    if (minMatch) {
-      const adjusted = Math.round(parseFloat(minMatch[1]) * multiplier);
-      return _loc('TravelPace.Speed.Format.PerMinute', { speed: adjusted, unit: minMatch[3] });
-    }
-    return speedString;
+    const pace = paceSelect.value;
+    const mount = this.#selectedMount();
+    const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
+    const speed = mount ? formatMountSpeed(getMountSpeed(mount), pace, useMetric) : TravelPaceApp.#getDefaultSpeeds(useMetric)[pace];
+    paceLabel.textContent = `${_loc('TravelPace.Labels.Pace')} (${speed})`;
   }
 }

@@ -72,7 +72,7 @@ export class MountConfigMenu extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static async #getPotentialMounts() {
     const actors = [];
-    for (const actor of game.actors) if (actor.type === 'npc' || actor.type === 'vehicle') actors.push({ id: actor.id, name: actor.name, type: actor.type, img: actor.img, isWorld: true });
+    for (const actor of game.actors) if (actor.type === 'npc' || actor.type === 'vehicle') actors.push({ id: actor.uuid, name: actor.name, type: actor.type, img: actor.img, isWorld: true });
     for (const pack of game.packs) {
       if (pack.metadata.type !== 'Actor') continue;
       const index = await pack.getIndex({ fields: ['type', 'img'] });
