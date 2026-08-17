@@ -1,4 +1,6 @@
 *.lock
+/dist
+/node_modules
 /packs
 /storage
 /todo

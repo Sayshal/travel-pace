@@ -1,5 +1,6 @@
 import { registerSettings } from './scripts/settings.mjs';
 import { TravelCalculator } from './scripts/travel-calculator.mjs';
+import './styles/travel-pace.css';
 
 Hooks.once('init', () => {
   ATLAS.register('travel-pace', {
