@@ -1,60 +1,40 @@
 <div class="travel-pace-chat">
-  <h2 id="travelpace-chat_title">{{localize "TravelPace.ChatMessage.Title"}}</h2>
+  <h2>{{localize "TRAVELPACE.ChatMessage.Title"}}</h2>
 
-  {{#if vehicleInfo}}
-    <p class="travel-pace-mount" id="travelpace-chat_mount">
-      {{localize "TravelPace.ChatMessage.UsingMount"}}: {{vehicleInfo.embed}} ({{vehicleInfo.speed}})
-    </p>
-  {{else if speedPercent}}
-    {{#unless (eq speedPercent 100)}}
-      <p class="travel-pace-mount" id="travelpace-chat_mount">
-        {{localize "TravelPace.ChatMessage.UsingMount"}} ({{speedPercent}}%
-        {{localize "TravelPace.ChatMessage.OfNormalSpeed"}})
-      </p>
-    {{/unless}}
+  {{#if mountEmbed}}
+    <p class="travel-pace-mount">{{localize "TRAVELPACE.ChatMessage.UsingMount" mount=mountEmbed speed=mountSpeed}}</p>
   {{/if}}
 
   {{#if modifierLines.length}}
-    <div class="travel-pace-modifiers" id="travelpace-chat_modifiers">
+    <div class="travel-pace-modifiers">
       {{#each modifierLines}}
         <p>{{this}}</p>
       {{/each}}
     </div>
   {{/if}}
 
-  <div class="travel-pace-details" id="travelpace-chat_details">
-    <p class="travel-pace-pace" id="travelpace-chat_pace">{{paceLabel}} {{localize "TravelPace.ChatMessage.Pace"}}</p>
+  <div class="travel-pace-details">
+    <p class="travel-pace-pace">{{localize "TRAVELPACE.ChatMessage.PaceLine" pace=paceLabel}}</p>
 
     {{#if (eq result.mode "distance")}}
-      <p class="travel-pace-input" id="travelpace-chat_input">
-        {{localize "TravelPace.ChatMessage.Distance"}}: {{result.input.distance}} {{result.input.unit}}
-      </p>
-      <p class="travel-pace-output" id="travelpace-chat_output">
-        {{localize "TravelPace.ChatMessage.Time"}}: {{result.output.timeFormatted}}
-      </p>
+      <p class="travel-pace-input">{{localize "TRAVELPACE.ChatMessage.DistanceLine" distance=distanceText}}</p>
+      <p class="travel-pace-output">{{localize "TRAVELPACE.ChatMessage.TimeLine" time=timeText}}</p>
     {{else}}
-      <p class="travel-pace-input" id="travelpace-chat_input">
-        {{localize "TravelPace.ChatMessage.Time"}}:
-        {{#if result.input.time.days}}{{result.input.time.days}}d {{/if}}
-        {{#if result.input.time.hours}}{{result.input.time.hours}}h {{/if}}
-        {{#if result.input.time.minutes}}{{result.input.time.minutes}}m{{/if}}
-      </p>
-      <p class="travel-pace-output" id="travelpace-chat_output">
-        {{localize "TravelPace.ChatMessage.Distance"}}: {{result.output.distance}} {{result.output.unit}}
-      </p>
+      <p class="travel-pace-input">{{localize "TRAVELPACE.ChatMessage.TimeLine" time=timeText}}</p>
+      <p class="travel-pace-output">{{localize "TRAVELPACE.ChatMessage.DistanceLine" distance=distanceText}}</p>
     {{/if}}
   </div>
 
   {{#if showEffects}}
-    <div class="travel-pace-effects" id="travelpace-chat_effects">
+    <div class="travel-pace-effects">
       <p>{{result.paceEffect}}</p>
     </div>
   {{/if}}
 
   {{#if result.output.totalMinutes}}
-    <button type="button" class="travel-pace-advance" id="travelpace-chat_advance">
+    <button type="button" class="travel-pace-advance">
       <i class="fas fa-forward"></i>
-      {{localize "TravelPace.Advance.Button"}}
+      {{localize "TRAVELPACE.Advance.Button"}}
     </button>
   {{/if}}
 </div>

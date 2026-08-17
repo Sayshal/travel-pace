@@ -1,16 +1,13 @@
 <div class="travel-pace-mount-config">
-	{{!-- Instructions --}}
-	<p id="travelpace-mount-instructions">{{localize "TravelPace.Settings.MountConfig.Instructions"}}</p>
+	<p class="hint">{{localize "TRAVELPACE.Settings.MountConfig.Instructions"}}</p>
 
-	{{!-- Mount Selection Widget --}}
-	{{formField fields.mounts value=document.mounts rootId=partId widget=mountsWidget placeholder=(localize "TravelPace.Settings.MountConfig.SelectMounts")}}
-
-	{{!-- No Mounts Warning --}}
-	{{#unless actors.length}}
-		<hr />
-		<div class="notification error" id="travelpace-mount-warning">
-			<p>{{localize "TravelPace.Settings.MountConfig.NoMounts"}}</p>
-			<p>{{localize "TravelPace.Settings.MountConfig.AddMountsHint"}}</p>
+	{{#if actors.length}}
+		<h3>{{localize "TRAVELPACE.Settings.MountConfig.SelectMounts"}}</h3>
+		{{formField fields.mounts widget=mountsWidget}}
+	{{else}}
+		<div class="notification error">
+			<p>{{localize "TRAVELPACE.Settings.MountConfig.NoMounts"}}</p>
+			<p>{{localize "TRAVELPACE.Settings.MountConfig.AddMountsHint"}}</p>
 		</div>
-	{{/unless}}
+	{{/if}}
 </div>

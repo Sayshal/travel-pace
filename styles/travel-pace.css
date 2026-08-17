@@ -1,6 +1,5 @@
 :root {
   --travel-pace-border-radius: 0.313rem;
-  --travel-pace-shadow: 0 0 0.313rem rgb(0 0 0 / 50%);
   --travel-pace-spacing-sm: 0.625rem;
   --travel-pace-spacing-xs: 0.313rem;
   --travel-pace-transition: all 0.2s ease;
@@ -12,12 +11,11 @@
   --travel-pace-border-color: var(--atlas-border, rgb(255 255 255 / 15%));
   --travel-pace-button-bg: var(--atlas-button-bg, rgb(75 74 68));
   --travel-pace-button-bg-hover: var(--atlas-button-hover, rgb(96 94 84));
-  --travel-pace-divider: var(--atlas-divider, rgb(255 255 255 / 10%));
-  --travel-pace-error-bg: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 15%, transparent);
+  --travel-pace-error-bg: var(--atlas-error-bg, rgb(244 67 54 / 15%));
   --travel-pace-error-border: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 50%, transparent);
+  --travel-pace-shadow: 0 0 0.313rem var(--atlas-shadow-color, rgb(0 0 0 / 40%));
   --travel-pace-text-on-color: var(--atlas-button-text, rgb(255 255 255));
   --travel-pace-text-primary: var(--atlas-text, rgb(241 241 241));
-  --travel-pace-text-secondary: var(--atlas-text-secondary, rgb(186 186 186));
 }
 
 .travel-calculator-window {
@@ -101,7 +99,6 @@
       border-radius: var(--travel-pace-border-radius);
       text-align: center;
       background-color: var(--travel-pace-bg-highlight);
-      transition: var(--travel-pace-transition);
 
       h3 {
         opacity: 0.8;
@@ -148,13 +145,11 @@
 }
 
 .travel-pace-chat {
-  --travel-pace-text-primary: var(--atlas-surface-text);
-  --travel-pace-text-secondary: var(--atlas-surface-text-dim);
-  --travel-pace-bg-highlight: var(--atlas-surface-bg);
-  --travel-pace-divider: var(--atlas-surface-divider);
+  --travel-pace-bg-highlight: rgb(0 0 0 / 5%);
+  --travel-pace-divider: rgb(0 0 0 / 10%);
+  --travel-pace-text-secondary: rgb(60 60 60);
 
   padding: var(--travel-pace-spacing-sm);
-  color: var(--travel-pace-text-primary);
   font-family: var(--font-primary);
 
   h2 {
@@ -208,8 +203,8 @@
   .travel-pace-advance {
     gap: var(--travel-pace-spacing-xs);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     width: 100%;
     margin-top: var(--travel-pace-spacing-sm);
   }
@@ -219,11 +214,12 @@
   padding: var(--travel-pace-spacing-sm);
 
   .notification.error {
+    --background-color: var(--travel-pace-error-bg);
+    --border-color: var(--travel-pace-error-border);
+
+    flex-direction: column;
+    align-items: start;
     margin: 1rem 0;
-    padding: 0.75rem;
-    border: 1px solid var(--travel-pace-error-border);
-    border-radius: var(--travel-pace-border-radius);
-    background-color: var(--travel-pace-error-bg);
   }
 
   .mounts-widget {
@@ -242,9 +238,6 @@
     }
 
     label {
-      gap: var(--travel-pace-spacing-xs);
-      display: flex;
-      align-items: center;
       padding: 0.2rem 0;
       cursor: pointer;
     }
@@ -255,13 +248,5 @@
   .travel-pace-weather-presets {
     max-height: 20rem;
     overflow-y: auto;
-  }
-}
-
-.travel-pace-app .form-footer {
-  padding-top: var(--travel-pace-spacing-sm);
-
-  button {
-    width: 100%;
   }
 }

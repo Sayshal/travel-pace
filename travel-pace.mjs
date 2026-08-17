@@ -1,28 +1,13 @@
+import { exposeApi } from './scripts/api.mjs';
+import { MODULE } from './scripts/constants.mjs';
+import { registerHooks } from './scripts/hooks.mjs';
 import { registerSettings } from './scripts/settings.mjs';
-import { TravelCalculator } from './scripts/travel-calculator.mjs';
 import './styles/travel-pace.css';
 
 Hooks.once('init', () => {
-  ATLAS.register('travel-pace', {
-    title: 'Travel Pace',
-    github: 'Sayshal/travel-pace',
-    theme: { scope: '.travel-calculator-window, .travel-pace-app' }
-  });
-  registerSettings();
-  const api = {
-    /** @returns {string} The distance unit abbreviation the world is configured for */
-    get unit() {
-      return TravelCalculator.unit;
-    },
-    calculateTravel: (data) => TravelCalculator.calculateTravel(data),
-    submitCalculation: (data) => TravelCalculator.submitCalculation(data),
-    createChatMessage: (result) => TravelCalculator.createChatMessage(result),
-    durationToSeconds: (totalMinutes) => TravelCalculator.durationToSeconds(totalMinutes),
-    openCalculator: () => TravelCalculator.openCalculator()
-  };
-  game.modules.get('travel-pace').api = api;
-  globalThis.TRAVELPACE = api;
+  ATLAS.register(MODULE.ID, { github: 'Sayshal/travel-pace', theme: { scope: '.travel-calculator-window, .travel-pace-app' } });
   ATLAS.log(3, 'Initializing module');
+  registerSettings();
+  registerHooks();
+  exposeApi();
 });
-Hooks.on('getSceneControlButtons', (controls) => TravelCalculator.getSceneControlButtons(controls));
-Hooks.on('renderChatMessageHTML', (message, html) => TravelCalculator.onRenderChatMessage(message, html));

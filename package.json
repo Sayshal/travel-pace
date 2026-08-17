@@ -1,7 +1,7 @@
 {
   "name": "travel-pace",
   "version": "1.0.0",
-  "description": "FoundryVTT Module",
+  "description": "Travel time and distance calculator for FoundryVTT",
   "scripts": {
     "build": "rollup -c rollup.config.mjs",
     "build:watch": "rollup -c rollup.config.mjs --watch",

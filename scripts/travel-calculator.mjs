@@ -1,44 +1,27 @@
-import { TravelPaceApp } from './app.mjs';
-import { CONST } from './config.mjs';
-import { calculateDistance, calculateTime, formatMountSpeed, formatTime, getMountSpeed, getPaceEffects, isCalendariaActive } from './helpers.mjs';
+import { MODULE, SETTINGS, TEMPLATES } from './constants.mjs';
+import { getWeatherModifiers } from './integrations/calendaria.mjs';
+import {
+  breakdownMinutesToTimeUnits,
+  calculateDistance,
+  calculateTime,
+  formatMountSpeed,
+  formatTime,
+  getMountSpeed,
+  getPaceEffects,
+  minutesPerHour,
+  timeToMinutes,
+  travelUnits,
+  unitAbbreviation
+} from './utils.mjs';
 
-/** Coordinator for the Travel Pace calculator: scene-controls integration, calculation entry, chat output. */
+/** Turns calculator input into a result, a chat card, and a world-time advance. */
 export class TravelCalculator {
-  static requestor = undefined;
-
-  /**
-   * Add the travel-pace button to the token scene controls.
-   * @param {object} controls The v13+ scene-controls record object
-   */
-  static getSceneControlButtons(controls) {
-    if (!controls.tokens?.tools) return;
-    controls.tokens.tools['travel-pace'] = {
-      name: 'travel-pace',
-      title: _loc('TravelPace.Button'),
-      icon: 'fas fa-route',
-      visible: true,
-      button: true,
-      onChange: () => TravelCalculator.openCalculator()
-    };
-  }
-
   /**
    * The distance unit abbreviation the world is configured for.
    * @returns {string} The localized unit abbreviation
    */
   static get unit() {
-    return _loc(game.settings.get(CONST.moduleId, CONST.settings.useMetric) ? 'DND5E.DistKmAbbr' : 'DND5E.DistMiAbbr');
-  }
-
-  /** Open (or re-focus) the calculator window. */
-  static openCalculator() {
-    if (TravelCalculator.requestor && !TravelCalculator.requestor.rendered) TravelCalculator.requestor = undefined;
-    if (!TravelCalculator.requestor) {
-      TravelCalculator.requestor = new TravelPaceApp();
-      TravelCalculator.requestor.render(true);
-    } else {
-      TravelCalculator.requestor.bringToFront();
-    }
+    return unitAbbreviation(travelUnits().length);
   }
 
   /**
@@ -58,56 +41,33 @@ export class TravelCalculator {
   /**
    * Calculate either travel time or travel distance from the calculator payload.
    * @param {object} data Calculator input payload (mode, pace, distance|time, mount)
-   * @returns {object|null} The structured calculation result, or null when a preCalculate listener cancelled it
+   * @returns {object|null} The structured calculation result, or null when a listener cancelled it
    */
   static calculateTravel(data) {
+    const modifiers = getWeatherModifiers();
+    if (Hooks.call('travelPace.preCalculate', { data, modifiers }) === false) return null;
     const { mode, pace, mount = null } = data;
     const speed = getMountSpeed(mount);
-    const paceEffect = getPaceEffects(pace);
-    const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
     const unit = TravelCalculator.unit;
-    const modifiers = TravelCalculator.#getWeatherModifiers();
-    if (Hooks.call('travelPace.preCalculate', { data, modifiers }) === false) return null;
     const extraMultiplier = modifiers.reduce((product, modifier) => product * (Number(modifier.multiplier) > 0 ? Number(modifier.multiplier) : 1), 1);
+    const shared = { paceEffect: getPaceEffects(pace), speed, modifiers, extraMultiplier, mountUuid: mount?.uuid ?? null };
     if (mode === 'distance') {
-      const { distance } = data;
-      const distanceInFeet = useMetric ? distance * CONST.conversion.ftPerKm : distance * CONST.conversion.ftPerMile;
-      const time = calculateTime(distanceInFeet, pace, speed, extraMultiplier);
-      const totalMinutes = time ? time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + time.minutes : 0;
-      return { mode, input: { distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes }, paceEffect, speed, modifiers, extraMultiplier, mountUuid: mount?.uuid ?? null };
+      const time = calculateTime(data.distance, pace, speed, extraMultiplier);
+      return { mode, input: { distance: data.distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes: time ? timeToMinutes(time) : 0 }, ...shared };
     }
-    const { time } = data;
-    const totalMinutes = time.days * CONST.timeUnits.minutesPerDay + time.hours * CONST.timeUnits.minutesPerHour + (time.minutes || 0);
-    const distanceData = calculateDistance(totalMinutes, pace, speed, extraMultiplier);
-    const distance = useMetric ? distanceData.kilometers : distanceData.miles;
-    return { mode, input: { time, pace }, output: { distance, unit, totalMinutes }, paceEffect, speed, modifiers, extraMultiplier, mountUuid: mount?.uuid ?? null };
-  }
-
-  /**
-   * Build the built-in weather modifiers from the current Calendaria weather and the configured tables.
-   * @returns {Array<{id: string, label: string, multiplier: number}>} Labeled multipliers, empty when weather integration is off or unavailable
-   */
-  static #getWeatherModifiers() {
-    if (!game.settings.get(CONST.moduleId, CONST.settings.useWeather) || !isCalendariaActive()) return [];
-    const weather = CALENDARIA.api.getCurrentWeather();
-    if (!weather) return [];
-    const level = CALENDARIA.api.getWeatherSeverityLevel(weather.severity);
-    const presetMultiplier = Number(game.settings.get(CONST.moduleId, CONST.settings.weatherMultipliers)[weather.id]) || 1;
-    const severityMultiplier = Number(game.settings.get(CONST.moduleId, CONST.settings.severityMultipliers)[level?.id] ?? CONST.severityDefaults[level?.id]) || 1;
-    const modifiers = [];
-    if (presetMultiplier !== 1) modifiers.push({ id: `weather.${weather.id}`, label: weather.label || weather.id, multiplier: presetMultiplier });
-    if (severityMultiplier !== 1) modifiers.push({ id: 'weather.severity', label: _loc('TravelPace.ChatMessage.SeverityLabel', { label: _loc(level.label) }), multiplier: severityMultiplier });
-    return modifiers;
+    const totalMinutes = timeToMinutes(data.time);
+    return { mode, input: { time: data.time, pace }, output: { distance: calculateDistance(totalMinutes, pace, speed, extraMultiplier), unit, totalMinutes }, ...shared };
   }
 
   /**
    * Phrase a labeled multiplier as a sentence naming its direction and size.
-   * @param {{label: string, multiplier: number}} modifier A labeled multiplier from the result
+   * @param {{id: string, label: string, multiplier: number}} modifier A labeled multiplier from the result
    * @returns {string} Localized sentence describing the modifier
    */
-  static #describeModifier({ label, multiplier }) {
-    const key = multiplier < 1 ? 'TravelPace.ChatMessage.ModifierSlower' : 'TravelPace.ChatMessage.ModifierFaster';
-    return _loc(key, { label: _loc(label), percent: Math.round(Math.abs(1 - multiplier) * 100) });
+  static #describeModifier({ id, label, multiplier }) {
+    const key = multiplier < 1 ? 'TRAVELPACE.ChatMessage.ModifierSlower' : 'TRAVELPACE.ChatMessage.ModifierFaster';
+    const name = id === 'weather.severity' ? _loc('TRAVELPACE.ChatMessage.SeverityLabel', { label: _loc(label) }) : _loc(label);
+    return _loc(key, { label: name, percent: Math.round(Math.abs(1 - multiplier) * 100) });
   }
 
   /**
@@ -116,26 +76,18 @@ export class TravelCalculator {
    * @returns {Promise<ChatMessage>} The created chat message
    */
   static async createChatMessage(result) {
-    const showEffects = game.settings.get(CONST.moduleId, CONST.settings.showEffects);
-    const useMetric = game.settings.get(CONST.moduleId, CONST.settings.useMetric);
-    let vehicleInfo = null;
-    if (result.mountUuid) {
-      const actor = await fromUuid(result.mountUuid);
-      if (actor) vehicleInfo = { speed: formatMountSpeed(getMountSpeed(actor), result.input.pace, useMetric), embed: `@UUID[${actor.uuid}]` };
-      else ATLAS.log(2, 'Mount actor not found:', result.mountUuid);
-    }
-    const paceLabel = _loc(`TravelPace.Paces.${result.input.pace.charAt(0).toUpperCase()}${result.input.pace.slice(1)}`);
-    const speedPercent = result.speed?.ratio !== undefined ? Math.round(result.speed.ratio * 100) : null;
-    const modifierLines = (result.modifiers ?? []).map((modifier) => TravelCalculator.#describeModifier(modifier));
-    const content = await foundry.applications.handlebars.renderTemplate('modules/travel-pace/templates/chat-message.hbs', {
+    const distance = result.mode === 'distance' ? result.input.distance : Math.round(result.output.distance * 10) / 10;
+    const content = await foundry.applications.handlebars.renderTemplate(TEMPLATES.CHAT_MESSAGE, {
       result,
-      paceLabel,
-      speedPercent,
-      showEffects,
-      vehicleInfo,
-      modifierLines
+      paceLabel: _loc(`TRAVELPACE.Paces.${result.input.pace.charAt(0).toUpperCase()}${result.input.pace.slice(1)}`),
+      showEffects: game.settings.get(MODULE.ID, SETTINGS.SHOW_EFFECTS),
+      mountEmbed: result.mountUuid ? `@UUID[${result.mountUuid}]` : null,
+      mountSpeed: result.mountUuid ? formatMountSpeed(result.speed, result.input.pace) : null,
+      distanceText: `${distance} ${result.output.unit ?? result.input.unit}`,
+      timeText: result.mode === 'distance' ? result.output.timeFormatted : formatTime(result.input.time),
+      modifierLines: (result.modifiers ?? []).map((modifier) => TravelCalculator.#describeModifier(modifier))
     });
-    return ChatMessage.create({ speaker: ChatMessage.getSpeaker(), content, flags: { [CONST.moduleId]: { result } } });
+    return ChatMessage.create({ speaker: ChatMessage.getSpeaker(), content, flags: { [MODULE.ID]: { result } } });
   }
 
   /**
@@ -156,18 +108,17 @@ export class TravelCalculator {
    * @returns {Promise<void>}
    */
   static async advanceWorldTime(message) {
-    const result = message.getFlag(CONST.moduleId, 'result');
+    const result = message.getFlag(MODULE.ID, 'result');
     const seconds = TravelCalculator.durationToSeconds(result?.output?.totalMinutes);
-    if (seconds <= 0) return void ui.notifications.warn('TravelPace.Advance.NoDuration', { localize: true });
+    if (seconds <= 0) return void ui.notifications.warn('TRAVELPACE.Advance.NoDuration');
     const { secondsPerMinute, minutesPerHour, hoursPerDay } = game.time.calendar.days;
-    const secondsPerHour = secondsPerMinute * minutesPerHour;
-    const secondsPerDay = secondsPerHour * hoursPerDay;
+    const secondsPerDay = secondsPerMinute * minutesPerHour * hoursPerDay;
     if (seconds > secondsPerDay) {
       const days = Math.floor(seconds / secondsPerDay);
-      const hours = Math.round((seconds % secondsPerDay) / secondsPerHour);
+      const hours = Math.round((seconds % secondsPerDay) / (secondsPerMinute * minutesPerHour));
       const confirmed = await foundry.applications.api.DialogV2.confirm({
-        window: { title: 'TravelPace.Advance.Confirm.Title' },
-        content: `<p>${_loc('TravelPace.Advance.Confirm.Content', { days, hours })}</p>`
+        window: { title: 'TRAVELPACE.Advance.Confirm.Title' },
+        content: `<p>${_loc('TRAVELPACE.Advance.Confirm.Content', { days, hours })}</p>`
       });
       if (!confirmed) return;
     }
@@ -181,10 +132,9 @@ export class TravelCalculator {
    */
   static durationToSeconds(totalMinutes) {
     if (!(totalMinutes > 0)) return 0;
-    const { secondsPerMinute, minutesPerHour, hoursPerDay } = game.time.calendar.days;
-    if (game.settings.get(CONST.moduleId, CONST.settings.advanceMode) === 'travel') return Math.round(totalMinutes * secondsPerMinute);
-    const travelDays = Math.floor(totalMinutes / CONST.timeUnits.minutesPerDay);
-    const remainingMinutes = totalMinutes % CONST.timeUnits.minutesPerDay;
-    return Math.round(travelDays * hoursPerDay * minutesPerHour * secondsPerMinute + remainingMinutes * secondsPerMinute);
+    const { calendar } = game.time;
+    if (game.settings.get(MODULE.ID, SETTINGS.ADVANCE_MODE) === 'travel') return Math.round(calendar.componentsToTime({ minute: totalMinutes }));
+    const { days, hours, minutes } = breakdownMinutesToTimeUnits(totalMinutes);
+    return Math.round(calendar.componentsToTime({ day: days, minute: hours * minutesPerHour() + minutes }));
   }
 }

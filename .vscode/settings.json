@@ -1,6 +1,4 @@
 {
-  "i18n-ally.localesPaths": [
-    "dnd5e/lang",
-    "foundry/public/lang"
-  ]
+  "i18n-ally.localesPaths": ["dnd5e/lang", "foundry/public/lang"],
+  "prettier.configPath": "../.prettierrc.json"
 }

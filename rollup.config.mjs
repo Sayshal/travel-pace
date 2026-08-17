@@ -5,15 +5,6 @@ import postcss from 'rollup-plugin-postcss';
 const isDev = process.env.BUILD === 'development';
 
 export default {
-  /**
-   * Suppress circular dependency warnings.
-   * @param {object} warning - The rollup warning
-   * @param {Function} warn - Default warning handler
-   */
-  onwarn(warning, warn) {
-    if (warning.code === 'CIRCULAR_DEPENDENCY') return;
-    warn(warning);
-  },
   input: 'travel-pace.mjs',
   output: {
     file: 'dist/travel-pace.mjs',
