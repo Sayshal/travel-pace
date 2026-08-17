@@ -1,146 +1,170 @@
-:root {
-  --travel-pace-border-radius: 0.313rem;
-  --travel-pace-spacing-sm: 0.625rem;
-  --travel-pace-spacing-xs: 0.313rem;
-  --travel-pace-transition: all 0.2s ease;
-}
+.travel-pace-app .window-content {
+  color: var(--atlas-text, inherit);
+  background: var(--atlas-bg, transparent);
 
-.travel-calculator-window,
-.travel-pace-app {
-  --travel-pace-bg-highlight: var(--atlas-bg-hover, rgb(255 255 255 / 5%));
-  --travel-pace-border-color: var(--atlas-border, rgb(255 255 255 / 15%));
-  --travel-pace-button-bg: var(--atlas-button-bg, rgb(75 74 68));
-  --travel-pace-button-bg-hover: var(--atlas-button-hover, rgb(96 94 84));
-  --travel-pace-error-bg: var(--atlas-error-bg, rgb(244 67 54 / 15%));
-  --travel-pace-error-border: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 50%, transparent);
-  --travel-pace-shadow: 0 0 0.313rem var(--atlas-shadow-color, rgb(0 0 0 / 40%));
-  --travel-pace-text-on-color: var(--atlas-button-text, rgb(255 255 255));
-  --travel-pace-text-primary: var(--atlas-text, rgb(241 241 241));
-}
-
-.travel-calculator-window {
-  min-width: 18.75rem;
-
-  .travel-calculator {
-    gap: var(--travel-pace-spacing-sm);
+  /* Single-part menus wrap their groups in one root, so that root carries the column layout
+     standard-form would otherwise apply to the groups directly */
+  .travel-pace-mount-config,
+  .travel-pace-weather-config {
+    gap: var(--spacer-16, 1rem);
     display: flex;
     flex-direction: column;
+  }
 
-    hr {
-      opacity: 0.5;
-      margin-top: 0;
-      border-color: var(--travel-pace-border-color);
+  input:not([type='checkbox']),
+  select {
+    border: 0.0625rem solid var(--atlas-border, rgb(74 74 74));
+    color: var(--atlas-text, rgb(224 224 224));
+    background: var(--atlas-input-bg, rgb(48 48 48));
+
+    &::placeholder {
+      color: var(--atlas-text-dim, rgb(136 136 136));
     }
 
-    .header-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: var(--travel-pace-spacing-xs) 0;
-
-      label {
-        margin-bottom: 0.5rem;
-        font-weight: normal;
-      }
+    &:focus {
+      border-color: var(--atlas-primary, rgb(74 144 226));
+      outline: none;
+      box-shadow: none;
     }
+  }
 
-    .form-group {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--travel-pace-spacing-xs) 0;
+  select option {
+    color: var(--atlas-text, rgb(224 224 224));
+    background: var(--atlas-bg, rgb(31 31 31));
+  }
 
-      label {
-        margin-right: 1rem;
-        font-weight: 100;
-        font-size: small;
-      }
+  input[type='checkbox'] {
+    --checkbox-background-color: var(--atlas-input-bg, rgb(48 48 48));
+    --checkbox-border-color: var(--atlas-border, rgb(74 74 74));
+    --checkbox-checked-color: var(--atlas-primary, rgb(74 144 226));
+    --checkbox-checkmark-color: var(--atlas-text-on-color, rgb(255 255 255));
+  }
 
-      input,
-      select {
-        flex: 0 0 38%;
-        height: 1.563rem;
-        padding: 0 0.5rem;
-        border-radius: var(--travel-pace-border-radius);
-        text-align: center;
-        transition: var(--travel-pace-transition);
+  fieldset {
+    border-color: var(--atlas-border, rgb(74 74 74));
 
-        &:focus {
-          outline: none;
-          box-shadow: var(--travel-pace-shadow);
-        }
-      }
+    legend {
+      color: var(--atlas-text-heading, inherit);
     }
+  }
 
-    .mode-selector {
-      gap: 1.875rem;
-      display: flex;
-      justify-content: center;
-      margin-bottom: 0.5rem;
+  .hint {
+    color: var(--atlas-text-dim, inherit);
+  }
+
+  button {
+    border: 0.0625rem solid var(--atlas-button-border, rgb(74 74 74));
+    color: var(--atlas-button-text, rgb(224 224 224));
+    background: var(--atlas-button-bg, rgb(48 48 48));
+
+    &:hover {
+      color: var(--atlas-text-heading, rgb(238 238 238));
+      background: var(--atlas-button-hover, rgb(58 58 58));
     }
+  }
 
-    .radio-label {
-      gap: 0.3rem;
-      display: flex;
-      align-items: center;
-      font-weight: normal;
-      cursor: pointer;
+  .mode-toggle {
+    display: flex;
+    border: 0.0625rem solid var(--atlas-button-border, rgb(74 74 74));
+    border-radius: 0.375rem;
+    overflow: hidden;
 
-      input[type='radio'] {
-        margin: 0;
-        transform: translateY(-15%);
-      }
-    }
-
-    .calculation-preview-container {
-      margin-top: var(--travel-pace-spacing-sm);
-      padding: var(--travel-pace-spacing-sm);
-      border: 1px solid var(--travel-pace-border-color);
-      border-radius: var(--travel-pace-border-radius);
-      text-align: center;
-      background-color: var(--travel-pace-bg-highlight);
-
-      h3 {
-        opacity: 0.8;
-        margin-top: 0;
-        padding-bottom: 0.4rem;
-        border-bottom: 1px solid var(--travel-pace-border-color);
-        font-size: 1rem;
-      }
-    }
-
-    .calculation-preview {
-      min-height: 1.5rem;
-      padding: 0.3rem;
-      color: var(--travel-pace-text-primary);
-      font-style: italic;
-      font-weight: 100;
-    }
-
-    .submit-button {
-      gap: 0.5rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      margin-top: var(--travel-pace-spacing-sm);
-      padding: 0.5rem 1rem;
+    button {
+      flex: 1;
       border: none;
-      border-radius: var(--travel-pace-border-radius);
-      color: var(--travel-pace-text-on-color);
-      cursor: pointer;
-      background-color: var(--color-button-primary, var(--travel-pace-button-bg));
-      transition: var(--travel-pace-transition);
+      border-radius: 0;
+
+      & + button {
+        border-inline-start: 0.0625rem solid var(--atlas-button-border, rgb(74 74 74));
+      }
+
+      &[aria-pressed='true'] {
+        color: var(--atlas-text-heading, inherit);
+        font-weight: bold;
+        background: var(--atlas-bg-hover, transparent);
+      }
+    }
+  }
+
+  .form-fields .unit {
+    flex: 0 0 auto;
+    align-self: center;
+  }
+
+  .traveller-drop {
+    gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border: 0.0625rem dashed var(--atlas-border-light, rgb(110 110 110));
+    border-radius: 0.25rem;
+    color: var(--atlas-text, inherit);
+    background: var(--atlas-bg-lighter, transparent);
+
+    img {
+      object-fit: cover;
+      flex: 0 0 auto;
+      width: 2rem;
+      height: 2rem;
+      border: none;
+      border-radius: 0.25rem;
+    }
+
+    .traveller-name {
+      overflow-wrap: anywhere;
+      flex: 1;
+      color: var(--atlas-text, inherit);
+    }
+
+    button {
+      flex: 0 0 auto;
+      width: 1.75rem;
+      border: none;
+      background: none;
 
       &:hover {
-        background-color: var(--color-button-primary-hover, var(--travel-pace-button-bg-hover));
-        box-shadow: var(--travel-pace-shadow);
-      }
-
-      &:active {
-        transform: translateY(1px);
+        color: var(--atlas-error, inherit);
+        background: none;
       }
     }
+  }
+
+  .travel-result {
+    padding: 0.75rem;
+    border: 0.0625rem solid var(--atlas-border, transparent);
+    border-radius: 0.25rem;
+    color: var(--atlas-text-heading, inherit);
+    font-size: var(--font-size-16);
+    text-align: center;
+    background: var(--atlas-bg-lighter, transparent);
+  }
+
+  .mounts-widget {
+    max-height: 25rem;
+    padding-right: 0.313rem;
+    overflow-y: auto;
+
+    .mount-section {
+      margin-bottom: 0.625rem;
+
+      h4 {
+        margin: 0 0 0.313rem;
+        padding-bottom: 0.313rem;
+        border-bottom: 0.0625rem solid var(--atlas-border, transparent);
+      }
+
+      label {
+        padding: 0.2rem 0;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .travel-pace-weather-presets {
+    max-height: 20rem;
+    overflow-y: auto;
   }
 }
 
@@ -149,13 +173,13 @@
   --travel-pace-divider: rgb(0 0 0 / 10%);
   --travel-pace-text-secondary: rgb(60 60 60);
 
-  padding: var(--travel-pace-spacing-sm);
+  padding: 0.625rem;
   font-family: var(--font-primary);
 
   h2 {
     margin-top: 0;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--travel-pace-divider);
+    border-bottom: 0.0625rem solid var(--travel-pace-divider);
     font-size: 1.2rem;
   }
 
@@ -167,11 +191,11 @@
   }
 
   .travel-pace-mount {
-    margin-bottom: var(--travel-pace-spacing-sm);
+    margin-bottom: 0.625rem;
   }
 
   .travel-pace-modifiers {
-    margin-bottom: var(--travel-pace-spacing-sm);
+    margin-bottom: 0.625rem;
 
     p {
       margin: 0.25rem 0;
@@ -179,9 +203,9 @@
   }
 
   .travel-pace-details {
-    margin-bottom: var(--travel-pace-spacing-sm);
-    padding: var(--travel-pace-spacing-sm);
-    border-radius: var(--travel-pace-border-radius);
+    margin-bottom: 0.625rem;
+    padding: 0.625rem;
+    border-radius: 0.25rem;
     background-color: var(--travel-pace-bg-highlight);
   }
 
@@ -196,57 +220,16 @@
   }
 
   .travel-pace-effects {
-    padding-top: var(--travel-pace-spacing-sm);
-    border-top: 1px solid var(--travel-pace-divider);
+    padding-top: 0.625rem;
+    border-top: 0.0625rem solid var(--travel-pace-divider);
   }
 
   .travel-pace-advance {
-    gap: var(--travel-pace-spacing-xs);
+    gap: 0.313rem;
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    margin-top: var(--travel-pace-spacing-sm);
-  }
-}
-
-.travel-pace-mount-config {
-  padding: var(--travel-pace-spacing-sm);
-
-  .notification.error {
-    --background-color: var(--travel-pace-error-bg);
-    --border-color: var(--travel-pace-error-border);
-
-    flex-direction: column;
-    align-items: start;
-    margin: 1rem 0;
-  }
-
-  .mounts-widget {
-    max-height: 25rem;
-    padding-right: var(--travel-pace-spacing-xs);
-    overflow-y: auto;
-  }
-
-  .mount-section {
-    margin-bottom: var(--travel-pace-spacing-sm);
-
-    h4 {
-      margin: 0 0 var(--travel-pace-spacing-xs);
-      padding-bottom: var(--travel-pace-spacing-xs);
-      border-bottom: 1px solid var(--travel-pace-border-color);
-    }
-
-    label {
-      padding: 0.2rem 0;
-      cursor: pointer;
-    }
-  }
-}
-
-.travel-pace-weather-config {
-  .travel-pace-weather-presets {
-    max-height: 20rem;
-    overflow-y: auto;
+    margin-top: 0.625rem;
   }
 }

@@ -6,8 +6,8 @@ import {
   calculateTime,
   formatMountSpeed,
   formatTime,
-  getMountSpeed,
   getPaceEffects,
+  getTravellerSpeed,
   minutesPerHour,
   timeToMinutes,
   travelUnits,
@@ -47,7 +47,7 @@ export class TravelCalculator {
     const modifiers = getWeatherModifiers();
     if (Hooks.call('travelPace.preCalculate', { data, modifiers }) === false) return null;
     const { mode, pace, mount = null } = data;
-    const speed = getMountSpeed(mount);
+    const speed = getTravellerSpeed(mount);
     const unit = TravelCalculator.unit;
     const extraMultiplier = modifiers.reduce((product, modifier) => product * (Number(modifier.multiplier) > 0 ? Number(modifier.multiplier) : 1), 1);
     const shared = { paceEffect: getPaceEffects(pace), speed, modifiers, extraMultiplier, mountUuid: mount?.uuid ?? null };

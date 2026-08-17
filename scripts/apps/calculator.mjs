@@ -1,26 +1,49 @@
 import { MODULE, TEMPLATES } from '../constants.mjs';
 import { TravelCalculator } from '../travel-calculator.mjs';
-import { formatMountSpeed, getEnabledMountUuids, getMountSpeed, resolveMount, travelUnits, unitAbbreviation } from '../utils.mjs';
+import { formatMountSpeed, getEnabledMountUuids, getTravellerSpeed, resolveMount, travelUnits, unitAbbreviation } from '../utils.mjs';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const { DragDrop, TextEditor } = foundry.applications.ux;
 
 /** The travel calculator window. */
 export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
-  static PARTS = { main: { template: TEMPLATES.CALCULATOR } };
+  static PARTS = {
+    mode: { template: TEMPLATES.MODE_TOGGLE },
+    journey: { template: TEMPLATES.JOURNEY },
+    traveller: { template: TEMPLATES.TRAVELLER },
+    result: { template: TEMPLATES.RESULT },
+    footer: { template: TEMPLATES.FORM_FOOTER }
+  };
 
   static DEFAULT_OPTIONS = {
     id: MODULE.APP_ID,
-    classes: ['travel-calculator-window'],
-    position: { height: 'auto', width: 300, top: 74, left: 120 },
-    actions: { submitCalculation: TravelPaceApp.#submitCalculation },
-    window: { icon: 'fa-solid fa-route', title: 'TRAVELPACE.Title', resizable: false, minimizable: true }
+    classes: ['travel-pace-app'],
+    position: { height: 'auto', width: 360 },
+    actions: {
+      setMode: TravelPaceApp.#setMode,
+      clearTraveller: TravelPaceApp.#clearTraveller,
+      submitCalculation: TravelPaceApp.#submitCalculation
+    },
+    window: { icon: 'fa-solid fa-route', title: 'TRAVELPACE.Title', contentClasses: ['standard-form'], resizable: false }
   };
 
-  /** @type {Map<string, foundry.documents.Actor>} Resolved mounts, keyed by the UUID their option carries. */
-  #mounts = new Map();
+  /**
+   * The form's state.
+   * @type {{mode: string, pace: string, traveller: string, distance: number, days: number, hours: number}}
+   */
+  #state = { mode: 'distance', pace: 'normal', traveller: '', distance: 0, days: 0, hours: 0 };
+
+  /** @type {Map<string, foundry.documents.Actor>} Travellers on offer, keyed by UUID. */
+  #travellers = new Map();
+
+  /** @type {Set<string>} UUIDs dropped onto the window this session, which the GM has not enabled. */
+  #dropped = new Set();
 
   /** @type {number|null} Hook id for the Calendaria weather listener. */
   #weatherHookId = null;
+
+  /** @type {DragDrop|null} */
+  #dragDrop = null;
 
   /**
    * Open the calculator, or bring the open one forward.
@@ -34,32 +57,46 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** @inheritdoc */
   async _prepareContext() {
+    const { mode, pace, traveller } = this.#state;
+    await this.#loadTravellers();
+
+    const actor = this.#travellers.get(traveller) ?? null;
+    const speed = getTravellerSpeed(actor);
+
     return {
-      unit: unitAbbreviation(travelUnits().length),
+      distanceMode: mode === 'distance',
       modes: [
-        { id: 'distance', label: 'TRAVELPACE.Modes.Distance' },
-        { id: 'time', label: 'TRAVELPACE.Modes.Time' }
+        { id: 'distance', label: 'TRAVELPACE.Labels.Distance', active: mode === 'distance' },
+        { id: 'time', label: 'TRAVELPACE.Labels.Time', active: mode === 'time' }
       ],
-      paces: [
-        { id: 'normal', label: 'TRAVELPACE.Paces.Normal' },
-        { id: 'fast', label: 'TRAVELPACE.Paces.Fast' },
-        { id: 'slow', label: 'TRAVELPACE.Paces.Slow' }
-      ],
-      mounts: await this.#loadMounts()
+      unit: unitAbbreviation(travelUnits().length),
+      distance: this.#state.distance || null,
+      days: this.#state.days,
+      hours: this.#state.hours,
+      paces: ['normal', 'fast', 'slow'].map((id) => ({ id, label: `TRAVELPACE.Paces.${id.charAt(0).toUpperCase()}${id.slice(1)}`, selected: id === pace })),
+      paceHint: _loc('TRAVELPACE.Hints.Pace', { speed: formatMountSpeed(speed, pace) }),
+      traveller: actor ? { uuid: actor.uuid, name: actor.name, img: actor.img } : null,
+      travellers: [...this.#travellers.values()].map((option) => ({ uuid: option.uuid, name: option.name, selected: option.uuid === traveller })),
+      multipleTravellers: this.#travellers.size > 1,
+      result: this.#describeResult(),
+      buttons: [{ type: 'button', action: 'submitCalculation', icon: 'fas fa-comments', label: 'TRAVELPACE.Buttons.Calculate' }]
     };
   }
 
   /** @inheritdoc */
   _onFirstRender(_context, _options) {
     this.element.addEventListener('input', this.#onInputChange.bind(this));
-    this.#weatherHookId = Hooks.on('calendaria.weatherChange', () => this.#updatePreview());
+    this.#weatherHookId = Hooks.on('calendaria.weatherChange', () => this.render());
   }
 
   /** @inheritdoc */
   _onRender(_context, _options) {
-    this.#setMode(this.element.querySelector('input[name="travelpace-mode"]:checked')?.value);
-    this.#updatePreview();
-    this.#updatePaceLabel();
+    this.#dragDrop ??= new DragDrop.implementation({
+      dropSelector: '.traveller-drop',
+      permissions: { drop: () => true },
+      callbacks: { drop: this.#onDrop.bind(this) }
+    });
+    this.#dragDrop.bind(this.element);
   }
 
   /** @inheritdoc */
@@ -70,52 +107,96 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Dispatch a form input event to the right update path.
-   * @param {Event} event Input event from the calculator form
+   * Record a changed field and refresh the result line, without re-rendering under the cursor.
+   * @param {Event} event Input event from the form
+   * @returns {void}
    */
   #onInputChange(event) {
-    const { target } = event;
-    if (target.name === 'travelpace-mode') this.#setMode(target.value);
-    else if (target.id === 'travelpace-pace' || target.id === 'travelpace-mount') this.#updatePaceLabel();
-    this.#updatePreview();
+    const { name, value } = event.target;
+    if (!(name in this.#state)) return;
+    this.#state[name] = name === 'pace' || name === 'traveller' ? value : Number(value) || 0;
+    if (name === 'traveller' || name === 'pace') return void this.render();
+    const line = this.element.querySelector('.travel-result');
+    if (line) line.textContent = this.#describeResult();
   }
 
   /**
-   * Show the panel for the chosen calculation mode and hide the other.
-   * @param {string} mode 'distance' or 'time'
+   * Take a dropped actor as the traveller, offering it alongside the GM's configured mounts.
+   * @param {DragEvent} event The drop event
+   * @returns {Promise<void>}
    */
-  #setMode(mode) {
-    const distance = mode !== 'time';
-    this.element.querySelector('.distance-to-time')?.toggleAttribute('hidden', !distance);
-    this.element.querySelector('.time-to-distance')?.toggleAttribute('hidden', distance);
+  async #onDrop(event) {
+    const data = TextEditor.implementation.getDragEventData(event);
+    if (data?.type !== 'Actor') return;
+    const actor = await fromUuid(data.uuid);
+    if (!actor) return;
+    this.#dropped.add(actor.uuid);
+    this.#state.traveller = actor.uuid;
+    this.render();
   }
 
   /**
-   * Read the form into a calculator payload.
+   * The calculator payload the current state describes.
    * @returns {object} A payload for TravelCalculator.calculateTravel
    */
   #getFormData() {
-    const form = this.element;
-    const mode = form.querySelector('input[name="travelpace-mode"]:checked')?.value;
-    const pace = form.querySelector('#travelpace-pace')?.value;
-    const mount = this.#selectedMount();
-
-    if (mode === 'distance') return { mode, pace, mount, distance: Number(form.querySelector('#travelpace-distance')?.value) || 0 };
-    return {
-      mode,
-      pace,
-      mount,
-      time: { days: Number(form.querySelector('#travelpace-days')?.value) || 0, hours: Number(form.querySelector('#travelpace-hours')?.value) || 0, minutes: 0 }
-    };
+    const { mode, pace, traveller, distance, days, hours } = this.#state;
+    const mount = this.#travellers.get(traveller) ?? null;
+    return mode === 'distance' ? { mode, pace, mount, distance } : { mode, pace, mount, time: { days, hours, minutes: 0 } };
   }
 
   /**
-   * Whether a payload carries enough input to calculate anything.
-   * @param {object} data A payload from #getFormData
-   * @returns {boolean} True when the form has usable input
+   * Whether the form carries enough input to calculate anything.
+   * @returns {boolean} True when there is something to calculate
    */
-  static #hasInput(data) {
-    return data.mode === 'distance' ? data.distance > 0 : data.time.days > 0 || data.time.hours > 0;
+  #hasInput() {
+    const { mode, distance, days, hours } = this.#state;
+    return mode === 'distance' ? distance > 0 : days > 0 || hours > 0;
+  }
+
+  /**
+   * The result line for the current state.
+   * @returns {string} Localized result, or the empty-state prompt
+   */
+  #describeResult() {
+    if (!this.#hasInput()) return _loc('TRAVELPACE.Preview.Empty');
+    const result = TravelCalculator.calculateTravel(this.#getFormData());
+    if (!result) return _loc('TRAVELPACE.Preview.Empty');
+    return result.mode === 'distance' ? result.output.timeFormatted : `${result.output.distance.toFixed(1)} ${result.output.unit}`;
+  }
+
+  /**
+   * Resolve every traveller on offer: the mounts the GM enabled, plus anything dropped this session.
+   * @returns {Promise<void>}
+   */
+  async #loadTravellers() {
+    this.#travellers.clear();
+    for (const uuid of [...getEnabledMountUuids(), ...this.#dropped]) {
+      const actor = await resolveMount(uuid);
+      if (actor) this.#travellers.set(uuid, actor);
+    }
+  }
+
+  /**
+   * Action handler: switch which quantity the calculator solves for.
+   * @this {TravelPaceApp}
+   * @param {Event} _event Triggering event
+   * @param {HTMLElement} target The clicked half of the toggle
+   * @returns {void}
+   */
+  static #setMode(_event, target) {
+    this.#state.mode = target.dataset.mode;
+    this.render();
+  }
+
+  /**
+   * Action handler: travel on foot again.
+   * @this {TravelPaceApp}
+   * @returns {void}
+   */
+  static #clearTraveller() {
+    this.#state.traveller = '';
+    this.render();
   }
 
   /**
@@ -124,57 +205,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @returns {Promise<void>}
    */
   static async #submitCalculation() {
-    const data = this.#getFormData();
-    if (!TravelPaceApp.#hasInput(data)) {
+    if (!this.#hasInput()) {
       ui.notifications.warn('TRAVELPACE.Preview.Error');
       return;
     }
-    await TravelCalculator.submitCalculation(data);
-  }
-
-  /** Recompute and render the live preview line. */
-  #updatePreview() {
-    const preview = this.element.querySelector('.calculation-preview');
-    if (!preview) return;
-    const data = this.#getFormData();
-    const result = TravelPaceApp.#hasInput(data) ? TravelCalculator.calculateTravel(data) : null;
-    if (!result) {
-      preview.textContent = _loc('TRAVELPACE.Preview.Empty');
-      return;
-    }
-    preview.textContent = result.mode === 'distance' ? result.output.timeFormatted : `${result.output.distance.toFixed(1)} ${result.output.unit}`;
-  }
-
-  /** Show the speed the selected pace and mount imply, beside the pace label. */
-  #updatePaceLabel() {
-    const label = this.element.querySelector('label[for="travelpace-pace"]');
-    const pace = this.element.querySelector('#travelpace-pace')?.value;
-    if (!label || !pace) return;
-    label.textContent = `${_loc('TRAVELPACE.Labels.Pace')} (${formatMountSpeed(getMountSpeed(this.#selectedMount()), pace)})`;
-  }
-
-  /**
-   * Resolve the enabled mounts and cache them, so the preview and pace label can read one synchronously.
-   * @returns {Promise<Array<{uuid: string, name: string}>>} Mount options for the dropdown
-   */
-  async #loadMounts() {
-    this.#mounts.clear();
-    const options = [];
-    for (const uuid of getEnabledMountUuids()) {
-      const actor = await resolveMount(uuid);
-      if (!actor) continue;
-      this.#mounts.set(uuid, actor);
-      options.push({ uuid, name: actor.name });
-    }
-    return options;
-  }
-
-  /**
-   * The mount currently chosen in the dropdown.
-   * @returns {foundry.documents.Actor|null} The resolved mount, or null when none is selected
-   */
-  #selectedMount() {
-    const uuid = this.element.querySelector('#travelpace-mount')?.value;
-    return (uuid && this.#mounts.get(uuid)) || null;
+    await TravelCalculator.submitCalculation(this.#getFormData());
   }
 }

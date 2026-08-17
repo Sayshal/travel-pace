@@ -79,6 +79,20 @@ export function getMountSpeed(mount) {
 }
 
 /**
+ * Read the speed of whatever the party is travelling as.
+ * @param {foundry.documents.Actor|null} actor A creature, vehicle or group actor
+ * @returns {MountSpeed} The speed to travel at
+ */
+export function getTravellerSpeed(actor) {
+  if (actor?.type !== 'group') return getMountSpeed(actor);
+  const stated = getMountSpeed(actor);
+  if (distancePerMinute('normal', stated) > 0) return stated;
+  const members = (actor.system?.members ?? []).map((member) => member.actor).filter((member) => member?.system?.isCreature);
+  if (!members.length) return stated;
+  return members.map(getMountSpeed).reduce((slower, speed) => (distancePerMinute('normal', speed) < distancePerMinute('normal', slower) ? speed : slower));
+}
+
+/**
  * Format a mount's speed for display, adjusted by the selected pace.
  * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
  * @param {string} pace Travel pace id

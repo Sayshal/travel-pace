@@ -13,7 +13,11 @@ export const SETTINGS = {
 
 /** @enum {string} Handlebars template paths. */
 export const TEMPLATES = {
-  CALCULATOR: 'modules/travel-pace/templates/calculator.hbs',
+  MODE_TOGGLE: 'modules/travel-pace/templates/mode-toggle.hbs',
+  JOURNEY: 'modules/travel-pace/templates/journey.hbs',
+  TRAVELLER: 'modules/travel-pace/templates/traveller.hbs',
+  RESULT: 'modules/travel-pace/templates/result.hbs',
+  FORM_FOOTER: 'templates/generic/form-footer.hbs',
   CHAT_MESSAGE: 'modules/travel-pace/templates/chat-message.hbs',
   MOUNT_CONFIG: 'modules/travel-pace/templates/mount-config.hbs',
   WEATHER_CONFIG: 'modules/travel-pace/templates/weather-config.hbs'
