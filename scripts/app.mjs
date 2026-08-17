@@ -46,7 +46,6 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @inheritdoc */
   _onRender(_context, _options) {
     this.element.addEventListener('input', this.#onInputChange.bind(this));
-    this.element.addEventListener('change', this.#onInputChange.bind(this));
     this.#setMode('distance');
     this.#updatePreview();
     this.#updatePaceLabel();
@@ -62,8 +61,8 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Dispatch form input/change events to the right update path.
-   * @param {Event} event Input or change event from the calculator form
+   * Dispatch a form input event to the right update path.
+   * @param {Event} event Input event from the calculator form
    */
   #onInputChange(event) {
     const { target } = event;
