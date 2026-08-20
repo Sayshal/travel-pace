@@ -202,14 +202,25 @@ export function getPaceEffects(pace) {
 
 /**
  * The UUIDs of every mount the GM has enabled.
+ * @since 6.0.0
  * @returns {string[]} Enabled mount UUIDs
  */
 export function getEnabledMountUuids() {
   const stored = game.settings.get(MODULE.ID, SETTINGS.ENABLED_MOUNTS);
-  if (Array.isArray(stored)) return stored;
+  return Array.isArray(stored) ? stored : readLegacyEnabledMounts(stored);
+}
+
+/**
+ * Read the pre-6.0 enabled-mount map, which keyed world actors by bare id and compendium entries by UUID.
+ * @param {object} [stored] The stored `{key: boolean}` map
+ * @returns {string[]} Enabled mount UUIDs, with bare world-actor ids promoted to `Actor.<id>`
+ * @since 6.0.0
+ * @deprecated Remove in 7.0.0
+ */
+function readLegacyEnabledMounts(stored) {
   return Object.entries(stored ?? {})
     .filter(([, enabled]) => enabled)
-    .map(([uuid]) => uuid);
+    .map(([key]) => (key.includes('.') ? key : `Actor.${key}`));
 }
 
 /**
