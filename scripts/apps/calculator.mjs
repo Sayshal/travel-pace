@@ -66,8 +66,8 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       distanceMode: mode === 'distance',
       modes: [
-        { id: 'distance', label: 'TRAVELPACE.Labels.Distance', active: mode === 'distance' },
-        { id: 'time', label: 'TRAVELPACE.Labels.Time', active: mode === 'time' }
+        { id: 'distance', label: 'ATLAS.Common.Distance', active: mode === 'distance' },
+        { id: 'time', label: 'ATLAS.Common.Time', active: mode === 'time' }
       ],
       unit: unitAbbreviation(travelUnits().length),
       distance: this.#state.distance || null,

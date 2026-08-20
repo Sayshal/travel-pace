@@ -26,7 +26,7 @@ export class WeatherConfigMenu extends TravelPaceMenu {
         multiplier: presetMultipliers[preset.id] ?? 1
       })),
       severities: getSeverityLevels().map((level) => ({ ...level, multiplier: severityMultipliers[level.id] ?? SEVERITY_DEFAULTS[level.id] ?? 1 })),
-      buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'TRAVELPACE.Buttons.Save' }]
+      buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'ATLAS.Common.Save' }]
     };
   }
 

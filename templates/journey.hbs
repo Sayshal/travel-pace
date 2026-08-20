@@ -3,7 +3,7 @@
 
 	{{#if distanceMode}}
 		<div class="form-group">
-			<label for="travelpace-distance">{{localize "TRAVELPACE.Labels.Distance"}}</label>
+			<label for="travelpace-distance">{{localize "ATLAS.Common.Distance"}}</label>
 			<div class="form-fields">
 				<input type="number" id="travelpace-distance" name="distance" value="{{distance}}" min="0" step="0.1"
 					placeholder="0">
@@ -13,10 +13,10 @@
 		</div>
 	{{else}}
 		<div class="form-group">
-			<label for="travelpace-days">{{localize "TRAVELPACE.Labels.Days"}}</label>
+			<label for="travelpace-days">{{localize "ATLAS.Common.Days"}}</label>
 			<div class="form-fields">
 				<input type="number" id="travelpace-days" name="days" value="{{days}}" min="0">
-				<label for="travelpace-hours">{{localize "TRAVELPACE.Labels.Hours"}}</label>
+				<label for="travelpace-hours">{{localize "ATLAS.Common.Hours"}}</label>
 				<input type="number" id="travelpace-hours" name="hours" value="{{hours}}" min="0">
 			</div>
 			<p class="hint">{{localize "TRAVELPACE.Hints.Time"}}</p>

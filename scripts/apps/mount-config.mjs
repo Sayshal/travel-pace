@@ -20,7 +20,7 @@ export class MountConfigMenu extends TravelPaceMenu {
       document: { schema: settingSchema, mounts: [...this.enabled] },
       fields: settingSchema.fields,
       mountsWidget: () => this.#createMountsWidget(),
-      buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'TRAVELPACE.Buttons.Save' }],
+      buttons: [{ type: 'submit', icon: 'fas fa-save', label: 'ATLAS.Common.Save' }],
       actors: this.actors
     };
   }

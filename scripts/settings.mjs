@@ -34,7 +34,7 @@ export function registerSettings() {
   game.settings.register(MODULE.ID, SETTINGS.ENABLED_MOUNTS, { scope: 'world', config: false, type: Array, default: [] });
   game.settings.registerMenu(MODULE.ID, 'mountConfigMenu', {
     name: 'TRAVELPACE.Settings.MountConfig.Name',
-    label: 'TRAVELPACE.Settings.MountConfig.Label',
+    label: 'ATLAS.Common.Configure',
     hint: 'TRAVELPACE.Settings.MountConfig.Hint',
     icon: 'fas fa-horse',
     type: MountConfigMenu,
@@ -42,7 +42,7 @@ export function registerSettings() {
   });
   game.settings.registerMenu(MODULE.ID, 'weatherConfigMenu', {
     name: 'TRAVELPACE.Settings.WeatherConfig.Name',
-    label: 'TRAVELPACE.Settings.WeatherConfig.Label',
+    label: 'ATLAS.Common.Configure',
     hint: 'TRAVELPACE.Settings.WeatherConfig.Hint',
     icon: 'fas fa-cloud-sun-rain',
     type: WeatherConfigMenu,
