@@ -1,6 +1,6 @@
 .travel-pace-app .window-content {
-  color: var(--atlas-text, inherit);
-  background: var(--atlas-bg, transparent);
+  color: var(--atlas-text);
+  background: var(--atlas-bg);
 
   /* Single-part menus wrap their groups in one root, so that root carries the column layout
      standard-form would otherwise apply to the groups directly */
@@ -13,59 +13,59 @@
 
   input:not([type='checkbox']),
   select {
-    border: 0.0625rem solid var(--atlas-border, rgb(74 74 74));
-    color: var(--atlas-text, rgb(224 224 224));
-    background: var(--atlas-input-bg, rgb(48 48 48));
+    border: 0.0625rem solid var(--atlas-border);
+    color: var(--atlas-text);
+    background: var(--atlas-input-bg);
 
     &::placeholder {
-      color: var(--atlas-text-dim, rgb(136 136 136));
+      color: var(--atlas-text-dim);
     }
 
     &:focus {
-      border-color: var(--atlas-primary, rgb(74 144 226));
+      border-color: var(--atlas-primary);
       outline: none;
       box-shadow: none;
     }
   }
 
   select option {
-    color: var(--atlas-text, rgb(224 224 224));
-    background: var(--atlas-bg, rgb(31 31 31));
+    color: var(--atlas-text);
+    background: var(--atlas-bg);
   }
 
   input[type='checkbox'] {
-    --checkbox-background-color: var(--atlas-input-bg, rgb(48 48 48));
-    --checkbox-border-color: var(--atlas-border, rgb(74 74 74));
-    --checkbox-checked-color: var(--atlas-primary, rgb(74 144 226));
-    --checkbox-checkmark-color: var(--atlas-text-on-color, rgb(255 255 255));
+    --checkbox-background-color: var(--atlas-input-bg);
+    --checkbox-border-color: var(--atlas-border);
+    --checkbox-checked-color: var(--atlas-primary);
+    --checkbox-checkmark-color: var(--atlas-text-on-color);
   }
 
   fieldset {
-    border-color: var(--atlas-border, rgb(74 74 74));
+    border-color: var(--atlas-border);
 
     legend {
-      color: var(--atlas-text-heading, inherit);
+      color: var(--atlas-text-heading);
     }
   }
 
   .hint {
-    color: var(--atlas-text-dim, inherit);
+    color: var(--atlas-text-dim);
   }
 
   button {
-    border: 0.0625rem solid var(--atlas-button-border, rgb(74 74 74));
-    color: var(--atlas-button-text, rgb(224 224 224));
-    background: var(--atlas-button-bg, rgb(48 48 48));
+    border: 0.0625rem solid var(--atlas-button-border);
+    color: var(--atlas-button-text);
+    background: var(--atlas-button-bg);
 
     &:hover {
-      color: var(--atlas-text-heading, rgb(238 238 238));
-      background: var(--atlas-button-hover, rgb(58 58 58));
+      color: var(--atlas-text-heading);
+      background: var(--atlas-button-hover);
     }
   }
 
   .mode-toggle {
     display: flex;
-    border: 0.0625rem solid var(--atlas-button-border, rgb(74 74 74));
+    border: 0.0625rem solid var(--atlas-button-border);
     border-radius: 0.375rem;
     overflow: hidden;
 
@@ -75,13 +75,13 @@
       border-radius: 0;
 
       & + button {
-        border-inline-start: 0.0625rem solid var(--atlas-button-border, rgb(74 74 74));
+        border-inline-start: 0.0625rem solid var(--atlas-button-border);
       }
 
       &[aria-pressed='true'] {
-        color: var(--atlas-text-heading, inherit);
+        color: var(--atlas-text-heading);
         font-weight: bold;
-        background: var(--atlas-bg-hover, transparent);
+        background: var(--atlas-bg-hover);
       }
     }
   }
@@ -98,10 +98,10 @@
     min-height: 2.75rem;
     margin-bottom: 0.5rem;
     padding: 0.5rem;
-    border: 0.0625rem dashed var(--atlas-border-light, rgb(110 110 110));
+    border: 0.0625rem dashed var(--atlas-border-light);
     border-radius: 0.25rem;
-    color: var(--atlas-text, inherit);
-    background: var(--atlas-bg-lighter, transparent);
+    color: var(--atlas-text);
+    background: var(--atlas-bg-lighter);
 
     img {
       object-fit: cover;
@@ -115,7 +115,7 @@
     .traveller-name {
       overflow-wrap: anywhere;
       flex: 1;
-      color: var(--atlas-text, inherit);
+      color: var(--atlas-text);
     }
 
     button {
@@ -125,7 +125,7 @@
       background: none;
 
       &:hover {
-        color: var(--atlas-error, inherit);
+        color: var(--atlas-error);
         background: none;
       }
     }
@@ -133,12 +133,12 @@
 
   .travel-result {
     padding: 0.75rem;
-    border: 0.0625rem solid var(--atlas-border, transparent);
+    border: 0.0625rem solid var(--atlas-border);
     border-radius: 0.25rem;
-    color: var(--atlas-text-heading, inherit);
+    color: var(--atlas-text-heading);
     font-size: var(--font-size-16);
     text-align: center;
-    background: var(--atlas-bg-lighter, transparent);
+    background: var(--atlas-bg-lighter);
   }
 
   .mounts-widget {
@@ -152,7 +152,7 @@
       h4 {
         margin: 0 0 0.313rem;
         padding-bottom: 0.313rem;
-        border-bottom: 0.0625rem solid var(--atlas-border, transparent);
+        border-bottom: 0.0625rem solid var(--atlas-border);
       }
 
       label {
