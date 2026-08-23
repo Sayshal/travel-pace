@@ -1,0 +1,8 @@
+<div class="mode-toggle" role="group" aria-label="{{localize 'TRAVELPACE.Labels.CalculationMode'}}">
+	{{#each modes}}
+		<button type="button" data-action="setMode" data-mode="{{this.id}}"
+			aria-pressed="{{#if this.active}}true{{else}}false{{/if}}">
+			{{localize this.label}}
+		</button>
+	{{/each}}
+</div>

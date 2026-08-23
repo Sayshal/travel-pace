@@ -1,0 +1,37 @@
+<fieldset class="travel-pace-journey">
+	<legend>{{localize "TRAVELPACE.Labels.Journey"}}</legend>
+
+	{{#if distanceMode}}
+		<div class="form-group">
+			<label for="travelpace-distance">{{localize "ATLAS.Common.Distance"}}</label>
+			<div class="form-fields">
+				<input type="number" id="travelpace-distance" name="distance" value="{{distance}}" min="0" step="0.1"
+					placeholder="0">
+				<span class="unit">{{unit}}</span>
+			</div>
+			<p class="hint">{{localize "TRAVELPACE.Hints.Distance"}}</p>
+		</div>
+	{{else}}
+		<div class="form-group">
+			<label for="travelpace-days">{{localize "ATLAS.Common.Days"}}</label>
+			<div class="form-fields">
+				<input type="number" id="travelpace-days" name="days" value="{{days}}" min="0">
+				<label for="travelpace-hours">{{localize "ATLAS.Common.Hours"}}</label>
+				<input type="number" id="travelpace-hours" name="hours" value="{{hours}}" min="0">
+			</div>
+			<p class="hint">{{localize "TRAVELPACE.Hints.Time"}}</p>
+		</div>
+	{{/if}}
+
+	<div class="form-group">
+		<label for="travelpace-pace">{{localize "TRAVELPACE.Labels.Pace"}}</label>
+		<div class="form-fields">
+			<select id="travelpace-pace" name="pace">
+				{{#each paces}}
+					<option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{localize this.label}}</option>
+				{{/each}}
+			</select>
+		</div>
+		<p class="hint">{{paceHint}}</p>
+	</div>
+</fieldset>

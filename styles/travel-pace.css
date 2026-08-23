@@ -1,183 +1,211 @@
-:root {
-  --travel-pace-border-radius: 0.313rem;
-  --travel-pace-shadow: 0 0 0.313rem rgb(0 0 0 / 50%);
-  --travel-pace-spacing-sm: 0.625rem;
-  --travel-pace-spacing-xs: 0.313rem;
-  --travel-pace-transition: all 0.2s ease;
-}
+.travel-pace-app .window-content {
+  color: var(--atlas-text);
+  background: var(--atlas-bg);
 
-.travel-calculator-window,
-.travel-pace-app {
-  --travel-pace-bg-highlight: var(--atlas-bg-hover, rgb(255 255 255 / 5%));
-  --travel-pace-border-color: var(--atlas-border, rgb(255 255 255 / 15%));
-  --travel-pace-button-bg: var(--atlas-button-bg, rgb(75 74 68));
-  --travel-pace-button-bg-hover: var(--atlas-button-hover, rgb(96 94 84));
-  --travel-pace-divider: var(--atlas-divider, rgb(255 255 255 / 10%));
-  --travel-pace-error-bg: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 15%, transparent);
-  --travel-pace-error-border: color-mix(in srgb, var(--atlas-error, rgb(244 67 54)) 50%, transparent);
-  --travel-pace-text-on-color: var(--atlas-button-text, rgb(255 255 255));
-  --travel-pace-text-primary: var(--atlas-text, rgb(241 241 241));
-  --travel-pace-text-secondary: var(--atlas-text-secondary, rgb(186 186 186));
-}
-
-.travel-calculator-window {
-  min-width: 18.75rem;
-
-  .travel-calculator {
-    gap: var(--travel-pace-spacing-sm);
+  /* Single-part menus wrap their groups in one root, so that root carries the column layout
+     standard-form would otherwise apply to the groups directly */
+  .travel-pace-mount-config,
+  .travel-pace-weather-config {
+    gap: var(--spacer-16, 1rem);
     display: flex;
     flex-direction: column;
+  }
 
-    hr {
-      opacity: 0.5;
-      margin-top: 0;
-      border-color: var(--travel-pace-border-color);
+  input:not([type='checkbox']),
+  select {
+    border: 0.0625rem solid var(--atlas-border);
+    color: var(--atlas-text);
+    background: var(--atlas-input-bg);
+
+    &::placeholder {
+      color: var(--atlas-text-dim);
     }
 
-    .header-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: var(--travel-pace-spacing-xs) 0;
-
-      label {
-        margin-bottom: 0.5rem;
-        font-weight: normal;
-      }
+    &:focus {
+      border-color: var(--atlas-primary);
+      outline: none;
+      box-shadow: none;
     }
+  }
 
-    .form-group {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--travel-pace-spacing-xs) 0;
+  select option {
+    color: var(--atlas-text);
+    background: var(--atlas-bg);
+  }
 
-      label {
-        margin-right: 1rem;
-        font-weight: 100;
-        font-size: small;
-      }
+  input[type='checkbox'] {
+    --checkbox-background-color: var(--atlas-input-bg);
+    --checkbox-border-color: var(--atlas-border);
+    --checkbox-checked-color: var(--atlas-primary);
+    --checkbox-checkmark-color: var(--atlas-text-on-color);
+  }
 
-      input,
-      select {
-        flex: 0 0 38%;
-        height: 1.563rem;
-        padding: 0 0.5rem;
-        border-radius: var(--travel-pace-border-radius);
-        text-align: center;
-        transition: var(--travel-pace-transition);
+  fieldset {
+    border-color: var(--atlas-border);
 
-        &:focus {
-          outline: none;
-          box-shadow: var(--travel-pace-shadow);
-        }
-      }
+    legend {
+      color: var(--atlas-text-heading);
     }
+  }
 
-    .mode-selector {
-      gap: 1.875rem;
-      display: flex;
-      justify-content: center;
-      margin-bottom: 0.5rem;
+  .hint {
+    color: var(--atlas-text-dim);
+  }
+
+  button {
+    border: 0.0625rem solid var(--atlas-button-border);
+    color: var(--atlas-button-text);
+    background: var(--atlas-button-bg);
+
+    &:hover {
+      color: var(--atlas-text-heading);
+      background: var(--atlas-button-hover);
     }
+  }
 
-    .radio-label {
-      gap: 0.3rem;
-      display: flex;
-      align-items: center;
-      font-weight: normal;
-      cursor: pointer;
+  .mode-toggle {
+    display: flex;
+    border: 0.0625rem solid var(--atlas-button-border);
+    border-radius: 0.375rem;
+    overflow: hidden;
 
-      input[type='radio'] {
-        margin: 0;
-        transform: translateY(-15%);
-      }
-    }
-
-    .calculation-preview-container {
-      margin-top: var(--travel-pace-spacing-sm);
-      padding: var(--travel-pace-spacing-sm);
-      border: 1px solid var(--travel-pace-border-color);
-      border-radius: var(--travel-pace-border-radius);
-      text-align: center;
-      background-color: var(--travel-pace-bg-highlight);
-      transition: var(--travel-pace-transition);
-
-      h3 {
-        opacity: 0.8;
-        margin-top: 0;
-        padding-bottom: 0.4rem;
-        border-bottom: 1px solid var(--travel-pace-border-color);
-        font-size: 1rem;
-      }
-    }
-
-    .calculation-preview {
-      min-height: 1.5rem;
-      padding: 0.3rem;
-      color: var(--travel-pace-text-primary);
-      font-style: italic;
-      font-weight: 100;
-    }
-
-    .submit-button {
-      gap: 0.5rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      margin-top: var(--travel-pace-spacing-sm);
-      padding: 0.5rem 1rem;
+    button {
+      flex: 1;
       border: none;
-      border-radius: var(--travel-pace-border-radius);
-      color: var(--travel-pace-text-on-color);
-      cursor: pointer;
-      background-color: var(--color-button-primary, var(--travel-pace-button-bg));
-      transition: var(--travel-pace-transition);
+      border-radius: 0;
+
+      & + button {
+        border-inline-start: 0.0625rem solid var(--atlas-button-border);
+      }
+
+      &[aria-pressed='true'] {
+        color: var(--atlas-text-heading);
+        font-weight: bold;
+        background: var(--atlas-bg-hover);
+      }
+    }
+  }
+
+  .form-fields .unit {
+    flex: 0 0 auto;
+    align-self: center;
+  }
+
+  .traveller-drop {
+    gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border: 0.0625rem dashed var(--atlas-border-light);
+    border-radius: 0.25rem;
+    color: var(--atlas-text);
+    background: var(--atlas-bg-lighter);
+
+    img {
+      object-fit: cover;
+      flex: 0 0 auto;
+      width: 2rem;
+      height: 2rem;
+      border: none;
+      border-radius: 0.25rem;
+    }
+
+    .traveller-name {
+      overflow-wrap: anywhere;
+      flex: 1;
+      color: var(--atlas-text);
+    }
+
+    button {
+      flex: 0 0 auto;
+      width: 1.75rem;
+      border: none;
+      background: none;
 
       &:hover {
-        background-color: var(--color-button-primary-hover, var(--travel-pace-button-bg-hover));
-        box-shadow: var(--travel-pace-shadow);
-      }
-
-      &:active {
-        transform: translateY(1px);
+        color: var(--atlas-error);
+        background: none;
       }
     }
+  }
+
+  .travel-result {
+    padding: 0.75rem;
+    border: 0.0625rem solid var(--atlas-border);
+    border-radius: 0.25rem;
+    color: var(--atlas-text-heading);
+    font-size: var(--font-size-16);
+    text-align: center;
+    background: var(--atlas-bg-lighter);
+  }
+
+  .mounts-widget {
+    max-height: 25rem;
+    padding-right: 0.313rem;
+    overflow-y: auto;
+
+    .mount-section {
+      margin-bottom: 0.625rem;
+
+      h4 {
+        margin: 0 0 0.313rem;
+        padding-bottom: 0.313rem;
+        border-bottom: 0.0625rem solid var(--atlas-border);
+      }
+
+      label {
+        padding: 0.2rem 0;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .travel-pace-weather-presets {
+    max-height: 20rem;
+    overflow-y: auto;
   }
 }
 
 .travel-pace-chat {
-  --travel-pace-text-primary: var(--atlas-surface-text);
-  --travel-pace-text-secondary: var(--atlas-surface-text-dim);
-  --travel-pace-bg-highlight: var(--atlas-surface-bg);
-  --travel-pace-divider: var(--atlas-surface-divider);
+  --travel-pace-bg-highlight: rgb(0 0 0 / 5%);
+  --travel-pace-divider: rgb(0 0 0 / 10%);
+  --travel-pace-text-secondary: rgb(60 60 60);
 
-  padding: var(--travel-pace-spacing-sm);
-  color: var(--travel-pace-text-primary);
+  padding: 0.625rem;
   font-family: var(--font-primary);
 
   h2 {
     margin-top: 0;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--travel-pace-divider);
+    border-bottom: 0.0625rem solid var(--travel-pace-divider);
     font-size: 1.2rem;
   }
 
   .travel-pace-mount,
+  .travel-pace-modifiers,
   .travel-pace-effects {
     color: var(--travel-pace-text-secondary);
     font-style: italic;
   }
 
   .travel-pace-mount {
-    margin-bottom: var(--travel-pace-spacing-sm);
+    margin-bottom: 0.625rem;
+  }
+
+  .travel-pace-modifiers {
+    margin-bottom: 0.625rem;
+
+    p {
+      margin: 0.25rem 0;
+    }
   }
 
   .travel-pace-details {
-    margin-bottom: var(--travel-pace-spacing-sm);
-    padding: var(--travel-pace-spacing-sm);
-    border-radius: var(--travel-pace-border-radius);
+    margin-bottom: 0.625rem;
+    padding: 0.625rem;
+    border-radius: 0.25rem;
     background-color: var(--travel-pace-bg-highlight);
   }
 
@@ -192,50 +220,16 @@
   }
 
   .travel-pace-effects {
-    padding-top: var(--travel-pace-spacing-sm);
-    border-top: 1px solid var(--travel-pace-divider);
-  }
-}
-
-.travel-pace-mount-config {
-  padding: var(--travel-pace-spacing-sm);
-
-  .notification.error {
-    margin: 1rem 0;
-    padding: 0.75rem;
-    border: 1px solid var(--travel-pace-error-border);
-    border-radius: var(--travel-pace-border-radius);
-    background-color: var(--travel-pace-error-bg);
+    padding-top: 0.625rem;
+    border-top: 0.0625rem solid var(--travel-pace-divider);
   }
 
-  .mounts-widget {
-    max-height: 25rem;
-    padding-right: var(--travel-pace-spacing-xs);
-    overflow-y: auto;
+  .travel-pace-advance {
+    gap: 0.313rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 0.625rem;
   }
-
-  .mount-section {
-    margin-bottom: var(--travel-pace-spacing-sm);
-
-    h4 {
-      margin: 0 0 var(--travel-pace-spacing-xs);
-      padding-bottom: var(--travel-pace-spacing-xs);
-      border-bottom: 1px solid var(--travel-pace-border-color);
-    }
-
-    label {
-      gap: var(--travel-pace-spacing-xs);
-      display: flex;
-      align-items: center;
-      padding: 0.2rem 0;
-      cursor: pointer;
-    }
-  }
-}
-
-.travel-pace-footer {
-  margin-top: var(--travel-pace-spacing-sm);
-  padding-top: var(--travel-pace-spacing-sm);
-  border-top: 1px solid var(--travel-pace-border-color);
-  text-align: center;
 }

@@ -1,0 +1,30 @@
+<fieldset class="travel-pace-traveller">
+	<legend>{{localize "TRAVELPACE.Labels.Traveller"}}</legend>
+
+	<div class="traveller-drop">
+		{{#if traveller}}
+			<img src="{{traveller.img}}" alt="">
+			<span class="traveller-name">{{traveller.name}}</span>
+			<button type="button" class="icon" data-action="clearTraveller" data-tooltip="TRAVELPACE.Labels.Clear">
+				<i class="fas fa-xmark"></i>
+			</button>
+		{{else}}
+			<i class="fas fa-hand-pointer"></i>
+			<span class="traveller-name">{{localize "TRAVELPACE.Labels.DropHint"}}</span>
+		{{/if}}
+	</div>
+
+	{{#if multipleTravellers}}
+		<div class="form-group">
+			<label for="travelpace-traveller">{{localize "TRAVELPACE.Labels.Transport"}}</label>
+			<div class="form-fields">
+				<select id="travelpace-traveller" name="traveller">
+					<option value="">{{localize "TRAVELPACE.Labels.NoMount"}}</option>
+					{{#each travellers}}
+						<option value="{{this.uuid}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
+					{{/each}}
+				</select>
+			</div>
+		</div>
+	{{/if}}
+</fieldset>
