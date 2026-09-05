@@ -74,7 +74,7 @@ export function getMountSpeed(mount) {
   const travel = mount.system?.attributes?.travel;
   if (travel?.speeds?.max) return { perHour: travel.speeds.max, unit: travel.units };
   const movement = mount.system?.attributes?.movement ?? {};
-  const walkFeet = dnd5e.utils.convertLength(movement.walk || 0, movement.units ?? 'ft', 'ft', { strict: false });
+  const walkFeet = dnd5e.utils.convertLength(movement.speed || 0, movement.units ?? 'ft', 'ft', { strict: false });
   return { ratio: walkFeet / TRAVEL.WALK_BASELINE_FEET };
 }
 
