@@ -1,0 +1,16 @@
+## Breaking Changes
+
+- Enabled mounts are stored by UUID, so world actors and compendium actors resolve through the same lookup.
+- The module's own metric toggle is gone. Distances follow the system's units setting, and pace tables, travel hours and unit conversion are read from the system.
+
+## New Features
+
+- When Calendaria is active, a Use Weather world setting, off by default, scales travel time and distance by the current weather preset and severity band. A Weather Multipliers menu overrides the multipliers.
+- The calculator window was rebuilt: a mode toggle replaces the distance and time radios, a live result line sits above the Calculate button, and the traveller field accepts a dropped actor, group, vehicle or mount.
+- Travel chat cards list each applied modifier in plain text and show a GM-only advance-time button that moves world time forward by the calculated travel duration.
+- A Time Advance Mode world setting advances by full calendar days or by travel hours only. Advancing by more than one calendar day asks for confirmation first.
+- A group actor with no speed of its own travels at the speed of its slowest creature member.
+
+## Bug Fixes
+
+- 8 bugs squashed
