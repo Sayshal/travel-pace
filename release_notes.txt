@@ -1,35 +1,4 @@
-## Breaking Changes
-
-- Enabled mounts are stored by UUID, so world actors and compendium actors resolve through the same lookup. Enabled mounts the config list does not show stay enrolled when you save.
-- The module's own metric toggle is gone. Distances follow the system's units setting, and pace tables, travel hours and unit conversion are read from the system instead of being hardcoded.
-
-## New Features
-
-- A group actor with no speed of its own now travels at the speed of its slowest creature member.
-- Advancing world time by more than one calendar day asks for confirmation first.
-- New Time Advance Mode world setting: advance by full calendar days, or by travel hours only.
-- New Use Weather world setting, off by default: when Calendaria is active, the current weather preset and its severity band scale travel time and distance.
-- New Weather Multipliers config menu for overriding the per-preset and per-severity multipliers. Severity multipliers start from built-in defaults and apply only once Use Weather is on.
-- Set the traveller by dragging an actor, group, vehicle or mount onto the traveller field, with a clear button to remove it. The mount dropdown only appears when more than one traveller is available.
-- The travel calculator window was rebuilt: a two-half mode toggle replaces the distance and time radios, fields sit in standard form groups with hints and a unit suffix, and a live result line sits above the Calculate button.
-- Travel chat cards list each applied modifier in plain text. The calculator preview applies the same multipliers and refreshes when Calendaria reports a weather change.
-- Travel chat cards show an advance-time button, visible to the GM only, that moves world time forward by the calculated travel duration.
-
-## Bug Fixes
-
-- A mount with no walking speed is now reported as unable to travel instead of silently falling back to 30 ft.
-- A walking mount's speed is reported per minute instead of per round.
-- Mount and vehicle speeds are read as numbers straight from the actor's travel and movement data instead of being parsed out of localized text, so the calculator, preview and chat card agree in non-English worlds.
-- Mounts enabled before the switch to UUID storage resolve again: bare world-actor ids saved by earlier versions are promoted to their UUID form on read.
-- The Weather Multipliers menu no longer wipes its saved tables when Calendaria is not active.
-- The calculator preview now updates once per input instead of twice.
-- The calculator stylesheet is scoped to the calculator, so it no longer restyles the dnd5e group sheet.
-- The scene-control button reopens the calculator after it has been closed.
-
 ## Changes
 
-- Chat cards are localized as whole sentences.
-- Day, hour and minute lengths come from the world calendar rather than assuming Earth time. Travel estimates no longer invent weeks, months or years.
-- MIT license copyright holder updated from "Tyler" to "3 Death Saves".
-- The calculator window is themed with 3DS:ATLAS variables.
-- Verified Foundry compatibility bumped to 14.366.
+- Mount speeds read the system's prepared movement speed instead of the movement.walk value that dnd5e 6.0 deprecated. Reported speeds are unchanged.
+- dnd5e compatibility raised to a minimum of 5.3.3 and verified against 6.0.0.
