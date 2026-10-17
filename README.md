@@ -21,15 +21,22 @@ A calculator dialog for D&D 5E travel pace. Convert a distance into how long the
 
 ## Features
 
-- Two calculation modes: Distance → Time and Time → Distance
-- The three SRD travel paces (Fast / Normal / Slow) with their standard multipliers
-- Mount and vehicle support: pick from a configurable list of world or compendium actors. Walking actors use their movement speed; vehicles use their speed in mi/hour or km/hour from their actor data.
-- Imperial or metric units, set per-world
-- Pace effects (Stealth / Perception disadvantage, etc.) included on the chat card by default
+**Two calculation modes:** Distance → Time and Time → Distance, using the three SRD travel paces (Fast / Normal / Slow) with their standard multipliers.
 
 <img src="https://wiki.3deathsaves.com/travel-pace/calculator-dialog.png" alt="Travel Pace Calculator" width="750">
+
+**Chat card:** Pace effects (Stealth / Perception disadvantage, etc.) included on the chat card by default.
+
 <img src="https://wiki.3deathsaves.com/travel-pace/chat-card.png" alt="Travel Pace chat card" width="750">
+
+**Weather:** With Calendaria active, set a multiplier for each weather preset so the current weather speeds up or slows down travel.
+
 <img src="https://wiki.3deathsaves.com/travel-pace/weather-config.png" alt="Weather multiplier configuration" width="750">
+
+### Also Included
+
+- Mount and vehicle support: pick from a configurable list of world or compendium actors. Walking actors use their movement speed; vehicles use their speed in mi/hour or km/hour from their actor data.
+- Imperial or metric units, set per-world
 
 ## Installation
 
