@@ -7,6 +7,8 @@
 ![Foundry Version](https://img.shields.io/endpoint?url=https%3A%2F%2Ffoundryshields.com%2Fversion%3Fstyle%3Dfor-the-badge%26url%3Dhttps%3A%2F%2Fgithub.com%2FSayshal%2Ftravel-pace%2Freleases%2Flatest%2Fdownload%2Fmodule.json)
 ![D&D5E Version](https://img.shields.io/endpoint?url=https%3A%2F%2Ffoundryshields.com%2Fsystem%3FnameType%3Dfoundry%26showVersion%3D1%26style%3Dfor-the-badge%26url%3Dhttps%3A%2F%2Fgithub.com%2FSayshal%2Ftravel-pace%2Freleases%2Flatest%2Fdownload%2Fmodule.json)
 
+![Travel Pace Hero](https://wiki.3deathsaves.com/travel-pace/hero.png)
+
 ## Supporting the module
 
 [![Patreon](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/3deathsaves)
@@ -24,6 +26,10 @@ A calculator dialog for D&D 5E travel pace. Convert a distance into how long the
 - Mount and vehicle support: pick from a configurable list of world or compendium actors. Walking actors use their movement speed; vehicles use their speed in mi/hour or km/hour from their actor data.
 - Imperial or metric units, set per-world
 - Pace effects (Stealth / Perception disadvantage, etc.) included on the chat card by default
+
+<img src="https://wiki.3deathsaves.com/travel-pace/calculator-dialog.png" alt="Travel Pace Calculator" width="750">
+<img src="https://wiki.3deathsaves.com/travel-pace/chat-card.png" alt="Travel Pace chat card" width="750">
+<img src="https://wiki.3deathsaves.com/travel-pace/weather-config.png" alt="Weather multiplier configuration" width="750">
 
 ## Installation
 
