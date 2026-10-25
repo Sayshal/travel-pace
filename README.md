@@ -62,4 +62,4 @@ To configure which actors appear in the mount dropdown, open Module Settings →
 
 ## Support
 
-If you hit a bug or want a feature, file it on the [issue tracker](https://github.com/Sayshal/travel-pace/issues).
+If you hit a bug or want a feature, report it at [3deathsaves.com/report](https://3deathsaves.com/report?module=travel-pace).
