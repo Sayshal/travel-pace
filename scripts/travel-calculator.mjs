@@ -4,6 +4,7 @@ import {
   breakdownMinutesToTimeUnits,
   calculateDistance,
   calculateTime,
+  effectivePace,
   formatMountSpeed,
   formatTime,
   getPaceEffects,
@@ -46,16 +47,17 @@ export class TravelCalculator {
   static calculateTravel(data) {
     const modifiers = getWeatherModifiers();
     if (Hooks.call('travelPace.preCalculate', { data, modifiers }) === false) return null;
-    const { mode, pace, mount = null } = data;
-    const speed = getTravellerSpeed(mount);
+    const { mode, mount = null } = data;
+    const pace = effectivePace(mount, data.pace);
+    const speed = getTravellerSpeed(mount, data.travelType);
     const unit = TravelCalculator.unit;
     const extraMultiplier = modifiers.reduce((product, modifier) => product * (Number(modifier.multiplier) > 0 ? Number(modifier.multiplier) : 1), 1);
-    const shared = { paceEffect: getPaceEffects(pace), speed, modifiers, extraMultiplier, mountUuid: mount?.uuid ?? null };
+    const shared = { paceEffect: speed.paced ? getPaceEffects(pace) : '', paceSlowed: pace !== data.pace, speed, modifiers, extraMultiplier, mountUuid: mount?.uuid ?? null };
     if (mode === 'distance') {
       const time = calculateTime(data.distance, pace, speed, extraMultiplier);
-      return { mode, input: { distance: data.distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes: time ? timeToMinutes(time) : 0 }, ...shared };
+      return { mode, input: { distance: data.distance, unit, pace }, output: { timeFormatted: formatTime(time), time, totalMinutes: time ? timeToMinutes(time, speed.hours) : 0 }, ...shared };
     }
-    const totalMinutes = timeToMinutes(data.time);
+    const totalMinutes = timeToMinutes(data.time, speed.hours);
     return { mode, input: { time: data.time, pace }, output: { distance: calculateDistance(totalMinutes, pace, speed, extraMultiplier), unit, totalMinutes }, ...shared };
   }
 
@@ -79,8 +81,8 @@ export class TravelCalculator {
     const distance = result.mode === 'distance' ? result.input.distance : Math.round(result.output.distance * 10) / 10;
     const content = await foundry.applications.handlebars.renderTemplate(TEMPLATES.CHAT_MESSAGE, {
       result,
-      paceLabel: _loc(`TRAVELPACE.Paces.${result.input.pace.charAt(0).toUpperCase()}${result.input.pace.slice(1)}`),
-      showEffects: game.settings.get(MODULE.ID, SETTINGS.SHOW_EFFECTS),
+      paceLabel: result.speed.paced === false ? null : CONFIG.DND5E.travelPace[result.input.pace]?.label,
+      showEffects: game.settings.get(MODULE.ID, SETTINGS.SHOW_EFFECTS) && !!result.paceEffect,
       mountEmbed: result.mountUuid ? `@UUID[${result.mountUuid}]` : null,
       mountSpeed: result.mountUuid ? formatMountSpeed(result.speed, result.input.pace) : null,
       distanceText: `${distance} ${result.output.unit ?? result.input.unit}`,
@@ -109,8 +111,8 @@ export class TravelCalculator {
    */
   static async advanceWorldTime(message) {
     const result = message.getFlag(MODULE.ID, 'result');
-    const seconds = TravelCalculator.durationToSeconds(result?.output?.totalMinutes);
-    if (seconds <= 0) return void ui.notifications.warn('TRAVELPACE.Advance.NoDuration');
+    const seconds = TravelCalculator.durationToSeconds(result?.output?.totalMinutes, result?.speed?.hours);
+    if (seconds <= 0) return void ui.notifications.warn('TRAVELPACE.Advance.NoDuration', { localize: true });
     const { secondsPerMinute, minutesPerHour, hoursPerDay } = game.time.calendar.days;
     const secondsPerDay = secondsPerMinute * minutesPerHour * hoursPerDay;
     if (seconds > secondsPerDay) {
@@ -118,7 +120,7 @@ export class TravelCalculator {
       const hours = Math.round((seconds % secondsPerDay) / (secondsPerMinute * minutesPerHour));
       const confirmed = await foundry.applications.api.DialogV2.confirm({
         window: { title: 'TRAVELPACE.Advance.Confirm.Title' },
-        content: `<p>${_loc('TRAVELPACE.Advance.Confirm.Content', { days, hours })}</p>`
+        content: `<p>${_loc('TRAVELPACE.Advance.Confirm.Content', { duration: formatTime({ days, hours, minutes: 0 }) })}</p>`
       });
       if (!confirmed) return;
     }
@@ -128,13 +130,15 @@ export class TravelCalculator {
   /**
    * Convert a travel duration to world-time seconds using the configured day-advance mode.
    * @param {number} totalMinutes Travel minutes from a calculation result
+   * @param {number} [dayHours] Hours in the traveller's travel day
    * @returns {number} Seconds to advance world time by
    */
-  static durationToSeconds(totalMinutes) {
+  static durationToSeconds(totalMinutes, dayHours = undefined) {
     if (!(totalMinutes > 0)) return 0;
-    const { calendar } = game.time;
-    if (game.settings.get(MODULE.ID, SETTINGS.ADVANCE_MODE) === 'travel') return Math.round(calendar.componentsToTime({ minute: totalMinutes }));
-    const { days, hours, minutes } = breakdownMinutesToTimeUnits(totalMinutes);
-    return Math.round(calendar.componentsToTime({ day: days, minute: hours * minutesPerHour() + minutes }));
+    // ponytail: built from calendar.days instead of componentsToTime, which Calendaria treats as an absolute date that ignores `day`; revisit once Calendaria honours `day`
+    const { secondsPerMinute, hoursPerDay } = game.time.calendar.days;
+    if (game.settings.get(MODULE.ID, SETTINGS.ADVANCE_MODE) === 'travel') return Math.round(totalMinutes * secondsPerMinute);
+    const { days, hours, minutes } = breakdownMinutesToTimeUnits(totalMinutes, dayHours);
+    return Math.round(((days * hoursPerDay + hours) * minutesPerHour() + minutes) * secondsPerMinute);
   }
 }

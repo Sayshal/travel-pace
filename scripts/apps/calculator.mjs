@@ -1,6 +1,6 @@
 import { MODULE, TEMPLATES } from '../constants.mjs';
 import { TravelCalculator } from '../travel-calculator.mjs';
-import { formatMountSpeed, getEnabledMountUuids, getTravellerSpeed, resolveMount, travelUnits, unitAbbreviation } from '../utils.mjs';
+import { effectivePace, fastestTravelType, formatMountSpeed, getEnabledMountUuids, getTravellerSpeed, getTravellerSpeeds, resolveMount, travelUnits, unitAbbreviation } from '../utils.mjs';
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { DragDrop, TextEditor } = foundry.applications.ux;
@@ -29,9 +29,9 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * The form's state.
-   * @type {{mode: string, pace: string, traveller: string, distance: number, days: number, hours: number}}
+   * @type {{mode: string, pace: string, traveller: string, travelType: string, distance: number, days: number, hours: number}}
    */
-  #state = { mode: 'distance', pace: 'normal', traveller: '', distance: 0, days: 0, hours: 0 };
+  #state = { mode: 'distance', pace: 'normal', traveller: '', travelType: '', distance: 0, days: 0, hours: 0 };
 
   /** @type {Map<string, foundry.documents.Actor>} Travellers on offer, keyed by UUID. */
   #travellers = new Map();
@@ -57,11 +57,14 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** @inheritdoc */
   async _prepareContext() {
-    const { mode, pace, traveller } = this.#state;
+    const { mode, traveller } = this.#state;
     await this.#loadTravellers();
 
     const actor = this.#travellers.get(traveller) ?? null;
-    const speed = getTravellerSpeed(actor);
+    const speeds = getTravellerSpeeds(actor);
+    if (!(this.#state.travelType in speeds)) this.#state.travelType = fastestTravelType(speeds) ?? '';
+    const speed = getTravellerSpeed(actor, this.#state.travelType);
+    const pace = effectivePace(actor, this.#state.pace);
 
     return {
       distanceMode: mode === 'distance',
@@ -73,8 +76,12 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       distance: this.#state.distance || null,
       days: this.#state.days,
       hours: this.#state.hours,
-      paces: ['normal', 'fast', 'slow'].map((id) => ({ id, label: `TRAVELPACE.Paces.${id.charAt(0).toUpperCase()}${id.slice(1)}`, selected: id === pace })),
+      paces: Object.entries(CONFIG.DND5E.travelPace).map(([id, { label }]) => ({ id, label, selected: id === this.#state.pace })),
+      paceDisabled: !speed.paced,
       paceHint: _loc('TRAVELPACE.Hints.Pace', { speed: formatMountSpeed(speed, pace) }),
+      paceNote: this.#describePaceNote(speed, pace),
+      travelTypes: Object.keys(speeds).map((id) => ({ id, label: CONFIG.DND5E.travelTypes[id]?.label ?? id, selected: id === this.#state.travelType })),
+      multipleTravelTypes: Object.keys(speeds).length > 1,
       traveller: actor ? { uuid: actor.uuid, name: actor.name, img: actor.img } : null,
       travellers: [...this.#travellers.values()].map((option) => ({ uuid: option.uuid, name: option.name, selected: option.uuid === traveller })),
       multipleTravellers: this.#travellers.size > 1,
@@ -114,8 +121,10 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #onInputChange(event) {
     const { name, value } = event.target;
     if (!(name in this.#state)) return;
-    this.#state[name] = name === 'pace' || name === 'traveller' ? value : Number(value) || 0;
-    if (name === 'traveller' || name === 'pace') return void this.render();
+    const isChoice = ['pace', 'traveller', 'travelType'].includes(name);
+    this.#state[name] = isChoice ? value : Number(value) || 0;
+    if (name === 'traveller') this.#state.travelType = '';
+    if (isChoice) return void this.render();
     const line = this.element.querySelector('.travel-result');
     if (line) line.textContent = this.#describeResult();
   }
@@ -132,6 +141,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!actor) return;
     this.#dropped.add(actor.uuid);
     this.#state.traveller = actor.uuid;
+    this.#state.travelType = '';
     this.render();
   }
 
@@ -140,9 +150,9 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @returns {object} A payload for TravelCalculator.calculateTravel
    */
   #getFormData() {
-    const { mode, pace, traveller, distance, days, hours } = this.#state;
+    const { mode, pace, traveller, travelType, distance, days, hours } = this.#state;
     const mount = this.#travellers.get(traveller) ?? null;
-    return mode === 'distance' ? { mode, pace, mount, distance } : { mode, pace, mount, time: { days, hours, minutes: 0 } };
+    return mode === 'distance' ? { mode, pace, travelType, mount, distance } : { mode, pace, travelType, mount, time: { days, hours, minutes: 0 } };
   }
 
   /**
@@ -163,6 +173,18 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const result = TravelCalculator.calculateTravel(this.#getFormData());
     if (!result) return _loc('TRAVELPACE.Preview.Empty');
     return result.mode === 'distance' ? result.output.timeFormatted : `${result.output.distance.toFixed(1)} ${result.output.unit}`;
+  }
+
+  /**
+   * Why the pace in use differs from the one chosen, if it does.
+   * @param {object} speed The traveller's speed, as read by getTravellerSpeed
+   * @param {string} pace The pace the traveller actually moves at
+   * @returns {string|null} Localized note, or null when the chosen pace applies
+   */
+  #describePaceNote(speed, pace) {
+    if (!speed.paced) return _loc('TRAVELPACE.Hints.Unpaced');
+    if (pace !== this.#state.pace) return _loc('DND5E.TRAVEL.Slowed.Group');
+    return null;
   }
 
   /**
@@ -196,6 +218,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static #clearTraveller() {
     this.#state.traveller = '';
+    this.#state.travelType = '';
     this.render();
   }
 
@@ -206,7 +229,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static async #submitCalculation() {
     if (!this.#hasInput()) {
-      ui.notifications.warn('TRAVELPACE.Preview.Error');
+      ui.notifications.warn('TRAVELPACE.Preview.Error', { localize: true });
       return;
     }
     await TravelCalculator.submitCalculation(this.#getFormData());

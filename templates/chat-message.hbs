@@ -14,7 +14,12 @@
   {{/if}}
 
   <div class="travel-pace-details">
-    <p class="travel-pace-pace">{{localize "TRAVELPACE.ChatMessage.PaceLine" pace=paceLabel}}</p>
+    {{#if paceLabel}}
+      <p class="travel-pace-pace">{{localize "TRAVELPACE.ChatMessage.PaceLine" pace=paceLabel}}</p>
+    {{/if}}
+    {{#if result.paceSlowed}}
+      <p class="travel-pace-slowed">{{localize "DND5E.TRAVEL.Slowed.Group"}}</p>
+    {{/if}}
 
     {{#if (eq result.mode "distance")}}
       <p class="travel-pace-input">{{localize "TRAVELPACE.ChatMessage.DistanceLine" distance=distanceText}}</p>

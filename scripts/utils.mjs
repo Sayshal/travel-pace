@@ -1,9 +1,15 @@
 import { MODULE, SETTINGS, TRAVEL } from './constants.mjs';
 
 /**
- * @typedef {{perHour: number, unit: string}|{ratio: number}} MountSpeed
- * A vehicle's own travel speed in a `CONFIG.DND5E.travelUnits` key, or a walking mount's speed as a
- * ratio of the baseline the pace table assumes.
+ * @typedef {object} MountSpeed
+ * A speed in one travel medium: a vehicle or group's own travel speed in a `CONFIG.DND5E.travelUnits` key, or a
+ * creature's movement as a ratio of the baseline the pace table assumes.
+ * @property {number} [perHour] Travel speed per hour, in `unit`
+ * @property {string} [unit] A `CONFIG.DND5E.travelUnits` key
+ * @property {number} [ratio] Movement as a ratio of the walking baseline
+ * @property {string} type The `CONFIG.DND5E.travelTypes` key this speed travels by
+ * @property {number} hours Hours travelled per travel day
+ * @property {boolean} paced Whether the chosen pace changes this speed, false for vehicles that do not travel on land
  */
 
 /** @type {Object<string, string>} The length unit each travel unit measures distance in. */
@@ -19,6 +25,16 @@ function paceConfig(pace) {
 }
 
 /**
+ * The pace configuration a speed moves at. A speed the pace does not change always travels at normal.
+ * @param {MountSpeed} speed Mount speed
+ * @param {string} pace Travel pace id
+ * @returns {object} An entry of `CONFIG.DND5E.travelPace`
+ */
+function speedPaceConfig(speed, pace) {
+  return paceConfig(speed.paced === false ? 'normal' : pace);
+}
+
+/**
  * Minutes in an hour, read from the world calendar so a custom one is honoured.
  * @returns {number} Minutes per hour
  */
@@ -29,10 +45,11 @@ export function minutesPerHour() {
 /**
  * Minutes in a travel day. How many hours a party marches is a rule the system states; how long an
  * hour lasts is the world calendar's business.
+ * @param {number} [hours] Hours travelled per day, defaulting to the system's group travel day
  * @returns {number} Minutes per travel day
  */
-export function minutesPerTravelDay() {
-  return (CONFIG.DND5E.travelTimes?.group ?? 8) * minutesPerHour();
+export function minutesPerTravelDay(hours = CONFIG.DND5E.travelTimes.group) {
+  return hours * minutesPerHour();
 }
 
 /**
@@ -64,42 +81,131 @@ export function unitAbbreviation(unit) {
 }
 
 /**
- * Read a mount's travel speed. Vehicles carry a prepared travel block; everything else is measured
- * against the walking baseline.
- * @param {foundry.documents.Actor|null} mount The resolved mount or vehicle actor
- * @returns {MountSpeed} The mount's speed, or an unmodified ratio when there is no mount
+ * Hours an actor travels per travel day: its own travel setting when it has one, else the system's group default.
+ * @param {foundry.documents.Actor|null} actor The traveller
+ * @returns {number} Hours per travel day
  */
-export function getMountSpeed(mount) {
-  if (!mount) return { ratio: 1 };
-  const travel = mount.system?.attributes?.travel;
-  if (travel?.speeds?.max) return { perHour: travel.speeds.max, unit: travel.units };
-  const movement = mount.system?.attributes?.movement ?? {};
-  const walkFeet = dnd5e.utils.convertLength(movement.speed || 0, movement.units ?? 'ft', 'ft', { strict: false });
-  return { ratio: walkFeet / TRAVEL.WALK_BASELINE_FEET };
+function travelHours(actor) {
+  return actor?.system?.attributes?.travel?.time || CONFIG.DND5E.travelTimes.group;
 }
 
 /**
- * Read the speed of whatever the party is travelling as.
- * @param {foundry.documents.Actor|null} actor A creature, vehicle or group actor
- * @returns {MountSpeed} The speed to travel at
+ * Whether a prepared travel speed has a real source: a stated speed or pace, or a visible movement type that travels
+ * by that medium. dnd5e folds hidden movement types such as jump into land travel, which would give every vehicle a
+ * land speed.
+ * @param {foundry.documents.Actor} actor A vehicle or group actor
+ * @param {string} type A `CONFIG.DND5E.travelTypes` key
+ * @returns {boolean} True when the speed comes from something the actor can actually travel with
  */
-export function getTravellerSpeed(actor) {
-  if (actor?.type !== 'group') return getMountSpeed(actor);
-  const stated = getMountSpeed(actor);
-  if (distancePerMinute('normal', stated) > 0) return stated;
-  const members = (actor.system?.members ?? []).map((member) => member.actor).filter((member) => member?.system?.isCreature);
-  if (!members.length) return stated;
-  return members.map(getMountSpeed).reduce((slower, speed) => (distancePerMinute('normal', speed) < distancePerMinute('normal', slower) ? speed : slower));
+function hasTravelSource(actor, type) {
+  const source = actor._source.system.attributes?.travel ?? {};
+  if (source.speeds?.[type] || source.paces?.[type]) return true;
+  const movement = actor.system.attributes?.movement?.speeds ?? {};
+  return Object.entries(CONFIG.DND5E.movementTypes).some(([key, config]) => !config.hidden && (config.travel ?? 'land') === type && movement[key] > 0);
+}
+
+/**
+ * Read a mount's speed in every medium it can travel. Vehicles and groups carry a prepared travel block;
+ * creatures are measured against the walking baseline.
+ * @param {foundry.documents.Actor|null} mount The resolved mount or vehicle actor
+ * @returns {Object<string, MountSpeed>} Speeds keyed by `CONFIG.DND5E.travelTypes` key, only for media it can travel
+ */
+export function getMountSpeeds(mount) {
+  const hours = travelHours(mount);
+  if (!mount) return { land: { ratio: 1, type: 'land', hours, paced: true } };
+  const paced = !mount.system.isVehicle || mount.system.details?.type === 'land';
+  const speeds = {};
+  const travel = mount.system.attributes?.travel;
+  for (const type of Object.keys(CONFIG.DND5E.travelTypes)) {
+    if (travel?.speeds?.[type] > 0 && hasTravelSource(mount, type)) speeds[type] = { perHour: travel.speeds[type], unit: travel.units, type, hours, paced };
+  }
+  if (!foundry.utils.isEmpty(speeds)) return speeds;
+  const movement = mount.system.attributes?.movement;
+  for (const [key, config] of Object.entries(CONFIG.DND5E.movementTypes)) {
+    if (config.hidden) continue;
+    const type = config.travel ?? 'land';
+    const feet = dnd5e.utils.convertLength(movement?.speeds?.[key] || 0, movement?.units ?? 'ft', { to: 'ft', legacy: false }).value;
+    const ratio = feet / TRAVEL.WALK_BASELINE_FEET;
+    if (ratio > (speeds[type]?.ratio ?? 0)) speeds[type] = { ratio, type, hours, paced };
+  }
+  return speeds;
+}
+
+/**
+ * Read a group's speeds: its primary vehicle's, its own stated travel speeds, or else every medium all
+ * of its creatures share, at the slowest member's speed.
+ * @param {foundry.documents.Actor} group A group actor
+ * @returns {Object<string, MountSpeed>} Speeds keyed by `CONFIG.DND5E.travelTypes` key
+ */
+function getGroupSpeeds(group) {
+  const vehicle = group.system.primaryVehicle;
+  if (vehicle) return getMountSpeeds(vehicle);
+  const stated = getMountSpeeds(group);
+  const members = group.system.creatures ?? [];
+  if (!foundry.utils.isEmpty(stated) || !members.length) return stated;
+  const hours = travelHours(group);
+  const memberSpeeds = members.map(getMountSpeeds);
+  const speeds = {};
+  for (const type of Object.keys(CONFIG.DND5E.travelTypes)) {
+    if (!memberSpeeds.every((memberSpeed) => memberSpeed[type])) continue;
+    const slowest = memberSpeeds.map((memberSpeed) => memberSpeed[type]).reduce((slower, speed) => (distancePerMinute('normal', speed) < distancePerMinute('normal', slower) ? speed : slower));
+    speeds[type] = { ...slowest, hours };
+  }
+  return speeds;
+}
+
+/**
+ * Read every medium whatever the party is travelling as can travel, and its speed in each.
+ * @param {foundry.documents.Actor|null} actor A creature, vehicle or group actor
+ * @returns {Object<string, MountSpeed>} Speeds keyed by `CONFIG.DND5E.travelTypes` key
+ */
+export function getTravellerSpeeds(actor) {
+  return actor?.type === 'group' ? getGroupSpeeds(actor) : getMountSpeeds(actor);
+}
+
+/**
+ * The medium a set of speeds travels fastest in.
+ * @param {Object<string, MountSpeed>} speeds Speeds from getTravellerSpeeds
+ * @returns {string|undefined} A `CONFIG.DND5E.travelTypes` key, or undefined when there are none
+ */
+export function fastestTravelType(speeds) {
+  return Object.values(speeds).reduce((fastest, speed) => (!fastest || distancePerMinute('normal', speed) > distancePerMinute('normal', fastest) ? speed : fastest), null)?.type;
+}
+
+/**
+ * Read the speed of whatever the party is travelling as, in one medium.
+ * @param {foundry.documents.Actor|null} actor A creature, vehicle or group actor
+ * @param {string} [travelType] A `CONFIG.DND5E.travelTypes` key, defaulting to the fastest medium
+ * @returns {MountSpeed} The speed to travel at, standing still when the actor cannot travel that medium
+ */
+export function getTravellerSpeed(actor, travelType) {
+  const speeds = getTravellerSpeeds(actor);
+  const type = travelType || fastestTravelType(speeds) || 'land';
+  return speeds[type] ?? { ratio: 0, type, hours: travelHours(actor), paced: true };
+}
+
+/**
+ * The pace a traveller actually moves at. A group with a slowed member is held to slow pace unless its vehicle ignores pace.
+ * @param {foundry.documents.Actor|null} actor A creature, vehicle or group actor
+ * @param {string} pace The chosen travel pace id
+ * @returns {string} The travel pace id to calculate with
+ */
+export function effectivePace(actor, pace) {
+  if (actor?.type !== 'group') return pace;
+  const { slowed, available } = actor.system.getTravelPace().pace;
+  if (!slowed || !available) return pace;
+  const order = Object.keys(CONFIG.DND5E.travelPace);
+  return order.indexOf(pace) > order.indexOf('slow') ? 'slow' : pace;
 }
 
 /**
  * Format a mount's speed for display, adjusted by the selected pace.
- * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
+ * @param {MountSpeed} speed Mount speed, as read by getTravellerSpeed
  * @param {string} pace Travel pace id
  * @returns {string} Localized speed text
  */
 export function formatMountSpeed(speed, pace) {
-  const { multiplier } = paceConfig(pace);
+  const { multiplier } = speedPaceConfig(speed, pace);
   const units = travelUnits();
   if (speed.perHour !== undefined) {
     const { value } = dnd5e.utils.convertTravelSpeed(speed.perHour, speed.unit, { to: units.travel });
@@ -107,18 +213,19 @@ export function formatMountSpeed(speed, pace) {
   }
   const feetPerMinute = speed.ratio * TRAVEL.WALK_BASELINE_FEET * roundsPerMinute() * multiplier;
   const unit = units.length === 'km' ? 'm' : 'ft';
-  return _loc('TRAVELPACE.Speed.Format.PerMinute', { speed: Math.round(dnd5e.utils.convertLength(feetPerMinute, 'ft', unit, { strict: false })), unit: unitAbbreviation(unit) });
+  const { value } = dnd5e.utils.convertLength(feetPerMinute, 'ft', { to: unit, legacy: false });
+  return _loc('TRAVELPACE.Speed.Format.PerMinute', { speed: Math.round(value), unit: unitAbbreviation(unit) });
 }
 
 /**
  * The distance a mount covers per minute of travel, in the world's travel unit.
  * @param {string} pace Travel pace id
- * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
+ * @param {MountSpeed} speed Mount speed, as read by getTravellerSpeed
  * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {number} Distance per minute, or 0 when the mount cannot travel
  */
 export function distancePerMinute(pace, speed, extraMultiplier = 1) {
-  const config = paceConfig(pace);
+  const config = speedPaceConfig(speed, pace);
   const { travel } = travelUnits();
   const perMinute =
     speed.perHour !== undefined
@@ -132,25 +239,25 @@ export function distancePerMinute(pace, speed, extraMultiplier = 1) {
  * Calculate how long a distance takes to travel.
  * @param {number} distance Distance in the world's travel unit
  * @param {string} pace Travel pace id
- * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
+ * @param {MountSpeed} speed Mount speed, as read by getTravellerSpeed
  * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {{minutes: number, hours: number, days: number}|null} Time breakdown, or null when the mount cannot travel
  */
-export function calculateTime(distance, pace, speed = { ratio: 1 }, extraMultiplier = 1) {
+export function calculateTime(distance, pace, speed = getTravellerSpeed(null), extraMultiplier = 1) {
   const perMinute = distancePerMinute(pace, speed, extraMultiplier);
   if (!perMinute) return null;
-  return breakdownMinutesToTimeUnits(distance / perMinute);
+  return breakdownMinutesToTimeUnits(distance / perMinute, speed.hours);
 }
 
 /**
  * Calculate how far a span of travel covers.
  * @param {number} minutes Travel minutes
  * @param {string} pace Travel pace id
- * @param {MountSpeed} speed Mount speed, as read by getMountSpeed
+ * @param {MountSpeed} speed Mount speed, as read by getTravellerSpeed
  * @param {number} [extraMultiplier] Combined multiplier from weather and registered contributors
  * @returns {number} Distance in the world's travel unit
  */
-export function calculateDistance(minutes, pace, speed = { ratio: 1 }, extraMultiplier = 1) {
+export function calculateDistance(minutes, pace, speed = getTravellerSpeed(null), extraMultiplier = 1) {
   return distancePerMinute(pace, speed, extraMultiplier) * minutes;
 }
 
@@ -160,21 +267,24 @@ export function calculateDistance(minutes, pace, speed = { ratio: 1 }, extraMult
  * @param {number} [time.days] Travel days
  * @param {number} [time.hours] Hours
  * @param {number} [time.minutes] Minutes
+ * @param {number} [dayHours] Hours in a travel day
  * @returns {number} Total travel minutes
  */
-export function timeToMinutes({ days = 0, hours = 0, minutes = 0 } = {}) {
-  return days * minutesPerTravelDay() + hours * minutesPerHour() + minutes;
+export function timeToMinutes({ days = 0, hours = 0, minutes = 0 } = {}, dayHours = undefined) {
+  return days * minutesPerTravelDay(dayHours) + hours * minutesPerHour() + minutes;
 }
 
 /**
  * Break a minute total down into travel days, hours and minutes.
  * @param {number} totalMinutes Raw minute total
+ * @param {number} [dayHours] Hours in a travel day
  * @returns {{minutes: number, hours: number, days: number}} Time breakdown
  */
-export function breakdownMinutesToTimeUnits(totalMinutes) {
+export function breakdownMinutesToTimeUnits(totalMinutes, dayHours = undefined) {
   const rounded = Math.round(totalMinutes);
-  const remainder = rounded % minutesPerTravelDay();
-  return { days: Math.floor(rounded / minutesPerTravelDay()), hours: Math.floor(remainder / minutesPerHour()), minutes: remainder % minutesPerHour() };
+  const dayMinutes = minutesPerTravelDay(dayHours);
+  const remainder = rounded % dayMinutes;
+  return { days: Math.floor(rounded / dayMinutes), hours: Math.floor(remainder / minutesPerHour()), minutes: remainder % minutesPerHour() };
 }
 
 /**
@@ -194,10 +304,11 @@ export function formatTime(timeData) {
 /**
  * The localized description of a pace's mechanical effects.
  * @param {string} pace Travel pace id
- * @returns {string} Localized description
+ * @returns {string} Localized description, empty for a pace the module has no description for
  */
 export function getPaceEffects(pace) {
-  return _loc(`TRAVELPACE.Effects.${pace.charAt(0).toUpperCase()}${pace.slice(1)}`);
+  const key = `TRAVELPACE.Effects.${pace.capitalize()}`;
+  return game.i18n.has(key) ? _loc(key) : '';
 }
 
 /**

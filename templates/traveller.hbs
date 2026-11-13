@@ -27,4 +27,17 @@
 			</div>
 		</div>
 	{{/if}}
+
+	{{#if multipleTravelTypes}}
+		<div class="form-group">
+			<label for="travelpace-travel-type">{{localize "TRAVELPACE.Labels.TravelType"}}</label>
+			<div class="form-fields">
+				<select id="travelpace-travel-type" name="travelType">
+					{{#each travelTypes}}
+						<option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+					{{/each}}
+				</select>
+			</div>
+		</div>
+	{{/if}}
 </fieldset>
