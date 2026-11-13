@@ -47,6 +47,6 @@ export class WeatherConfigMenu extends TravelPaceMenu {
     for (const [id, value] of Object.entries(severity)) if (Number(value) > 0) severityMultipliers[id] = Number(value);
     await game.settings.set(MODULE.ID, SETTINGS.WEATHER_MULTIPLIERS, presetMultipliers);
     await game.settings.set(MODULE.ID, SETTINGS.SEVERITY_MULTIPLIERS, severityMultipliers);
-    ui.notifications.info('TRAVELPACE.Settings.WeatherConfig.Saved');
+    ui.notifications.info('TRAVELPACE.Settings.WeatherConfig.Saved', { localize: true });
   }
 }

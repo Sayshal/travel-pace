@@ -1,4 +1,15 @@
-## Changes
+## Breaking Changes
 
-- Mount speeds read the system's prepared movement speed instead of the value dnd5e 6.0 deprecated. Reported speeds are unchanged.
-- dnd5e compatibility raised to a minimum of 5.3.3 and verified against 6.0.0.
+- Requires dnd5e 6.1.0 as both minimum and verified version.
+
+## New Features
+
+- Day breakdowns and time advance use the traveller's own hours per travel day.
+- Groups travel at their primary vehicle's speed and appear in the mount configuration menu.
+- Groups with a slowed member are held to slow pace.
+- Pace selector is disabled for vehicles that do not travel on land.
+- Travel By selector picks between multiple land, water or air speeds and defaults to the fastest.
+
+## Bug Fixes
+
+- 5 bugs squashed

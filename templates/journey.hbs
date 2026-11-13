@@ -26,12 +26,15 @@
 	<div class="form-group">
 		<label for="travelpace-pace">{{localize "TRAVELPACE.Labels.Pace"}}</label>
 		<div class="form-fields">
-			<select id="travelpace-pace" name="pace">
+			<select id="travelpace-pace" name="pace" {{#if paceDisabled}}disabled{{/if}}>
 				{{#each paces}}
-					<option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{localize this.label}}</option>
+					<option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
 				{{/each}}
 			</select>
 		</div>
 		<p class="hint">{{paceHint}}</p>
+		{{#if paceNote}}
+			<p class="hint">{{paceNote}}</p>
+		{{/if}}
 	</div>
 </fieldset>

@@ -35,20 +35,20 @@ export class MountConfigMenu extends TravelPaceMenu {
    */
   static async #onSubmit(_event, _form, formData) {
     const submitted = formData.object.mounts || [];
-    const checked = Array.isArray(submitted) ? submitted : [submitted];
+    const checked = (Array.isArray(submitted) ? submitted : [submitted]).filter(Boolean);
     const listed = new Set(this.actors.map((actor) => actor.uuid));
-    const untouched = getEnabledMountUuids().filter((uuid) => !listed.has(uuid));
+    const untouched = getEnabledMountUuids().filter((uuid) => uuid && !listed.has(uuid));
     await game.settings.set(MODULE.ID, SETTINGS.ENABLED_MOUNTS, [...new Set([...untouched, ...checked])]);
-    ui.notifications.info('TRAVELPACE.Settings.MountConfig.Saved');
+    ui.notifications.info('TRAVELPACE.Settings.MountConfig.Saved', { localize: true });
   }
 
   /**
-   * Collect candidate mounts and vehicles from world actors and Actor compendiums, keyed by UUID.
+   * Collect candidate mounts, vehicles and groups from world actors, plus vehicles from Actor compendiums.
    * @returns {Promise<Array<object>>} Candidate actor descriptors ({uuid, name, type, img, isWorld, pack?})
    */
   static async #getPotentialMounts() {
     const actors = [];
-    for (const actor of game.actors) if (actor.type === 'npc' || actor.type === 'vehicle') actors.push({ uuid: actor.uuid, name: actor.name, type: actor.type, img: actor.img, isWorld: true });
+    for (const actor of game.actors) if (['npc', 'vehicle', 'group'].includes(actor.type)) actors.push({ uuid: actor.uuid, name: actor.name, type: actor.type, img: actor.img, isWorld: true });
     for (const pack of game.packs) {
       if (pack.metadata.type !== 'Actor') continue;
       const index = await pack.getIndex({ fields: ['type', 'img'] });
@@ -70,6 +70,7 @@ export class MountConfigMenu extends TravelPaceMenu {
     const sections = [
       { titleKey: 'TRAVELPACE.Settings.MountConfig.WorldNPCs', items: this.actors.filter((a) => a.isWorld && a.type === 'npc') },
       { titleKey: 'TRAVELPACE.Settings.MountConfig.WorldVehicles', items: this.actors.filter((a) => a.isWorld && a.type === 'vehicle') },
+      { titleKey: 'TRAVELPACE.Settings.MountConfig.WorldGroups', items: this.actors.filter((a) => a.isWorld && a.type === 'group') },
       { titleKey: 'TRAVELPACE.Settings.MountConfig.CompendiumVehicles', items: this.actors.filter((a) => !a.isWorld), suffix: (a) => ` (${a.pack})` }
     ];
     for (const section of sections) if (section.items.length) div.append(MountConfigMenu.#buildSection(section, this.enabled));
@@ -98,7 +99,7 @@ export class MountConfigMenu extends TravelPaceMenu {
       checkbox.type = 'checkbox';
       checkbox.name = 'mounts';
       checkbox.value = actor.uuid;
-      checkbox.checked = enabled.has(actor.uuid);
+      checkbox.toggleAttribute('checked', enabled.has(actor.uuid));
       const img = document.createElement('img');
       img.src = actor.img;
       img.alt = actor.name;
