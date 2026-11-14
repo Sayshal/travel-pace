@@ -116,8 +116,9 @@ export class TravelCalculator {
     const { secondsPerMinute, minutesPerHour, hoursPerDay } = game.time.calendar.days;
     const secondsPerDay = secondsPerMinute * minutesPerHour * hoursPerDay;
     if (seconds > secondsPerDay) {
-      const days = Math.floor(seconds / secondsPerDay);
-      const hours = Math.round((seconds % secondsPerDay) / (secondsPerMinute * minutesPerHour));
+      const totalHours = Math.round(seconds / (secondsPerMinute * minutesPerHour));
+      const days = Math.floor(totalHours / hoursPerDay);
+      const hours = totalHours % hoursPerDay;
       const confirmed = await foundry.applications.api.DialogV2.confirm({
         window: { title: 'TRAVELPACE.Advance.Confirm.Title' },
         content: `<p>${_loc('TRAVELPACE.Advance.Confirm.Content', { duration: formatTime({ days, hours, minutes: 0 }) })}</p>`

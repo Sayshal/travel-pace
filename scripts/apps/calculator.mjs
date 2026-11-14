@@ -84,7 +84,7 @@ export class TravelPaceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       multipleTravelTypes: Object.keys(speeds).length > 1,
       traveller: actor ? { uuid: actor.uuid, name: actor.name, img: actor.img } : null,
       travellers: [...this.#travellers.values()].map((option) => ({ uuid: option.uuid, name: option.name, selected: option.uuid === traveller })),
-      multipleTravellers: this.#travellers.size > 1,
+      multipleTravellers: this.#travellers.size > 0,
       result: this.#describeResult(),
       buttons: [{ type: 'button', action: 'submitCalculation', icon: 'fas fa-comments', label: 'TRAVELPACE.Buttons.Calculate' }]
     };

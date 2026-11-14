@@ -125,8 +125,7 @@ export function getMountSpeeds(mount) {
     if (config.hidden) continue;
     const type = config.travel ?? 'land';
     const feet = dnd5e.utils.convertLength(movement?.speeds?.[key] || 0, movement?.units ?? 'ft', { to: 'ft', legacy: false }).value;
-    const ratio = feet / TRAVEL.WALK_BASELINE_FEET;
-    if (ratio > (speeds[type]?.ratio ?? 0)) speeds[type] = { ratio, type, hours, paced };
+    if (feet && !speeds[type]) speeds[type] = { ratio: feet / TRAVEL.WALK_BASELINE_FEET, type, hours, paced };
   }
   return speeds;
 }

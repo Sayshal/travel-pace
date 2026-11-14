@@ -171,7 +171,7 @@
 .travel-pace-chat {
   --travel-pace-bg-highlight: rgb(0 0 0 / 5%);
   --travel-pace-divider: rgb(0 0 0 / 10%);
-  --travel-pace-text-secondary: rgb(60 60 60);
+  --travel-pace-text-secondary: var(--color-text-secondary);
 
   padding: 0.625rem;
   font-family: var(--font-primary);
