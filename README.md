@@ -35,8 +35,10 @@ A calculator dialog for D&D 5E travel pace. Convert a distance into how long the
 
 ### Also Included
 
-- Mount and vehicle support: pick from a configurable list of world or compendium actors. Walking actors use their movement speed; vehicles use their speed in mi/hour or km/hour from their actor data.
-- Imperial or metric units, set per-world
+- Mount and vehicle support: drag any actor, vehicle, or party onto the calculator, or pick one from a configurable list of world or compendium actors. Creatures use their movement speed; vehicles use their travel speed from their actor data.
+- Imperial or metric units, following the system's unit setting
+
+<img src="https://wiki.3deathsaves.com/travel-pace/calculator-traveller.png" alt="Calculator with a vehicle as the traveller" width="750">
 
 ## Installation
 
@@ -49,16 +51,18 @@ Install through Foundry's module manager, or paste the manifest URL:
 2. Pick Distance → Time or Time → Distance.
 3. Enter your distance (or days + hours).
 4. Pick the pace. The label updates to show the resulting speed.
-5. Optional: pick a configured mount or vehicle. The pace label adjusts to that actor's movement.
+5. Optional: drag a mount, vehicle, or party onto the Traveler panel, or pick one from the Transport dropdown. The pace label adjusts to that actor's speed.
 6. Send to Chat.
 
-To configure which actors appear in the mount dropdown, open Module Settings → Travel Pace → Configure Mounts & Vehicles. Pick from world NPCs, world vehicles, and vehicle actors in any installed compendium.
+To configure which actors appear in the Transport dropdown, open Configure Settings → Travel Pace Calculator → Configure Mounts & Vehicles. Pick from world NPCs, world vehicles, world groups, and vehicle actors in any installed compendium.
 
 ## Settings
 
-- **Use Metric System**: switch all distance displays to kilometers / meters.
 - **Show Pace Effects in Chat**: include the SRD rules text for the selected pace on the chat card.
-- **Configure Mounts & Vehicles**: opens the mount picker.
+- **Day Advance Mode**: advance world time by full calendar days for each travel day, or by only the hours spent moving.
+- **Weather Affects Travel Speed**: apply the weather multipliers when Calendaria reports the current weather.
+- **Configure Mounts & Vehicles**: opens the mount and vehicle picker.
+- **Configure Weather Multipliers**: sets the multiplier for each weather preset and severity level.
 
 ## Support
 
