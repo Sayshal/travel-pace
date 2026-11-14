@@ -1,15 +1,3 @@
-## Breaking Changes
-
-- Requires dnd5e 6.1.0 as both minimum and verified version.
-
-## New Features
-
-- Day breakdowns and time advance use the traveller's own hours per travel day.
-- Groups travel at their primary vehicle's speed and appear in the mount configuration menu.
-- Groups with a slowed member are held to slow pace.
-- Pace selector is disabled for vehicles that do not travel on land.
-- Travel By selector picks between multiple land, water or air speeds and defaults to the fastest.
-
 ## Bug Fixes
 
-- 5 bugs squashed
+- 4 bugs squashed

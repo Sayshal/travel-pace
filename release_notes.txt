@@ -1,24 +1,6 @@
-## Breaking Changes
-
-- Requires dnd5e 6.1.0 as both minimum and verified version.
-
-## New Features
-
-- Day breakdowns and time advance use the traveller's own hours per travel day.
-- Groups appear in the mount configuration menu.
-- Groups travel at their primary vehicle's speed.
-- Groups with a slowed member are held to slow pace, and the chat card shows a slowed note.
-- Pace selector is disabled with a note for vehicles that do not travel on land.
-- Travel By selector for travellers that can travel by more than one of land, water or air. Defaults to the fastest.
-
 ## Bug Fixes
 
-- Advance time no longer drops whole days in Calendaria worlds.
-- Notifications show localized text instead of raw keys.
-- Saving the mount configuration menu no longer clears already enabled mounts.
-- The advance-time confirmation shows a localized duration.
-- Travel speeds the system derives from hidden movement types such as jump are ignored.
-
-## Changes
-
-- Pace options come from the system's travel pace config instead of a fixed list.
+- Advance-time confirmation no longer shows a full day of rounded hours, such as 1 day 24 hours.
+- Chat card mount, modifier and effect rows use the theme's secondary text color, and the Days label in time mode is capitalized.
+- Creature land travel uses walk speed instead of the fastest of walk, burrow or climb, and falls back to burrow, then climb, only when walk speed is 0.
+- Transport dropdown appears whenever at least one traveller is available.
